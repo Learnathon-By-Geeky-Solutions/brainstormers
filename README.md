@@ -38,8 +38,8 @@ Ensure the following tools are installed on your system:
 
 1. **Clone the Repository**  
    ```bash
-   git clone https://github.com/orgs/Learnathon-By-Geeky-Solutions/projects/19/
-   cd task-management-system
+   git clone https://github.com/Learnathon-By-Geeky-Solutions/brainstormers.git
+   cd brainstormers
    ```
 
 2. **Restore Dependencies**  
