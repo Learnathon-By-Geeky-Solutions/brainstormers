@@ -1,0 +1,44 @@
+# Ignore build output
+bin/
+obj/
+
+# Ignore user-specific files
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ASP.NET Core Secrets
+*.secret.json
+
+# Ignore logs
+*.log
+
+# Ignore IDE-specific files (Visual Studio, Rider, etc.)
+.vscode/
+.idea/
+*.csproj.user
+.vs/
+
+# Ignore NuGet packages
+*.nupkg
+*.snupkg
+
+# Ignore other files
+*.swp
+*.lock.json
+*.pidb
+*.pdb
+
+# Ignore application configuration and runtime files
+appsettings.Development.json
+appsettings.local.json
+
+# Ignore temporary and OS-specific files
+*.tmp
+*.temp
+*.bak
+Thumbs.db
+.DS_Store
+desktop.ini

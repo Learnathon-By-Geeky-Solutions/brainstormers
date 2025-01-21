@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delegates", "Delegates\Delegates.csproj", "{F98BACA0-1198-4A18-BEE6-F05B42B6ED05}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LambdaExpressions", "LambdaExpressions\LambdaExpressions.csproj", "{CE32E8A2-EBE8-4438-BDCF-CC96507DE9FB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Events", "Events\Events.csproj", "{F5D6BC21-AB07-4929-80BD-79E72D577263}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F98BACA0-1198-4A18-BEE6-F05B42B6ED05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F98BACA0-1198-4A18-BEE6-F05B42B6ED05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F98BACA0-1198-4A18-BEE6-F05B42B6ED05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F98BACA0-1198-4A18-BEE6-F05B42B6ED05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE32E8A2-EBE8-4438-BDCF-CC96507DE9FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE32E8A2-EBE8-4438-BDCF-CC96507DE9FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE32E8A2-EBE8-4438-BDCF-CC96507DE9FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE32E8A2-EBE8-4438-BDCF-CC96507DE9FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5D6BC21-AB07-4929-80BD-79E72D577263}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5D6BC21-AB07-4929-80BD-79E72D577263}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5D6BC21-AB07-4929-80BD-79E72D577263}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5D6BC21-AB07-4929-80BD-79E72D577263}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
