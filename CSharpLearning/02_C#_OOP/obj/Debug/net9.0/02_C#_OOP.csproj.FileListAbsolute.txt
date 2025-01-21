@@ -1,0 +1,30 @@
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\bin\Debug\net9.0\02_C#_OOP.exe
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\bin\Debug\net9.0\02_C#_OOP.deps.json
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\bin\Debug\net9.0\02_C#_OOP.runtimeconfig.json
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\bin\Debug\net9.0\02_C#_OOP.dll
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\bin\Debug\net9.0\02_C#_OOP.pdb
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.GeneratedMSBuildEditorConfig.editorconfig
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.AssemblyInfoInputs.cache
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.AssemblyInfo.cs
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.csproj.CoreCompileInputs.cache
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.sourcelink.json
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.dll
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\refint\02_C#_OOP.dll
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.pdb
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.genruntimeconfig.cache
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon 3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\ref\02_C#_OOP.dll
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.GeneratedMSBuildEditorConfig.editorconfig
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.AssemblyInfoInputs.cache
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.AssemblyInfo.cs
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.csproj.CoreCompileInputs.cache
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.sourcelink.json
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.dll
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\refint\02_C#_OOP.dll
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.pdb
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\bin\Debug\net9.0\02_C#_OOP.exe
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\bin\Debug\net9.0\02_C#_OOP.deps.json
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\bin\Debug\net9.0\02_C#_OOP.runtimeconfig.json
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\bin\Debug\net9.0\02_C#_OOP.dll
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\bin\Debug\net9.0\02_C#_OOP.pdb
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\02_C#_OOP.genruntimeconfig.cache
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\02_C#_OOP\obj\Debug\net9.0\ref\02_C#_OOP.dll

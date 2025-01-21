@@ -1,0 +1,15 @@
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\bin\Debug\net9.0\LambdaExpressions.exe
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\bin\Debug\net9.0\LambdaExpressions.deps.json
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\bin\Debug\net9.0\LambdaExpressions.runtimeconfig.json
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\bin\Debug\net9.0\LambdaExpressions.dll
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\bin\Debug\net9.0\LambdaExpressions.pdb
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\obj\Debug\net9.0\LambdaExpressions.GeneratedMSBuildEditorConfig.editorconfig
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\obj\Debug\net9.0\LambdaExpressions.AssemblyInfoInputs.cache
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\obj\Debug\net9.0\LambdaExpressions.AssemblyInfo.cs
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\obj\Debug\net9.0\LambdaExpressions.csproj.CoreCompileInputs.cache
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\obj\Debug\net9.0\LambdaExpressions.sourcelink.json
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\obj\Debug\net9.0\LambdaExpressions.dll
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\obj\Debug\net9.0\refint\LambdaExpressions.dll
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\obj\Debug\net9.0\LambdaExpressions.pdb
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\obj\Debug\net9.0\LambdaExpressions.genruntimeconfig.cache
+F:\Works_Enamul_SEC\Docs\Projects\Learnathon_3.0\CSharpLearning\03_C#_Advanced\LambdaExpressions\obj\Debug\net9.0\ref\LambdaExpressions.dll
