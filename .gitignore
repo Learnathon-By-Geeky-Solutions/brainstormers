@@ -66,3 +66,12 @@ Release/
 
 # Ignore packages and dependencies
 packages/
+
+# Ignore Windows Forms specific files
+*.resx
+*.Designer.cs
+*.config
+
+# Ignore database and generated data files
+*.mdf
+*.ldf

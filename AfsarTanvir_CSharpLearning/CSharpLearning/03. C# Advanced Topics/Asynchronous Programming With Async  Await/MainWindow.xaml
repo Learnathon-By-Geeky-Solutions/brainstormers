@@ -1,0 +1,22 @@
+﻿<Window x:Class="Asynchronous_Programming_With_Async__Await.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Async Example" Height="500" Width="600">
+    <Grid>
+        <!-- First button with pop-up message -->
+        <Button Content="Download with Pop-up" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Top" 
+                Width="200" 
+                Height="50" 
+                Click="Button_Click_With_Message" RenderTransformOrigin="0.350,2.335" Margin="0,88,0,0" />
+
+        <!-- Second button without pop-up message -->
+        <Button Content="Download without Pop-up" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center" 
+                Width="200" 
+                Height="50" 
+                Click="Button_Click_Without_Message" RenderTransformOrigin="0.600,2.005" />
+    </Grid>
+</Window>
