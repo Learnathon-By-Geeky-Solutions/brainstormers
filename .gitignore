@@ -42,3 +42,27 @@ appsettings.local.json
 Thumbs.db
 .DS_Store
 desktop.ini
+
+
+# Ignore Visual Studio temporary files, build results, and
+# user-specific files
+.vs/
+*.user
+*.suo
+*.cache
+*.log
+
+# Ignore build output
+bin/
+obj/
+Debug/
+Release/
+
+# Ignore other files
+*.dll
+*.exe
+*.pdb
+*.tmp
+
+# Ignore packages and dependencies
+packages/

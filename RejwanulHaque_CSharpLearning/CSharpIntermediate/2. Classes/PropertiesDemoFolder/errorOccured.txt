@@ -1,0 +1,3 @@
+I have named the folder name same as a class name which was inside the folder. Hence an error occured. 
+I have named the folder "PropertiesDemoFolder" instead of "Properties". Because "Properties" folder is reserved folder name. 
+If I create a folder with this name, when I will click it, it will open the properties window.
