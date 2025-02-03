@@ -1,6 +1,7 @@
 ﻿using BulkyBookWeb.Data;
 using BulkyBookWeb.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BulkyBookWeb.Controllers
 {
@@ -46,19 +47,19 @@ namespace BulkyBookWeb.Controllers
         }
 
 
-        //GET
-        public IActionResult Edit(int? id)
+        private async Task<Category?> GetCategoryById(int? id)
         {
-            if (id == null || id == 0) return NotFound();
-            var categoryFromDb = _db.Categories.Find(id);
-            //var category = _db.Categories.FirstOrDefault(u => u.Id == id);
-            //var category = _db.Categories.SingleOrDefault(u => u.Id == id);
+            if (id == null || id <= 0) return null;
+            return await _db.Categories.FirstOrDefaultAsync(c => c.Id == id);
+        }
 
-            if(categoryFromDb == null)
-            { 
-                return NotFound();
-            }
-            return View(categoryFromDb);
+        // GET: Edit
+        public async Task<IActionResult> Edit(int? id)
+        {
+            var category = await GetCategoryById(id);
+            if (category == null) return NotFound("Category not found");
+
+            return View(category);  // Returns the default "Edit" view
         }
 
         //POST
@@ -82,20 +83,17 @@ namespace BulkyBookWeb.Controllers
         }
 
 
-        //GET
-        public IActionResult Delete(int? id)
-        {
-            if (id == null || id == 0) return NotFound();
-            var categoryFromDb = _db.Categories.Find(id);
-            //var category = _db.Categories.FirstOrDefault(u => u.Id == id);
-            //var category = _db.Categories.SingleOrDefault(u => u.Id == id);
+        
 
-            if (categoryFromDb == null)
-            {
-                return NotFound();
-            }
-            return View(categoryFromDb);
+        // GET: Delete
+        public async Task<IActionResult> Delete(int? id)
+        {
+            var category = await GetCategoryById(id);
+            if (category == null) return NotFound("Category not found");
+
+            return View("DeleteConfirmation", category);  // Returns a separate confirmation view
         }
+
 
         //POST
         [HttpPost]
