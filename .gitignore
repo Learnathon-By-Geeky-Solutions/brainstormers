@@ -75,3 +75,15 @@ packages/
 # Ignore database and generated data files
 *.mdf
 *.ldf
+
+# SonarQube/SonarCloud Analysis
+.sonarqube/
+.sonarlint/
+
+# Visual Studio Code
+.vscode/settings.json
+
+# Ignore Publish Profiles
+*.pubxml
+*.pubxml.user
+
