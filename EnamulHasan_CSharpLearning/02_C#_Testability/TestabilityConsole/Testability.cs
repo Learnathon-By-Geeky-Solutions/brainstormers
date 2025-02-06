@@ -7,10 +7,9 @@ namespace Fundamentals
         public DateTime DatePlaced { get; set; }
         public bool IsShipped { 
             get { return Shipment != null; }
-            set { }
         }
         public float TotalPrice { get; set; }
-        public Shipment Shipment { get; set; }
+        public required Shipment Shipment { get; set; }
     }
 
     public class Shipment

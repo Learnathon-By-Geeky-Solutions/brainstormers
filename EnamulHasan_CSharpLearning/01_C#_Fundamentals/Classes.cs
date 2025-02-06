@@ -4,8 +4,8 @@ namespace Fundamentals
 {
     public class Person
     {
-        public string FirstName;
-        public string LastName;
+        public required string FirstName { get; set; }
+        public required string LastName { get; set; }
         public void Intro(){
             Console.WriteLine("Name:" + FirstName + " " + LastName);
         }

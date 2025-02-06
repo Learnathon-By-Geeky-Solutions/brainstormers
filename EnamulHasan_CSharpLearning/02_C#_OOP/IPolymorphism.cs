@@ -25,12 +25,13 @@ namespace Fundamentals
 
     public class Message
     {
-        public string message { get; set; }
+        public required string Content { get; set; }
     }
 
     public class Video
     {
-        
+        public required string Title { get; set; }
+        public required string Description { get; set; }
     }
 
     public class VideoEncoder
@@ -46,7 +47,7 @@ namespace Fundamentals
         {
             foreach (var item in _notificationChannels)
             {
-                item.Send(new Message());
+                item.Send(new Message { Content = "Video encoded successfully." });
             }
         }
 

@@ -10,14 +10,9 @@ using BulkyBookWeb.Models;
 
 namespace BulkyBookWeb.Controllers
 {
-    public class CategoriesController : Controller
+    public class CategoriesController(ApplicationDbContext context) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public CategoriesController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
 
         // GET: Categories
         public async Task<IActionResult> Index()
@@ -28,6 +23,11 @@ namespace BulkyBookWeb.Controllers
         // GET: Categories/Details/5
         public async Task<IActionResult> Details(int? id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
             if (id == null)
             {
                 return NotFound();
@@ -68,6 +68,11 @@ namespace BulkyBookWeb.Controllers
         // GET: Categories/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
             if (id == null)
             {
                 return NotFound();
@@ -88,6 +93,11 @@ namespace BulkyBookWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,DisplayOrder,CreatedDateTime")] Category category)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
             if (id != category.Id)
             {
                 return NotFound();
@@ -119,19 +129,12 @@ namespace BulkyBookWeb.Controllers
         // GET: Categories/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                return BadRequest();
             }
-
-            var category = await _context.Categories
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (category == null)
-            {
-                return NotFound();
-            }
-
-            return View(category);
+           
+            return await Details(id);
         }
 
         // POST: Categories/Delete/5
@@ -139,6 +142,11 @@ namespace BulkyBookWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
             var category = await _context.Categories.FindAsync(id);
             if (category != null)
             {
