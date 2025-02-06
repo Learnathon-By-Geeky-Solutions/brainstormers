@@ -1,7 +1,6 @@
 ﻿using BulkyBookWeb.Data;
 using BulkyBookWeb.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace BulkyBookWeb.Controllers
 {
@@ -47,19 +46,21 @@ namespace BulkyBookWeb.Controllers
         }
 
 
-        private async Task<Category?> GetCategoryById(int? id)
+        //GET
+        public IActionResult Edit(int? id)
         {
-            if (id == null || id <= 0) return null;
-            return await _db.Categories.FirstOrDefaultAsync(c => c.Id == id);
-        }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            if (id == null || id == 0) return NotFound();
+            var categoryFromDb = _db.Categories.Find(id);
 
-        // GET: Edit
-        public async Task<IActionResult> Edit(int? id)
-        {
-            var category = await GetCategoryById(id);
-            if (category == null) return NotFound("Category not found");
-
-            return View(category);  // Returns the default "Edit" view
+            if(categoryFromDb == null)
+            { 
+                return NotFound();
+            }
+            return View(categoryFromDb);
         }
 
         //POST
@@ -83,23 +84,25 @@ namespace BulkyBookWeb.Controllers
         }
 
 
-        
-
-        // GET: Delete
-        public async Task<IActionResult> Delete(int? id)
+        //GET
+        public IActionResult Delete(int? id)
         {
-            var category = await GetCategoryById(id);
-            if (category == null) return NotFound("Category not found");
-
-            return View("DeleteConfirmation", category);  // Returns a separate confirmation view
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            return Edit(id);
         }
-
 
         //POST
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult DeletePOST(int? id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var obj = _db.Categories.Find(id);
             if (obj == null) return NotFound();
             _db.Categories.Remove(obj);
