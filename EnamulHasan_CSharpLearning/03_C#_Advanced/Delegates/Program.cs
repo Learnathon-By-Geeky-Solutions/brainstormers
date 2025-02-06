@@ -4,29 +4,35 @@ namespace  Delegates
 {
     public class Photo
     {
+        public required string Path { get; set; }
+        public DateTime DateTaken { get; set; }
 
-    }
-
-    public class PhotoProcessor
-    {
-        public void Process(string path, Action<Photo> filterHandler)
+        public static void Save()
         {
-            var photo = new Photo();
-
-            filterHandler(photo);
-
-            //photo.save();
+            Console.WriteLine("Photo saved.");
         }
     }
 
-    public class PhotoFilters
+    public static class PhotoProcessor
     {
-        public void Bright(Photo photo)
+        public static void Process(string path, Action<Photo> filterHandler)
+        {
+            var photo = new Photo { Path = path, DateTaken = DateTime.Now };
+
+            filterHandler(photo);
+
+            Photo.Save();
+        }
+    }
+
+    public static class PhotoFilters
+    {
+        public static void Bright(Photo photo)
         {
             Console.WriteLine("Apply Bright!!");
         }
 
-        public void Dark(Photo photo)
+        public static void Dark(Photo photo)
         {
             Console.WriteLine("Apply Dark!!");
         }
@@ -36,13 +42,10 @@ namespace  Delegates
     {
         static void Main(string[] args)
         {
-            var processor = new PhotoProcessor();
-            var filters = new PhotoFilters();
-            
-            Action<Photo> filterHandler = filters.Bright;
-            //filterHandler += filters.Dark;
+            Action<Photo> filterHandler = PhotoFilters.Bright;
+            filterHandler += PhotoFilters.Dark;
 
-            processor.Process("photo", filterHandler);
+            PhotoProcessor.Process("photo", filterHandler);
         }
     }
 }

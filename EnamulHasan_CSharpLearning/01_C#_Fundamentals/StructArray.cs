@@ -3,7 +3,7 @@ using System;
 namespace Fundamentals
 {
     //Efficient
-    public struct rgb
+    public struct Rgb
     {
         public int Red;
         public int Green;
@@ -12,7 +12,7 @@ namespace Fundamentals
 
     public class Arrays
     {
-        public int[] numbers;
+        public required int[] numbers;
     }
 }
 
