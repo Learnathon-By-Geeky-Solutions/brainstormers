@@ -10,14 +10,10 @@ using BulkyBookWeb.Models;
 
 namespace BulkyBookWeb.Controllers
 {
-    public class CategoriesScaffoldedController : Controller
+    public class CategoriesScaffoldedController(ApplicationDbContext context) : Controller
     {
-        private readonly ApplicationDbContext _context;
-
-        public CategoriesScaffoldedController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
+        
 
         // GET: CategoriesScaffolded
         public async Task<IActionResult> Index()
@@ -33,6 +29,10 @@ namespace BulkyBookWeb.Controllers
                 return NotFound();
             }
 
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var category = await _context.Categories
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (category == null)
@@ -71,6 +71,11 @@ namespace BulkyBookWeb.Controllers
             if (id == null)
             {
                 return NotFound();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
             }
 
             var category = await _context.Categories.FindAsync(id);
@@ -119,19 +124,11 @@ namespace BulkyBookWeb.Controllers
         // GET: CategoriesScaffolded/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                return BadRequest(ModelState);
             }
-
-            var category = await _context.Categories
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (category == null)
-            {
-                return NotFound();
-            }
-
-            return View(category);
+            return await Edit(id);
         }
 
         // POST: CategoriesScaffolded/Delete/5
@@ -139,6 +136,10 @@ namespace BulkyBookWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var category = await _context.Categories.FindAsync(id);
             if (category != null)
             {
