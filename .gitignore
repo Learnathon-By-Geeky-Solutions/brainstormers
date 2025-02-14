@@ -71,7 +71,6 @@ packages/
 
 # Ignore Windows Forms specific files
 *.resx
-*.Designer.cs
 *.config
 
 # Ignore database and generated data files
