@@ -11,9 +11,11 @@ obj/
 
 # ASP.NET Core Secrets
 *.secret.json
+*.jwk
 
 # Ignore logs
 *.log
+logs/
 
 # Ignore IDE-specific files (Visual Studio, Rider, etc.)
 .vscode/
