@@ -18,6 +18,10 @@ namespace TaskForge.Infrastructure.Data
         }
 
         // Define DbSets for each entity
+        public DbSet<UserProfile> UserProfiles { get; set; }
+        public DbSet<Project> Projects { get; set; }
+        public DbSet<ProjectMember> ProjectMembers { get; set; }
+        public DbSet<ProjectInvitation> ProjectInvitations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

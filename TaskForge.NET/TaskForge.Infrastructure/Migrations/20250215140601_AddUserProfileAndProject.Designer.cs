@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TaskForge.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using TaskForge.Infrastructure.Data;
 namespace TaskForge.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250215140601_AddUserProfileAndProject")]
+    partial class AddUserProfileAndProject
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -264,7 +267,7 @@ namespace TaskForge.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Projects", (string)null);
+                    b.ToTable("Projects");
                 });
 
             modelBuilder.Entity("TaskForge.Domain.Entities.ProjectInvitation", b =>
@@ -318,7 +321,7 @@ namespace TaskForge.Infrastructure.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.ToTable("ProjectInvitations", (string)null);
+                    b.ToTable("ProjectInvitations");
                 });
 
             modelBuilder.Entity("TaskForge.Domain.Entities.ProjectMember", b =>
@@ -360,7 +363,7 @@ namespace TaskForge.Infrastructure.Migrations
 
                     b.HasIndex("UserProfileId");
 
-                    b.ToTable("ProjectMembers", (string)null);
+                    b.ToTable("ProjectMembers");
                 });
 
             modelBuilder.Entity("TaskForge.Domain.Entities.UserProfile", b =>
@@ -432,7 +435,7 @@ namespace TaskForge.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserProfiles", (string)null);
+                    b.ToTable("UserProfiles");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
