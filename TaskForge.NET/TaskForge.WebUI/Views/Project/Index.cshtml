@@ -1,0 +1,25 @@
+﻿@model IEnumerable<TaskForge.Domain.Entities.Project>
+
+@{
+    ViewData["Title"] = "Projects List";
+}
+
+<h2>Projects</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var project in Model)
+        {
+            <tr>
+                <td>@project.Id</td>
+                <td>@project.Title</td>
+            </tr>
+        }
+    </tbody>
+</table>
