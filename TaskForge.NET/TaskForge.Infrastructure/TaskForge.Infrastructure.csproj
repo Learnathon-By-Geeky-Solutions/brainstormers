@@ -20,11 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TaskForge.Domain\TaskForge.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Repositories\" />
+    <ProjectReference Include="..\TaskForge.Application\TaskForge.Application.csproj" />
   </ItemGroup>
 
 </Project>

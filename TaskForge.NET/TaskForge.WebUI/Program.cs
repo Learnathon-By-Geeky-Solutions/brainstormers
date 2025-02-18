@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using TaskForge.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using TaskForge.Application.Interfaces;
+using TaskForge.Infrastructure.Repositories;
 
 namespace TaskForge.WebUI
 {
@@ -69,6 +71,14 @@ namespace TaskForge.WebUI
             // Add services for controllers and Razor Pages
             builder.Services.AddControllersWithViews();
             builder.Services.AddRazorPages();
+
+
+            builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+            builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
+            builder.Services.AddScoped<IProjectMemberRepository, ProjectMemberRepository>();
+
+            builder.Services.AddScoped<ProjectService>();
+
 
             var app = builder.Build();
 
