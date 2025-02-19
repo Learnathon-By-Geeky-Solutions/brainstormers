@@ -3,14 +3,16 @@ using Microsoft.EntityFrameworkCore;
 using TaskForge.Infrastructure.Data;
 using TaskForge.Domain.Entities;
 using TaskForge.Application.Services;
+using TaskForge.Application.Interfaces;
 using Duende.IdentityServer.Models;
 using Duende.IdentityServer;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using TaskForge.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Serilog;
-using TaskForge.Application.Interfaces;
 using TaskForge.Infrastructure.Repositories;
+using TaskForge.Application.Interfaces.Repositories;
+using TaskForge.Application.Interfaces.Services;
 
 namespace TaskForge.WebUI
 {
@@ -77,7 +79,7 @@ namespace TaskForge.WebUI
             builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
             builder.Services.AddScoped<IProjectMemberRepository, ProjectMemberRepository>();
 
-            builder.Services.AddScoped<ProjectService>();
+            builder.Services.AddScoped<IProjectService, ProjectService>();
 
 
             var app = builder.Build();

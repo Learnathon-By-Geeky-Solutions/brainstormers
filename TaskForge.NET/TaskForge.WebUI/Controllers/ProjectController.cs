@@ -1,19 +1,15 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Security.Claims;
-using TaskForge.Application.Services;
-using TaskForge.Infrastructure.Data;
+using TaskForge.Application.Interfaces.Services;
 
 namespace TaskForge.WebUI.Controllers
 {
     public class ProjectController : Controller
     {
-        private readonly ProjectService _projectService;
+        private readonly IProjectService _projectService;
         private readonly UserManager<IdentityUser> _userManager;
 
-        public ProjectController(ProjectService projectService, UserManager<IdentityUser> userManager)
+        public ProjectController(IProjectService projectService, UserManager<IdentityUser> userManager)
         {
             _projectService = projectService;
             _userManager = userManager;

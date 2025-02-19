@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TaskForge.Application.Interfaces;
+using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Domain.Entities;
 using TaskForge.Infrastructure.Data;
 

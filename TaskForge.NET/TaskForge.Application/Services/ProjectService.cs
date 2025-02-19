@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TaskForge.Application.Interfaces;
+using TaskForge.Application.Interfaces.Repositories;
+using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 
 namespace TaskForge.Application.Services
 {
-    public class ProjectService
+    public class ProjectService: IProjectService
     {
         private readonly IProjectRepository _projectRepository;
         private readonly IUserProfileRepository _userProfileRepository;
@@ -20,9 +21,9 @@ namespace TaskForge.Application.Services
             _projectMemberRepository = projectMemberRepository;
         }
 
-        public async Task<IEnumerable<Project>?> GetAllProjectsAsync(string Id)
+        public async Task<IEnumerable<Project>?> GetAllProjectsAsync(string userId)
         {
-            var userProfile = await _userProfileRepository.GetUserProfileByUserIdAsync(Id);
+            var userProfile = await _userProfileRepository.GetUserProfileByUserIdAsync(userId);
             if (userProfile == null)
             {
                 throw new KeyNotFoundException("User profile not found.");

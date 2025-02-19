@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using TaskForge.Application.Interfaces;
+using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Domain.Entities;
 using TaskForge.Infrastructure.Data;
 

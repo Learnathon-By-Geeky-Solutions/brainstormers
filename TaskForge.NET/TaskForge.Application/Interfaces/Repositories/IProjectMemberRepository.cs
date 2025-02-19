@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TaskForge.Domain.Entities;
 
-namespace TaskForge.Application.Interfaces
+namespace TaskForge.Application.Interfaces.Repositories
 {
     public interface IProjectMemberRepository
     {
