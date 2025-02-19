@@ -80,6 +80,7 @@ namespace TaskForge.WebUI
             builder.Services.AddScoped<IProjectMemberRepository, ProjectMemberRepository>();
 
             builder.Services.AddScoped<IProjectService, ProjectService>();
+            builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 
 
             var app = builder.Build();
