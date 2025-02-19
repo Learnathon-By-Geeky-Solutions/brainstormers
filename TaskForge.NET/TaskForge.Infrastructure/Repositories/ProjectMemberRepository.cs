@@ -19,6 +19,17 @@ namespace TaskForge.Infrastructure.Repositories
             _context = context;
         }
 
+        public async Task AddAsync(int projectId, int userProfileId)
+        {
+            var projectMember = new ProjectMember
+            {
+                ProjectId = projectId,
+                UserProfileId = userProfileId
+            };
+            await _context.AddAsync(projectMember);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<List<int>> GetProjectIdsByUserProfileIdAsync(int userProfileId)
         {
             return await _context.ProjectMembers

@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
+using TaskForge.Domain.Enums;
+using TaskForge.WebUI.Models;
 
 namespace TaskForge.WebUI.Controllers
 {
@@ -15,7 +19,7 @@ namespace TaskForge.WebUI.Controllers
             _userManager = userManager;
         }
 
-        // GET: Projects
+        // GET: Projects/Index
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -27,24 +31,49 @@ namespace TaskForge.WebUI.Controllers
             return View(projects);
         }
 
+        // GET: Projects/Create
+        [HttpGet]
+        public async Task<IActionResult> Create()
+        {
+            var viewModel = new CreateProjectViewModel
+            {
+                Title = "",
+                Status = 0,
+                StatusOptions = await _projectService.GetProjectStatusOptions()
+            };
+
+            return View(viewModel);
+        }
 
 
+        // POST: Projects/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CreateProjectViewModel viewModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                viewModel.StatusOptions = await _projectService.GetProjectStatusOptions();
+                return View(viewModel);
+            }
 
-        // POST: Books/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Create([Bind("Id,Title,Author,ISBN,Price")] Book book)
-        //{
-        //    if (ModelState.IsValid)
-        //    {
-        //        _context.Add(book);
-        //        await _context.SaveChangesAsync();
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    return View(book);
-        //}
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var dto = new CreateProjectDto
+            {
+                Title = viewModel.Title,
+                Description = viewModel.Description,
+                Status = viewModel.Status,
+                CreatedBy = user.Id
+            };
+
+            await _projectService.CreateProjectAsync(dto);
+            return RedirectToAction("Index");
+        }
 
     }
 }

@@ -10,5 +10,6 @@ namespace TaskForge.Application.Interfaces.Repositories
     public interface IProjectMemberRepository
     {
         Task<List<int>> GetProjectIdsByUserProfileIdAsync(int userProfileId);
+        Task AddAsync(int projectId,int userProfileId);
     }
 }

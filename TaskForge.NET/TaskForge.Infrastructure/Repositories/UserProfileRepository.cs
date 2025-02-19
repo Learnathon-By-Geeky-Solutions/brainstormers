@@ -29,11 +29,13 @@ namespace TaskForge.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<UserProfile?> GetUserProfileByUserIdAsync(string userId)
+        public async Task<int> GetUserProfileIdByUserIdAsync(string userId)
         {
             return await _context.UserProfiles
                 .Where(up => up.UserId == userId)
+                .Select(up => up.Id)
                 .FirstOrDefaultAsync();
         }
+
     }
 }
