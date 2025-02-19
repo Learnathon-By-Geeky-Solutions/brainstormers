@@ -9,7 +9,7 @@ namespace TaskForge.Application.Interfaces.Repositories
 {
     public interface IUserProfileRepository
     {
-        Task<UserProfile?> GetUserProfileByUserIdAsync(string userId);
+        Task<int> GetUserProfileIdByUserIdAsync(string userId);
         Task CreateAsync(string userId, string FullName);
     }
 }

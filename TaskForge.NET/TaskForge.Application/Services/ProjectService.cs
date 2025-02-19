@@ -1,11 +1,15 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
+using TaskForge.Domain.Enums;
 
 namespace TaskForge.Application.Services
 {
@@ -23,12 +27,8 @@ namespace TaskForge.Application.Services
 
         public async Task<IEnumerable<Project>?> GetAllProjectsAsync(string userId)
         {
-            var userProfile = await _userProfileRepository.GetUserProfileByUserIdAsync(userId);
-            if (userProfile == null)
-            {
-                throw new KeyNotFoundException("User profile not found.");
-            }
-            var projectIds = await _projectMemberRepository.GetProjectIdsByUserProfileIdAsync(userProfile.Id);
+            var userProfileId = await _userProfileRepository.GetUserProfileIdByUserIdAsync(userId);
+            var projectIds = await _projectMemberRepository.GetProjectIdsByUserProfileIdAsync(userProfileId);
             var projects = new List<Project>();
             foreach (var projectId in projectIds)
             {
@@ -38,6 +38,24 @@ namespace TaskForge.Application.Services
             }
 
             return projects;
+        }
+
+        public async Task CreateProjectAsync(CreateProjectDto dto)
+        {
+            var projectId = await _projectRepository.AddAsync(dto);
+            var userProfileId = await _userProfileRepository.GetUserProfileIdByUserIdAsync(dto.CreatedBy);
+            await _projectMemberRepository.AddAsync(projectId, userProfileId);
+        }
+
+        public Task<IEnumerable<SelectListItem>> GetProjectStatusOptions()
+        {
+            return Task.FromResult(Enum.GetValues(typeof(ProjectStatus))
+                   .Cast<ProjectStatus>()
+                   .Select(status => new SelectListItem
+                   {
+                       Value = status.ToString(),
+                       Text = status.ToString()
+                   }));
         }
     }
 }
