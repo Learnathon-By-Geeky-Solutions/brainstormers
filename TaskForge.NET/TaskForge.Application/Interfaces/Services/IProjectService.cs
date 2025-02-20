@@ -11,7 +11,7 @@ namespace TaskForge.Application.Interfaces.Services
 {
     public interface IProjectService
     {
-        Task<IEnumerable<Project>?> GetAllProjectsAsync(string userId);
+        Task<IEnumerable<Project>> GetFilteredProjectsAsync(ProjectFilterDto filter);
         Task<IEnumerable<SelectListItem>> GetProjectStatusOptions();
         Task CreateProjectAsync(CreateProjectDto dto);
     }

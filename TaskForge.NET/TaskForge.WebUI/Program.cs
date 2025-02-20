@@ -83,7 +83,6 @@ namespace TaskForge.WebUI
             builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 
 
-
             var app = builder.Build();
 
             // Configure the HTTP request pipeline

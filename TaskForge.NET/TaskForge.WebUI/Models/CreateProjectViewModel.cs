@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using TaskForge.Application.DTOs;
 using TaskForge.Domain.Enums;
 
 namespace TaskForge.WebUI.Models

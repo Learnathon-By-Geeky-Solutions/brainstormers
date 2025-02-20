@@ -1,4 +1,5 @@
-﻿@model IEnumerable<TaskForge.Domain.Entities.Project>
+﻿@model TaskForge.Web.Models.ProjectListViewModel
+@using TaskForge.Domain.Enums
 
 @{
     ViewData["Title"] = "Projects List";
@@ -6,23 +7,75 @@
 
 <h2>Projects</h2>
 
-<div class="text-end mb-3">
-    <a asp-action="Create" class="btn btn-primary">Create New Project</a>
+<div class="mb-4">
+    <form asp-action="Index" method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label for="Title" class="form-label">Title</label>
+            <input name="Title" value="@Model.Filter.Title" class="form-control" placeholder="Enter project title" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="Status" class="form-label">Status</label>
+            <select name="Status" class="form-select">
+                <option value="">All</option>
+                @foreach (ProjectStatus status in Enum.GetValues(typeof(ProjectStatus)))
+                {
+                    <option value="@((int)status)" selected="@(Model.Filter.Status == status ? "selected" : null)">
+                        @status
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label for="StartDateFrom" class="form-label">Start Date (From)</label>
+            <input name="StartDateFrom" type="date" value="@Model.Filter.StartDateFrom?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="StartDateTo" class="form-label">Start Date (To)</label>
+            <input name="StartDateTo" type="date" value="@Model.Filter.StartDateTo?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="EndDateFrom" class="form-label">End Date (From)</label>
+            <input name="EndDateFrom" type="date" value="@Model.Filter.EndDateFrom?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="EndDateTo" class="form-label">End Date (To)</label>
+            <input name="EndDateTo" type="date" value="@Model.Filter.EndDateTo?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+    </form>
 </div>
 
-<table class="table">
-    <thead>
+<div class="text-end mb-3">
+    <a asp-action="Create" class="btn btn-success">Create New Project</a>
+</div>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-light">
         <tr>
             <th>ID</th>
             <th>Name</th>
+            <th>Status</th>
+            <th>Start Date</th>
+            <th>End Date</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var project in Model)
+        @foreach (var project in Model.Projects)
         {
             <tr>
                 <td>@project.Id</td>
                 <td>@project.Title</td>
+                <td>@project.Status</td>
+                <td>@project.StartDate.ToString("yyyy-MM-dd")</td>
+                <td>@project.EndDate?.ToString("yyyy-MM-dd")</td>
             </tr>
         }
     </tbody>

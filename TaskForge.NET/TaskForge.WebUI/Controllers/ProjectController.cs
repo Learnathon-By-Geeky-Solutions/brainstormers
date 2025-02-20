@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
-using TaskForge.Domain.Enums;
+using TaskForge.Web.Models;
 using TaskForge.WebUI.Models;
 
 namespace TaskForge.WebUI.Controllers
@@ -19,19 +18,29 @@ namespace TaskForge.WebUI.Controllers
             _userManager = userManager;
         }
 
-        // GET: Projects/Index
-        public async Task<IActionResult> Index()
+        // GET: Project
+        [HttpGet]
+        public async Task<IActionResult> Index(ProjectFilterDto filter)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
                 return Unauthorized();
             }
-            var projects = await _projectService.GetAllProjectsAsync(user.Id);
-            return View(projects);
+            filter.UserId = user.Id;
+
+            var projects = await _projectService.GetFilteredProjectsAsync(filter);
+
+            var viewModel = new ProjectListViewModel
+            {
+                Filter = filter,
+                Projects = projects
+            };
+
+            return View(viewModel);
         }
 
-        // GET: Projects/Create
+        // GET: Project/Create
         [HttpGet]
         public async Task<IActionResult> Create()
         {
@@ -74,6 +83,9 @@ namespace TaskForge.WebUI.Controllers
             await _projectService.CreateProjectAsync(dto);
             return RedirectToAction("Index");
         }
+
+      
+
 
     }
 }
