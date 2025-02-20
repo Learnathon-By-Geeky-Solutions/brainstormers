@@ -15,6 +15,8 @@
         <tr>
             <th>ID</th>
             <th>Name</th>
+            <th>Description</th>
+            <th>Status</th>
         </tr>
     </thead>
     <tbody>
@@ -23,6 +25,11 @@
             <tr>
                 <td>@project.Id</td>
                 <td>@project.Title</td>
+                <td>@project.Description</td>
+                <td>@project.Status</td>
+                <td>
+                    <a asp-action="Details" class="btn btn-primary" asp-route-id="@project.Id">Details</a>
+                </td>
             </tr>
         }
     </tbody>

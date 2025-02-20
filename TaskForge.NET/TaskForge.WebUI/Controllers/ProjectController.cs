@@ -75,5 +75,21 @@ namespace TaskForge.WebUI.Controllers
             return RedirectToAction("Index");
         }
 
+        // GET: Projects/Details/5
+        public async Task<IActionResult> Details(int Id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
+            var project = await _projectService.GetProjectByIdAsync(Id);
+            if (project == null)
+            {
+                return NotFound();
+            }
+
+            return View(project);
+        }
     }
 }

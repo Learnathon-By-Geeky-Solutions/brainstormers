@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,6 +57,11 @@ namespace TaskForge.Application.Services
                        Value = status.ToString(),
                        Text = status.ToString()
                    }));
+        }
+
+        public async Task<Project?> GetProjectByIdAsync(int projectId)
+        {
+            return await _projectRepository.GetProjectByIdAsync(projectId);
         }
     }
 }
