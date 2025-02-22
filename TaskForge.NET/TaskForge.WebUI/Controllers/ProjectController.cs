@@ -18,17 +18,17 @@ namespace TaskForge.WebUI.Controllers
             _userManager = userManager;
         }
 
-        // GET: Project
         [HttpGet]
         public async Task<IActionResult> Index(ProjectFilterDto filter)
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
+            if (!ModelState.IsValid)
             {
-                return Unauthorized();
+                return RedirectToAction("Index");
             }
-            filter.UserId = user.Id;
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
 
+            filter.UserId = user.Id;
             var projects = await _projectService.GetFilteredProjectsAsync(filter);
 
             var viewModel = new ProjectListViewModel
@@ -40,6 +40,8 @@ namespace TaskForge.WebUI.Controllers
             return View(viewModel);
         }
 
+
+
         // GET: Project/Create
         [HttpGet]
         public async Task<IActionResult> Create()
@@ -48,7 +50,9 @@ namespace TaskForge.WebUI.Controllers
             {
                 Title = "",
                 Status = 0,
-                StatusOptions = await _projectService.GetProjectStatusOptions()
+                StatusOptions = await _projectService.GetProjectStatusOptions(),
+                StartDate = DateTime.Now,
+                EndDate = null,
             };
 
             return View(viewModel);
@@ -77,15 +81,13 @@ namespace TaskForge.WebUI.Controllers
                 Title = viewModel.Title,
                 Description = viewModel.Description,
                 Status = viewModel.Status,
-                CreatedBy = user.Id
+                CreatedBy = user.Id,
+                StartDate = viewModel.StartDate,
+                EndDate = viewModel.EndDate,
             };
 
             await _projectService.CreateProjectAsync(dto);
             return RedirectToAction("Index");
         }
-
-      
-
-
     }
 }

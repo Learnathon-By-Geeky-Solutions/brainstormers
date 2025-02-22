@@ -14,20 +14,31 @@
                 <div asp-validation-summary="All"></div>
                 <div class="form-floating py-1 col-12">
                     <input asp-for="Title" class="form-control border shadow" />
-                    <label asp-for="Title" class="ms-2"></label>
+                    <label for="Title" class="form-label">Title</label>
                     <span asp-validation-for="Title" class="text-danger"></span>
                 </div>
                 <div class="form-floating py-1 col-12">
                     <input asp-for="Description" class="form-control border shadow" />
-                    <label asp-for="Description" class="ms-2"></label>
+                    <label for="Title" class="form-label">Description</label>
                     <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
                 <div class="form-floating py-1 col-12">
                     <select asp-for="Status" asp-items="Model.StatusOptions" class="form-select border shadow">
                         <option value="">-- Select Status --</option>
                     </select>
-                    <label asp-for="Status" class="ms-2"></label>
+                    <label for="Status" class="form-label">Status</label>
                     <span asp-validation-for="Status" class="text-danger"></span>
+                </div>
+                <div class="form-floating py-1 col-12">
+                    <input asp-for="StartDate" class="form-control border shadow" value="@DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm")"/>
+                    <label for="StartDate" class="form-label">Start Date (UTC)</label>
+                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                </div>
+
+                <div class="form-floating py-1 col-12">
+                    <input asp-for="EndDate" class="form-control border shadow" placeholder="Select End Date" />
+                    <label for="EndDate" class="form-label">End Date</label>
+                    <span asp-validation-for="EndDate" class="text-danger"></span>
                 </div>
 
                 <div class="row pt-2">

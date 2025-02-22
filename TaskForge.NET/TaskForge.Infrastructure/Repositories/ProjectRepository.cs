@@ -29,8 +29,10 @@ namespace TaskForge.Infrastructure.Repositories
                 Title = dto.Title,
                 Description = dto.Description,
                 Status = dto.Status,
-                CreatedBy = dto.CreatedBy
+                CreatedBy = dto.CreatedBy,
+                StartDate = dto.StartDate,
             };
+            project.SetEndDate(dto.EndDate);
             _context.Projects.Add(project);
             await _context.SaveChangesAsync();
 

@@ -20,3 +20,15 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.header-cell {
+    position: relative;
+    text-align: center;
+}
+
+.header-cell i {
+    position: absolute;
+    right: 8px; /* Adjust spacing from the right edge */
+    top: 50%;
+    transform: translateY(-50%);
+}

@@ -3,15 +3,16 @@
 
 @{
     ViewData["Title"] = "Projects List";
+    string currentSortBy = Context.Request.Query["sortBy"].ToString() ?? "defaultSortBy";
+    string currentSortOrder = Context.Request.Query["sortOrder"].ToString() ?? "asc";
 }
 
 <h2>Projects</h2>
-
 <div class="mb-4">
     <form asp-action="Index" method="get" class="row g-3 align-items-end">
         <div class="col-md-3">
             <label for="Title" class="form-label">Title</label>
-            <input name="Title" value="@Model.Filter.Title" class="form-control" placeholder="Enter project title" />
+            <input name="Title" value="@Model.Filter?.Title" class="form-control" placeholder="Enter project title" />
         </div>
 
         <div class="col-md-3">
@@ -20,7 +21,7 @@
                 <option value="">All</option>
                 @foreach (ProjectStatus status in Enum.GetValues(typeof(ProjectStatus)))
                 {
-                    <option value="@((int)status)" selected="@(Model.Filter.Status == status ? "selected" : null)">
+                    <option value="@((int)status)" selected="@(Model.Filter?.Status == status ? "selected" : null)">
                         @status
                     </option>
                 }
@@ -29,22 +30,22 @@
 
         <div class="col-md-3">
             <label for="StartDateFrom" class="form-label">Start Date (From)</label>
-            <input name="StartDateFrom" type="date" value="@Model.Filter.StartDateFrom?.ToString("yyyy-MM-dd")" class="form-control" />
+            <input name="StartDateFrom" type="date" value="@Model.Filter?.StartDateFrom?.ToString("yyyy-MM-dd")" class="form-control" />
         </div>
 
         <div class="col-md-3">
             <label for="StartDateTo" class="form-label">Start Date (To)</label>
-            <input name="StartDateTo" type="date" value="@Model.Filter.StartDateTo?.ToString("yyyy-MM-dd")" class="form-control" />
+            <input name="StartDateTo" type="date" value="@Model.Filter?.StartDateTo?.ToString("yyyy-MM-dd")" class="form-control" />
         </div>
 
         <div class="col-md-3">
             <label for="EndDateFrom" class="form-label">End Date (From)</label>
-            <input name="EndDateFrom" type="date" value="@Model.Filter.EndDateFrom?.ToString("yyyy-MM-dd")" class="form-control" />
+            <input name="EndDateFrom" type="date" value="@Model.Filter?.EndDateFrom?.ToString("yyyy-MM-dd")" class="form-control" />
         </div>
 
         <div class="col-md-3">
             <label for="EndDateTo" class="form-label">End Date (To)</label>
-            <input name="EndDateTo" type="date" value="@Model.Filter.EndDateTo?.ToString("yyyy-MM-dd")" class="form-control" />
+            <input name="EndDateTo" type="date" value="@Model.Filter?.EndDateTo?.ToString("yyyy-MM-dd")" class="form-control" />
         </div>
 
         <div class="col-md-2">
@@ -57,26 +58,66 @@
     <a asp-action="Create" class="btn btn-success">Create New Project</a>
 </div>
 
+<p class="text-center">Click Tables Column For Sorting</p>
 <table class="table table-bordered table-hover">
     <thead class="table-light">
         <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Status</th>
-            <th>Start Date</th>
-            <th>End Date</th>
+            <th class="text-center">ID</th>
+
+            <th class="header-cell"
+                onclick="sortTable('Title')"
+                onkeydown="if(event.key === 'Enter' || event.key === ' ') sortTable('Title');"
+                tabindex="0">
+                Project Name
+                <i class="bi @(currentSortBy == "Title" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="titleSortIcon"></i>
+            </th>
+            <th class="header-cell"
+                onclick="sortTable('Status')"
+                onkeydown="if(event.key === 'Enter' || event.key === ' ') sortTable('Status');"
+                tabindex="0">
+                Status
+                <i class="bi @(currentSortBy == "Status" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="statusSortIcon"></i>
+            </th>
+            <th class="header-cell"
+                onclick="sortTable('StartDate')"
+                onkeydown="if(event.key === 'Enter' || event.key === ' ') sortTable('StartDate');"
+                tabindex="0">
+                Start Date
+                <i class="bi @(currentSortBy == "StartDate" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="startDateSortIcon"></i>
+            </th>
+            <th class="header-cell"
+                onclick="sortTable('EndDate')"
+                onkeydown="if(event.key === 'Enter' || event.key === ' ') sortTable('EndDate');"
+                tabindex="0">
+                End Date
+                <i class="bi @(currentSortBy == "EndDate" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="endDateSortIcon"></i>
+            </th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var project in Model.Projects)
+        @if (Model.Projects != null && Model.Projects.Any())
+        {
+            @foreach (var project in Model.Projects)
+            {
+                <tr class="text-center">
+                    <td>@project.Id</td>
+                    <td>@project.Title</td>
+                    <td>@project.Status</td>
+                    <td>@project.StartDate.ToString("yyyy-MM-dd")</td>
+                    <td>@project.EndDate?.ToString("yyyy-MM-dd")</td>
+                </tr>
+            }
+        }
+        else
         {
             <tr>
-                <td>@project.Id</td>
-                <td>@project.Title</td>
-                <td>@project.Status</td>
-                <td>@project.StartDate.ToString("yyyy-MM-dd")</td>
-                <td>@project.EndDate?.ToString("yyyy-MM-dd")</td>
+                <td colspan="5" class="text-center">
+                    <p>No projects available.</p>
+                </td>
             </tr>
         }
     </tbody>
 </table>
+@section Scripts {
+    <script src="~/js/sortTable.js"></script>
+}

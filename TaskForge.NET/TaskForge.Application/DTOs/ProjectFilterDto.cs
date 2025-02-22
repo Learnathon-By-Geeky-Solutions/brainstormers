@@ -16,5 +16,8 @@ namespace TaskForge.Application.DTOs
         public DateTime? StartDateTo { get; set; }
         public DateTime? EndDateFrom { get; set; }
         public DateTime? EndDateTo { get; set; }
+
+        public string? SortBy { get; set; }
+        public string SortOrder { get; set; } = "asc";
     }
 }
