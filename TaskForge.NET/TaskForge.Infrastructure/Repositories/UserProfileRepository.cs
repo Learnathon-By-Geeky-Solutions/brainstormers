@@ -36,9 +36,9 @@ namespace TaskForge.Infrastructure.Repositories
                 throw new ArgumentNullException(nameof(userId));
             }
             return await _context.UserProfiles
-                .Where(up => up.UserId == userId)
-                .Select(up => up.Id)
-                .FirstOrDefaultAsync();
+                        .Where(up => up.UserId == userId)
+                        .Select(up => up.Id)
+                        .FirstOrDefaultAsync();
         }
 
     }

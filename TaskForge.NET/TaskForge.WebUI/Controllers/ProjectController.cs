@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
@@ -7,14 +8,17 @@ using TaskForge.WebUI.Models;
 
 namespace TaskForge.WebUI.Controllers
 {
+    [Authorize(Roles = "Admin, User, Operator")]
     public class ProjectController : Controller
     {
         private readonly IProjectService _projectService;
+        private readonly IProjectInvitationService _invitationService;
         private readonly UserManager<IdentityUser> _userManager;
 
-        public ProjectController(IProjectService projectService, UserManager<IdentityUser> userManager)
+        public ProjectController(IProjectService projectService, IProjectInvitationService invitationService, UserManager<IdentityUser> userManager)
         {
             _projectService = projectService;
+            _invitationService = invitationService;
             _userManager = userManager;
         }
 
@@ -88,6 +92,23 @@ namespace TaskForge.WebUI.Controllers
 
             await _projectService.CreateProjectAsync(dto);
             return RedirectToAction("Index");
+        }
+
+
+        // GET: Project/Invite
+        [HttpGet]
+        public async Task<IActionResult> Invite(int projectId)
+        {
+            // Retrieve the project (Optional)
+            var project = await _projectService.GetByIdAsync(projectId);
+            if (project == null)
+            {
+                return NotFound();
+            }
+
+
+            // Return the view with projectId
+            return View(new InviteViewModel { ProjectId = projectId, Project = project, InvitedUserEmail = ""});
         }
     }
 }
