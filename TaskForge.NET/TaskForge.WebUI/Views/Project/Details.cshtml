@@ -6,7 +6,7 @@
 
 <h2>Project Dashboard</h2>
 
-<! -- Add Task Button -->
+<!-- Add Task Button (Triggers Modal) -->
 <div class="d-flex justify-content-end mb-4">
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">Add Task</button>
 </div>
@@ -25,6 +25,17 @@
     <p><strong>End Date:</strong> @(Model.Project.EndDate.HasValue ? Model.Project.EndDate.Value.ToString("yyyy-MM-dd") : "N/A")</p>
 </div>
 
+<!-- Task List -->
+<h3>Tasks</h3>
+<ul id="taskList" class="list-group">
+    @foreach (var task in Model.Project.Tasks)
+    {
+            <li class="list-group-item">
+                <strong>@task.Title</strong> - @task.Status | Due: @(task.DueDate?.ToString("yyyy-MM-dd") ?? "No Due Date")
+            </li>
+    }
+</ul>
+
 <!-- Modal for Adding Task -->
 <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -34,20 +45,23 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form asp-action="AddTask" method="post">
+                <form id="taskForm" asp-controller="Task" asp-action="Create" method="post">
+                    <input type="hidden" name="ProjectId" value="@Model.Project.Id" />
+
                     <div class="mb-3">
                         <label for="taskTitle" class="form-label">Task Title</label>
                         <input type="text" class="form-control" id="taskTitle" name="Title" required />
                     </div>
+
                     <div class="mb-3">
                         <label for="taskDescription" class="form-label">Task Description</label>
                         <textarea class="form-control" id="taskDescription" name="Description"></textarea>
                     </div>
+
                     <div class="mb-3">
                         <label for="taskDueDate" class="form-label">Due Date</label>
                         <input type="date" class="form-control" id="taskDueDate" name="DueDate" />
                     </div>
-                    <input type="hidden" name="ProjectId" value="@Model.Project.Id" />
 
                     <div class="text-end">
                         <button type="submit" class="btn btn-primary">Save Task</button>
@@ -58,7 +72,3 @@
         </div>
     </div>
 </div>
- 
-@section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-}

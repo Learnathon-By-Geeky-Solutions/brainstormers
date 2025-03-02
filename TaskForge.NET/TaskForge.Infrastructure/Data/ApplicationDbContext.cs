@@ -22,6 +22,8 @@ namespace TaskForge.Infrastructure.Data
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectMember> ProjectMembers { get; set; }
         public DbSet<ProjectInvitation> ProjectInvitations { get; set; }
+        public DbSet<TaskItem> TaskItems { get; set; }
+        public DbSet<TaskAssignment> TaskAssignments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
