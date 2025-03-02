@@ -105,9 +105,6 @@
                     <td>@project.Status</td>
                     <td>@project.StartDate.ToString("yyyy-MM-dd")</td>
                     <td>@project.EndDate?.ToString("yyyy-MM-dd")</td>
-                    <td>
-                        <a asp-action="Details" class="btn btn-primary" asp-route-id="@project.Id">Details</a>
-                    </td>
                 </tr>
             }
         }

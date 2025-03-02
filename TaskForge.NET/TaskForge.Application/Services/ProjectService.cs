@@ -49,11 +49,6 @@ namespace TaskForge.Application.Services
                    }));
         }
 
-        public async Task<Project?> GetProjectByIdAsync(int projectId)
-        {
-            return await _projectRepository.GetProjectByIdAsync(projectId);
-        }
-
         public async Task<IEnumerable<Project>> GetFilteredProjectsAsync(ProjectFilterDto filter)
         {
             var projects = await GetUserProjectsAsync(filter.UserId);
