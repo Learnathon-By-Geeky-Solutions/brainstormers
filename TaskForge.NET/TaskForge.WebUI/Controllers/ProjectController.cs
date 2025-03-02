@@ -106,6 +106,23 @@ namespace TaskForge.WebUI.Controllers
                 return NotFound();
             }
 
+        // GET: Project/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            var project = await _projectService.GetProjectByIdAsync(id);
+
+            if (project == null)
+            {
+                return NotFound();
+            }
+
+            var viewModel = new ProjectDetailsViewModel
+            {
+                Project = project
+            };
+
+            return View(viewModel); // Return the details page for the project
+        }
 
             // Return the view with projectId
             return View(new InviteViewModel { ProjectId = projectId, Project = project, InvitedUserEmail = ""});

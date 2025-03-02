@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -121,6 +122,11 @@ namespace TaskForge.Application.Services
                 "enddate" => isAscending ? projects.OrderBy(p => p.EndDate) : projects.OrderByDescending(p => p.EndDate),
                 _ => projects.OrderBy(p => p.Id)
             };
+        }
+
+        public async Task<Project?> GetProjectByIdAsync(int projectId)
+        {
+            return await _projectRepository.GetProjectByIdAsync(projectId);
         }
     }
 }

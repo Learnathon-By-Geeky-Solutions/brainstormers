@@ -62,6 +62,10 @@
 <table class="table table-bordered table-hover">
     <thead class="table-light">
         <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Status</th>
             <th class="text-center">ID</th>
 
             <th class="header-cell"
@@ -95,6 +99,16 @@
         </tr>
     </thead>
     <tbody>
+        @foreach (var project in Model)
+        {
+            <tr>
+                <td>@project.Id</td>
+                <td>@project.Title</td>
+                <td>@project.Description</td>
+                <td>@project.Status</td>
+                <td>
+                    <a asp-action="Details" class="btn btn-primary" asp-route-id="@project.Id">Details</a>
+                </td>
         @if (Model.Projects != null && Model.Projects.Any())
         {
             @foreach (var project in Model.Projects)
