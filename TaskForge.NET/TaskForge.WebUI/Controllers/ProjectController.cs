@@ -100,11 +100,15 @@ namespace TaskForge.WebUI.Controllers
         public async Task<IActionResult> Invite(int projectId)
         {
             // Retrieve the project (Optional)
-            var project = await _projectService.GetByIdAsync(projectId);
+            var project = await _projectService.GetProjectByIdAsync(projectId);
             if (project == null)
             {
                 return NotFound();
             }
+
+            // Return the view with projectId
+            return View(new InviteViewModel { ProjectId = projectId, Project = project, InvitedUserEmail = ""});
+        }
 
         // GET: Project/Details/5
         public async Task<IActionResult> Details(int id)
@@ -122,10 +126,6 @@ namespace TaskForge.WebUI.Controllers
             };
 
             return View(viewModel); // Return the details page for the project
-        }
-
-            // Return the view with projectId
-            return View(new InviteViewModel { ProjectId = projectId, Project = project, InvitedUserEmail = ""});
         }
     }
 }

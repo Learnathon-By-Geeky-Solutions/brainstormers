@@ -50,7 +50,7 @@ namespace TaskForge.Application.Services
                    }));
         }
 
-        public async Task<Project?> GetByIdAsync(int projectId)
+        public async Task<Project?> GetProjectByIdAsync(int projectId)
         {
             return await _projectRepository.GetProjectByIdAsync(projectId);
         }
@@ -122,11 +122,6 @@ namespace TaskForge.Application.Services
                 "enddate" => isAscending ? projects.OrderBy(p => p.EndDate) : projects.OrderByDescending(p => p.EndDate),
                 _ => projects.OrderBy(p => p.Id)
             };
-        }
-
-        public async Task<Project?> GetProjectByIdAsync(int projectId)
-        {
-            return await _projectRepository.GetProjectByIdAsync(projectId);
         }
     }
 }
