@@ -38,5 +38,11 @@ namespace TaskForge.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<bool> IsUserAssignedToProjectAsync(string userId, int projectId)
+        {
+            return await _context.ProjectMembers
+                .AnyAsync(pm => pm.UserProfile.UserId == userId && pm.ProjectId == projectId);
+        }
+
     }
 }

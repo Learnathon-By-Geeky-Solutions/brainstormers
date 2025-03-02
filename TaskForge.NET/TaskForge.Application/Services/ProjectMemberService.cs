@@ -1,0 +1,30 @@
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using TaskForge.Application.DTOs;
+using TaskForge.Application.Interfaces.Repositories;
+using TaskForge.Application.Interfaces.Services;
+using TaskForge.Domain.Entities;
+using TaskForge.Domain.Enums;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
+namespace TaskForge.Application.Services
+{
+    public class ProjectMemberService: IProjectMemberService
+    {
+        private readonly IProjectMemberRepository _projectMemberRepository;
+        public ProjectMemberService(IProjectMemberRepository projectMemberRepository)
+        {
+            _projectMemberRepository = projectMemberRepository;
+        }
+        public async Task<bool> IsUserAssignedToProjectAsync(string userId, int projectId)
+        {
+            return await _projectMemberRepository.IsUserAssignedToProjectAsync(userId, projectId);
+        }
+    }
+}

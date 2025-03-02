@@ -81,6 +81,7 @@ namespace TaskForge.WebUI
             builder.Services.AddScoped<IProjectMemberRepository, ProjectMemberRepository>();
 
             builder.Services.AddScoped<IProjectService, ProjectService>();
+            builder.Services.AddScoped<IProjectMemberService, ProjectMemberService>();
             builder.Services.AddScoped<IProjectInvitationService, ProjectInvitationService>();
             builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 

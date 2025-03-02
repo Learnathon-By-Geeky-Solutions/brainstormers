@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
+using TaskForge.Application.Services;
 using TaskForge.Web.Models;
 using TaskForge.WebUI.Models;
 
@@ -12,11 +13,13 @@ namespace TaskForge.WebUI.Controllers
     public class ProjectController : Controller
     {
         private readonly IProjectService _projectService;
+        private readonly IProjectMemberService _projectMemberService;
         private readonly IProjectInvitationService _invitationService;
         private readonly UserManager<IdentityUser> _userManager;
 
-        public ProjectController(IProjectService projectService, IProjectInvitationService invitationService, UserManager<IdentityUser> userManager)
+        public ProjectController(IProjectMemberService projectMemberService, IProjectService projectService, IProjectInvitationService invitationService, UserManager<IdentityUser> userManager)
         {
+            _projectMemberService = projectMemberService;
             _projectService = projectService;
             _invitationService = invitationService;
             _userManager = userManager;
@@ -113,6 +116,17 @@ namespace TaskForge.WebUI.Controllers
         // GET: Project/Details/5
         public async Task<IActionResult> Details(int Id)
         {
+
+            // Restrict project access to assigned users only
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            bool isMember = await _projectMemberService.IsUserAssignedToProjectAsync(user.Id, Id);
+            if (!isMember)
+            {
+                return Forbid(); // User is not allowed to access this project
+            }
+
             var project = await _projectService.GetProjectByIdAsync(Id);
 
             if (project == null)
@@ -120,7 +134,7 @@ namespace TaskForge.WebUI.Controllers
                 return NotFound();
             }
 
-            
+            // return project.tasks = the tasks which the user is assigned
 
             var viewModel = new ProjectDetailsViewModel
             {
