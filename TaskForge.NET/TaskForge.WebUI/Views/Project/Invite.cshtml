@@ -1,0 +1,66 @@
+﻿@model TaskForge.WebUI.Models.InviteViewModel
+
+<div class="w-100 card border-0 p-4">
+    <div class="card-header bg-primary bg-gradient ml-0 py-3">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h2 class="text-white py-2">Send Project Invitation</h2>
+            </div>
+        </div>
+    </div>
+    <div class="card-body border p-4">
+        <form method="post" class="row">
+            <div class="p-3">
+                <div asp-validation-summary="All"></div>
+
+                <!-- Project Info Section -->
+                <div class="mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Project: @Model.Project.Title</h5>
+                            <p class="card-text">@Model.Project.Description</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Input -->
+                <div class="form-floating py-1 col-12">
+                    <input asp-for="InvitedUserEmail" class="form-control border shadow" />
+                    <label for="InvitedUserEmail" class="form-label">Email Address</label>
+                    <span asp-validation-for="InvitedUserEmail" class="text-danger"></span>
+                </div>
+
+                <!-- Role Selection -->
+                <div class="form-floating py-1 col-12">
+                    <select asp-for="AssignedRole" class="form-select border shadow">
+                        <option value="TaskForge.Domain.Enums.ProjectRole.Read">Read</option>
+	                    <option value="TaskForge.Domain.Enums.ProjectRole.Write" >Write</option>
+	                    <option value="TaskForge.Domain.Enums.ProjectRole.Admin" >Admin</option>
+                    </select>
+                    <label for="AssignedRole" class="form-label">Role</label>
+                    <span asp-validation-for="AssignedRole" class="text-danger"></span>
+                </div>
+
+                <!-- Submit and Cancel Buttons -->
+                <div class="row pt-2">
+                    <div class="col-6 col-md-3">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-check-circle"></i> Send Invitation
+                        </button>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a asp-controller="Project" asp-action="Index" class="btn btn-secondary w-100">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        <partial name="_ValidationScriptsPartial" />
+    }
+}
