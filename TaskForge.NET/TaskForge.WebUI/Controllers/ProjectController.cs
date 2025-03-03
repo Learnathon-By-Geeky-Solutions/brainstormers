@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Application.Services;
@@ -100,17 +101,45 @@ namespace TaskForge.WebUI.Controllers
 
         // GET: Project/Invite
         [HttpGet]
-        public async Task<IActionResult> Invite(int projectId)
+        public async Task<IActionResult> ManageMembers(int Id)
         {
-            // Retrieve the project (Optional)
-            var project = await _projectService.GetProjectByIdAsync(projectId);
-            if (project == null)
+            var project = await _projectService.GetProjectByIdAsync(Id); // Retrieve project info
+            var projectMembers = new List<ProjectMemberViewModel>(); // Get project members
+
+            var model = new ProjectMembersViewModel
             {
-                return NotFound();
-            }
+                ProjectId = Id,
+                ProjectTitle = project.Title,
+                ProjectDescription = project.Description,
+                ProjectMembers = projectMembers.Select(m => new ProjectMemberViewModel
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Email = m.Email,
+                    Role = m.Role
+                }).ToList()
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Invite(InviteViewModel viewModel)
+        {
+            // Restrict project access to assigned users only
+            //var user = await _userManager.GetUserAsync(User);
+            //if (user == null) return Unauthorized();
+
+            //bool isMember = await _projectMemberService.IsUserAssignedToProjectAsync(user.Id, Id);
+            //if (!isMember)
+            //{
+            //    return Forbid(); // User is not allowed to access this project
+            //}
+
+            //var project = await _projectService.GetProjectByIdAsync(Id);
 
             // Return the view with projectId
-            return View(new InviteViewModel { ProjectId = projectId, Project = project, InvitedUserEmail = ""});
+            return RedirectToAction("ManageMembers", new { Id = viewModel.ProjectId });
         }
 
         // GET: Project/Details/5

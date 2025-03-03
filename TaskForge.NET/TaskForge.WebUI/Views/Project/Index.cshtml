@@ -64,7 +64,7 @@
 <table class="table table-bordered table-hover">
     <thead class="table-light">
         <tr>
-            <th class="text-center">ID</th>
+            <th class="text-center">#</th>
             <th class="header-cell" onclick="sortTable('Title')" tabindex="0">
                 Project Name
                 <i class="bi @(currentSortBy == "Title" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="titleSortIcon"></i>
@@ -87,16 +87,19 @@
     <tbody>
         @if (Model.Projects != null && Model.Projects.Any())
         {
-            @foreach (var project in Model.Projects)
+	        var serial = 1;
+
+            foreach (var project in Model.Projects)
             {
                 <tr class="text-center">
-                    <td>@project.Id</td>
+                    <td>@(serial++)</td>
                     <td>@project.Title</td>
                     <td>@project.Status</td>
                     <td>@project.StartDate.ToString("yyyy-MM-dd")</td>
                     <td>@project.EndDate?.ToString("yyyy-MM-dd")</td>
                     <td>
-                        <a asp-action="Details" class="btn btn-primary" asp-route-id="@project.Id">Details</a>
+	                    <a asp-action="Details" class="btn btn-info" asp-route-id="@project.Id">Details</a>
+	                    <a asp-action="ManageMembers" class="btn btn-warning" asp-route-id="@project.Id">Members</a>
                     </td>
                 </tr>
             }

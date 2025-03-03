@@ -1,0 +1,118 @@
+﻿@using TaskForge.Domain.Enums
+@model TaskForge.WebUI.Models.ProjectMembersViewModel
+
+@{
+    ViewData["Title"] = "Project Members - " + Model.ProjectTitle;
+}
+
+<div class="w-100 card border-0 p-4">
+    <div class="card-header bg-primary bg-gradient ml-0 py-3">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h2 class="text-white py-2">Project Members</h2>
+            </div>
+        </div>
+    </div>
+    <div class="card-body border p-4">
+
+        <!-- Project Info -->
+        <div class="mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Project: @Model.ProjectTitle</h5>
+                    <p class="card-text">@Model.ProjectDescription</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Members List -->
+        <h4 class="mb-3">Current Members</h4>
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr class="text-center">
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.ProjectMembers != null && Model.ProjectMembers.Any())
+                {
+                    var serial = 1;
+                    foreach (var member in Model.ProjectMembers)
+                    {
+                        <tr class="text-center">
+                            <td>@(serial++)</td>
+                            <td>@member.Name</td>
+                            <td>@member.Email</td>
+                            <td>@member.Role</td>
+                            <td>
+                                @* <a asp-action="RemoveMember" asp-route-id="@member.Id" class="btn btn-danger btn-sm">
+                                    <i class="bi bi-trash"></i> Remove
+                                </a> *@
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center">No members found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Invite Button (Triggers Modal) -->
+        <div class="text-end">
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#inviteModal">
+                <i class="bi bi-person-plus"></i> Invite Member
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Modal -->
+<div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inviteModalLabel">Send Project Invitation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+	            <form id="inviteForm" asp-controller="Project" asp-action="Invite" method="post">
+		            <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
+
+                    <div class="mb-3">
+                        <label for="InvitedUserEmail" class="form-label">Email Address</label>
+                        <input asp-for="InvitedUserEmail" class="form-control" />
+                        <span asp-validation-for="InvitedUserEmail" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+	                    <label for="AssignedRole" class="form-label">Role</label>
+	                    <select asp-for="AssignedRole" class="form-select" asp-items="Html.GetEnumSelectList<ProjectRole>()"></select>
+	                    <span asp-validation-for="AssignedRole" class="text-danger"></span>
+                    </div>
+
+                    <!-- Submit and Cancel Buttons -->
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-check-circle"></i> Send Invitation
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}
