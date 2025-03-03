@@ -22,7 +22,7 @@ namespace TaskForge.Domain.Entities
 
         public TaskPriority Priority { get; set; } = TaskPriority.Medium;
 
-        public DateTime? StartDate { get; private set; }
+        public DateTime? StartDate { get; set; }
         public DateTime? DueDate { get; private set; }
 
 

@@ -33,7 +33,7 @@ namespace TaskForge.Application.Services
         public async Task CreateProjectAsync(CreateProjectDto dto)
         {
             var projectId = await _projectRepository.AddAsync(dto);
-            var userProfileId = await _userProfileRepository.GetUserProfileIdByUserIdAsync(dto.CreatedBy);
+            var userProfileId = await _userProfileRepository.GetByUserIdAsync(dto.CreatedBy);
             if (userProfileId == null)
                 throw new ArgumentException("User profile not found.");
             await _projectMemberRepository.AddAsync(projectId, userProfileId);
@@ -69,7 +69,7 @@ namespace TaskForge.Application.Services
         // Fetch projects for the user
         private async Task<IEnumerable<Project>> GetUserProjectsAsync(string userId)
         {
-            var userProfileId = await _userProfileRepository.GetUserProfileIdByUserIdAsync(userId);
+            var userProfileId = await _userProfileRepository.GetByUserIdAsync(userId);
             if (userProfileId == null) return Enumerable.Empty<Project>();
 
             var projectIds = await _projectMemberRepository.GetProjectIdsByUserProfileIdAsync(userProfileId);

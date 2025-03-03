@@ -19,5 +19,10 @@ namespace TaskForge.Application.Services
         {
             await _userProfileRepository.CreateAsync(userId, FullName);
         }
+
+        public async Task<int> GetByUserIdAsync(string userId)
+        {
+            return await _userProfileRepository.GetByUserIdAsync(userId);
+        }
     }
 }

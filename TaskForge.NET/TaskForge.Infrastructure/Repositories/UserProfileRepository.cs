@@ -29,7 +29,7 @@ namespace TaskForge.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<int> GetUserProfileIdByUserIdAsync(string? userId)
+        public async Task<int> GetByUserIdAsync(string? userId)
         {
             if(userId == null)
             {
