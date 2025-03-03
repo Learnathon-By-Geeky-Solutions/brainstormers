@@ -14,14 +14,18 @@ namespace TaskForge.WebUI.Controllers
     public class ProjectController : Controller
     {
         private readonly IProjectService _projectService;
+        private readonly ITaskService _taskService;
+        private readonly IUserProfileService _userProfileService;
         private readonly IProjectMemberService _projectMemberService;
         private readonly IProjectInvitationService _invitationService;
         private readonly UserManager<IdentityUser> _userManager;
 
-        public ProjectController(IProjectMemberService projectMemberService, IProjectService projectService, IProjectInvitationService invitationService, UserManager<IdentityUser> userManager)
+        public ProjectController(IProjectMemberService projectMemberService, IProjectService projectService, ITaskService taskService, IUserProfileService userProfileService, IProjectInvitationService invitationService, UserManager<IdentityUser> userManager)
         {
             _projectMemberService = projectMemberService;
             _projectService = projectService;
+            _taskService = taskService;
+            _userProfileService = userProfileService;
             _invitationService = invitationService;
             _userManager = userManager;
         }
@@ -150,6 +154,7 @@ namespace TaskForge.WebUI.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
+            var userProfileId = await _userProfileService.GetByUserIdAsync(user.Id);
             bool isMember = await _projectMemberService.IsUserAssignedToProjectAsync(user.Id, Id);
             if (!isMember)
             {
@@ -163,14 +168,16 @@ namespace TaskForge.WebUI.Controllers
                 return NotFound();
             }
 
-            // return project.tasks = the tasks which the user is assigned
+            // return project.tasks = the tasks of this project
+
+            project.Tasks = (await _taskService.Get(Id)).ToList();
 
             var viewModel = new ProjectDetailsViewModel
             {
                 Project = project
             };
 
-            return View(viewModel); // Return the details page for the project
+            return View(viewModel);
         }
     }
 }

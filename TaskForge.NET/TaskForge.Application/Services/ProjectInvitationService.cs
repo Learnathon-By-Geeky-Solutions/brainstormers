@@ -40,7 +40,7 @@ namespace TaskForge.Application.Services
             }
 
             // Find the UserProfile for this user
-            var userProfileId = await _userProfileRepository.GetUserProfileIdByUserIdAsync(user.Id);
+            var userProfileId = await _userProfileRepository.GetByUserIdAsync(user.Id);
             if (userProfileId == 0)
             {
                 return false; // User profile not found
