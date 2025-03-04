@@ -19,7 +19,7 @@ namespace TaskForge.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task CreateAsync(ProjectInvitation invitation)
+        public async Task AddAsync(ProjectInvitation invitation)
         {
             await _context.ProjectInvitations.AddAsync(invitation);
             await _context.SaveChangesAsync();

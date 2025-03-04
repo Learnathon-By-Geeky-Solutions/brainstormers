@@ -107,8 +107,18 @@ namespace TaskForge.WebUI.Controllers
         [HttpGet]
         public async Task<IActionResult> ManageMembers(int Id)
         {
+            // Restrict project access to assigned users only
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            bool isMember = await _projectMemberService.IsUserAssignedToProjectAsync(user.Id, Id);
+            if (!isMember)
+            {
+                return Forbid(); // User is not allowed to access this project
+            }
+
             var project = await _projectService.GetProjectByIdAsync(Id); // Retrieve project info
-            var projectMembers = new List<ProjectMemberViewModel>(); // Get project members
+            var projectMembers = await _projectMemberService.GetProjectMembersAsync(Id); // Get project members
 
             var model = new ProjectMembersViewModel
             {
@@ -131,30 +141,36 @@ namespace TaskForge.WebUI.Controllers
         public async Task<IActionResult> Invite(InviteViewModel viewModel)
         {
             // Restrict project access to assigned users only
-            //var user = await _userManager.GetUserAsync(User);
-            //if (user == null) return Unauthorized();
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
 
-            //bool isMember = await _projectMemberService.IsUserAssignedToProjectAsync(user.Id, Id);
-            //if (!isMember)
-            //{
-            //    return Forbid(); // User is not allowed to access this project
-            //}
+            bool isMember = await _projectMemberService.IsUserAssignedToProjectAsync(user.Id, viewModel.ProjectId);
+            if (!isMember)
+            {
+                return Forbid(); // User is not allowed to access this project
+            }
 
-            //var project = await _projectService.GetProjectByIdAsync(Id);
+            // Send Invitation
+            var success = await _invitationService.SendInvitationAsync(viewModel.ProjectId, viewModel.InvitedUserEmail, viewModel.AssignedRole);
+            if (!success)
+            {
+                ModelState.AddModelError("", "Failed to send invitation.");
+                return RedirectToAction("ManageMembers", new { Id = viewModel.ProjectId });
+            }
 
-            // Return the view with projectId
+            // Redirect to Manage Members Page with success message
+            TempData["SuccessMessage"] = "Invitation sent to " + viewModel.InvitedUserEmail + " successfully.";
             return RedirectToAction("ManageMembers", new { Id = viewModel.ProjectId });
         }
+
 
         // GET: Project/Details/5
         public async Task<IActionResult> Details(int Id)
         {
-
             // Restrict project access to assigned users only
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            var userProfileId = await _userProfileService.GetByUserIdAsync(user.Id);
             bool isMember = await _projectMemberService.IsUserAssignedToProjectAsync(user.Id, Id);
             if (!isMember)
             {

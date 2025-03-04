@@ -70,10 +70,20 @@ namespace TaskForge.Application.Services
                 _logger.LogInformation("Super admin user already exists.");
             }
 
-            // Create UserProfile for Super Admin
-            await _userProfileService.CreateUserProfileAsync(adminUser.Id, "Super Admin");
+            var adminUserProfileId = await _userProfileService.GetByUserIdAsync(adminUser.Id);
+            if (adminUserProfileId == 0)
+            {
+                // Create UserProfile for Super Admin
+                await _userProfileService.CreateUserProfileAsync(adminUser.Id, "Super Admin");
 
-            _logger.LogInformation("Super admin UserProfile created successfully.");
+                _logger.LogInformation("Super admin UserProfile created successfully.");
+                
+            }
+            else
+            {
+                _logger.LogInformation("Super admin UserProfile already exists.");
+            }
+
         }
     }
 

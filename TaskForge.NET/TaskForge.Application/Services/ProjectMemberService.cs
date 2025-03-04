@@ -26,5 +26,11 @@ namespace TaskForge.Application.Services
         {
             return await _projectMemberRepository.IsUserAssignedToProjectAsync(userId, projectId);
         }
+
+        public async Task<List<ProjectMemberDto>> GetProjectMembersAsync(int projectId)
+        {
+            return await _projectMemberRepository.GetProjectMembersAsync(projectId);
+        }
+
     }
 }

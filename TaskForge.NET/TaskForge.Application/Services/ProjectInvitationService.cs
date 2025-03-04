@@ -53,11 +53,12 @@ namespace TaskForge.Application.Services
                 InvitedUserProfileId = userProfileId,
                 Status = InvitationStatus.Pending,
                 AssignedRole = assignedRole,
-                InvitationSentDate = DateTime.UtcNow
+                InvitationSentDate = DateTime.UtcNow,
+                CreatedBy = user.Id
             };
 
             // Save to database
-            await _invitationRepository.CreateAsync(invitation);
+            await _invitationRepository.AddAsync(invitation);
             return true;
         }
     }

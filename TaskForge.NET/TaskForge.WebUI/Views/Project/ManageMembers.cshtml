@@ -17,12 +17,33 @@
 
         <!-- Project Info -->
         <div class="mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Project: @Model.ProjectTitle</h5>
-                    <p class="card-text">@Model.ProjectDescription</p>
-                </div>
-            </div>
+	        <div class="card">
+		        <div class="card-body">
+			        <h5 class="card-title">Project: @Model.ProjectTitle</h5>
+			        <p class="card-text">@Model.ProjectDescription</p>
+		        </div>
+	        </div>
+        </div>
+        
+        <!-- Invite Button (Triggers Modal) -->
+        <div class ="row align-items-center mb-3">
+            <div class="col-sm-8 text-start">
+		        <!-- Success Message (if any) -->
+		        @if (TempData["SuccessMessage"] != null)
+		        {
+			        <div class="alert alert-success alert-dismissible fade show mb-0" role="alert" id="successAlert">
+				        <i class="bi bi-check-circle me-2"></i> 
+				        @TempData["SuccessMessage"]
+				        <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+			        </div>
+		        }
+	        </div>
+            
+	        <div class="col-sm-4 text-end">
+		        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#inviteModal">
+			        <i class="bi bi-person-plus"></i> Invite Member
+		        </button>
+	        </div>
         </div>
 
         <!-- Project Members List -->
@@ -64,13 +85,6 @@
                 }
             </tbody>
         </table>
-
-        <!-- Invite Button (Triggers Modal) -->
-        <div class="text-end">
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#inviteModal">
-                <i class="bi bi-person-plus"></i> Invite Member
-            </button>
-        </div>
     </div>
 </div>
 

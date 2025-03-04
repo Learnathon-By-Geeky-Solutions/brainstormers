@@ -10,7 +10,7 @@ namespace TaskForge.Application.Interfaces.Repositories
 {
     public interface IProjectInvitationRepository
     {
-        Task CreateAsync(ProjectInvitation invitation);
+        Task AddAsync(ProjectInvitation invitation);
         Task<ProjectInvitation?> GetByIdAsync(int invitationId);
         Task<List<ProjectInvitation>> GetByUserProfileIdAsync(int userProfileId);
         Task UpdateAsync(ProjectInvitation invitation);

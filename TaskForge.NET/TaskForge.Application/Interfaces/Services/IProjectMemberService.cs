@@ -12,5 +12,6 @@ namespace TaskForge.Application.Interfaces.Services
     public interface IProjectMemberService
     {
         Task<bool> IsUserAssignedToProjectAsync(string userId, int projectId);
+        Task<List<ProjectMemberDto>> GetProjectMembersAsync(int projectId);
     }
 }
