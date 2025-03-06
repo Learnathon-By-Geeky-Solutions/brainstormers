@@ -32,10 +32,22 @@ namespace TaskForge.Application.Services
 
         public async Task CreateProjectAsync(CreateProjectDto dto)
         {
-            var projectId = await _projectRepository.AddAsync(dto);
+            // 1. Map DTO to Project entity
+            var project = new Project
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                Status = dto.Status,
+                StartDate = dto.StartDate,
+            };
+            if (dto.EndDate != null) project.SetEndDate(dto.EndDate);
+
+            await _projectRepository.AddAsync(project);
+
+            var projectId = project.Id;
             var userProfileId = await _userProfileRepository.GetByUserIdAsync(dto.CreatedBy);
-            if (userProfileId == null)
-                throw new ArgumentException("User profile not found.");
+            //if (userProfileId == null)
+            //    throw new ArgumentException("User profile not found.");
             await _projectMemberRepository.AddAsync(projectId, userProfileId);
         }
 
@@ -52,7 +64,7 @@ namespace TaskForge.Application.Services
 
         public async Task<Project?> GetProjectByIdAsync(int projectId)
         {
-            return await _projectRepository.GetProjectByIdAsync(projectId);
+            return await _projectRepository.GetByIdAsync(projectId);
         }
 
         public async Task<IEnumerable<Project>> GetFilteredProjectsAsync(ProjectFilterDto filter)
@@ -78,7 +90,7 @@ namespace TaskForge.Application.Services
             var projects = new List<Project>();
             foreach (var projectId in projectIds)
             {
-                var project = await _projectRepository.GetProjectByIdAsync(projectId);
+                var project = await _projectRepository.GetByIdAsync(projectId);
                 if (project != null) projects.Add(project);
             }
 
