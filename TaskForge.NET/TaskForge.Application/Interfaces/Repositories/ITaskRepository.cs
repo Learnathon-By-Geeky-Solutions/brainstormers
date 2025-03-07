@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TaskForge.Application.DTOs;
+using TaskForge.Application.Interfaces.Repositories.common;
 using TaskForge.Domain.Entities;
 
 namespace TaskForge.Application.Interfaces.Repositories
 {
-    public interface ITaskRepository
+    public interface ITaskRepository : IRepository<TaskItem>
     {
         Task<TaskItem?> GetByIdAsync(int id);
         Task<IEnumerable<TaskItem>> GetFilteredAsync(TaskFilterDto filter);

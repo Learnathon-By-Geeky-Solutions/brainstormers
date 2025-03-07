@@ -48,7 +48,8 @@ namespace TaskForge.Application.Services
             var userProfileId = await _userProfileRepository.GetByUserIdAsync(dto.CreatedBy);
             //if (userProfileId == null)
             //    throw new ArgumentException("User profile not found.");
-            await _projectMemberRepository.AddAsync(projectId, userProfileId);
+            var projectMember = new ProjectMember { ProjectId = projectId, UserProfileId = userProfileId };
+            await _projectMemberRepository.AddAsync(projectMember);
         }
 
         public Task<IEnumerable<SelectListItem>> GetProjectStatusOptions()

@@ -8,30 +8,18 @@ using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
+using TaskForge.Infrastructure.common.Repositories;
 using TaskForge.Infrastructure.Data;
 
 namespace TaskForge.Infrastructure.Repositories
 {
-    public class ProjectMemberRepository : IProjectMemberRepository
+    public class ProjectMemberRepository : Repository<ProjectMember>, IProjectMemberRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public ProjectMemberRepository(ApplicationDbContext context)
+        public ProjectMemberRepository(ApplicationDbContext context) : base(context)
         {
             _context = context;
-        }
-
-        public async Task AddAsync(int projectId, int userProfileId)
-        {
-            var projectMember = new ProjectMember
-            {
-                ProjectId = projectId,
-                UserProfileId = userProfileId,
-                Role = ProjectRole.Admin,
-
-            };
-            await _context.AddAsync(projectMember);
-            await _context.SaveChangesAsync();
         }
 
         public async Task<List<int>> GetProjectIdsByUserProfileIdAsync(int userProfileId)
