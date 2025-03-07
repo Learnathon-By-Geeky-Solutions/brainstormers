@@ -1,18 +1,15 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TaskForge.Infrastructure.Data;
-using TaskForge.Domain.Entities;
 using TaskForge.Application.Services;
-using TaskForge.Application.Interfaces;
-using Duende.IdentityServer.Models;
-using Duende.IdentityServer;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using TaskForge.Infrastructure;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using TaskForge.Infrastructure.Repositories;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Services;
+using TaskForge.Infrastructure.common.Repositories;
+using TaskForge.Application.Interfaces.Repositories.common;
 
 namespace TaskForge.WebUI
 {
@@ -73,6 +70,9 @@ namespace TaskForge.WebUI
             // Add services for controllers and Razor Pages
             builder.Services.AddControllersWithViews();
             builder.Services.AddRazorPages();
+
+            // Register Generic Repository
+            builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 
             builder.Services.AddScoped<IProjectRepository, ProjectRepository>();

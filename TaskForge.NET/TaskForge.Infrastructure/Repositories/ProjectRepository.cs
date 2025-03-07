@@ -4,39 +4,18 @@ using Microsoft.EntityFrameworkCore;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Domain.Entities;
+using TaskForge.Infrastructure.common.Repositories;
 using TaskForge.Infrastructure.Data;
 
 namespace TaskForge.Infrastructure.Repositories
 {
-    public class ProjectRepository : IProjectRepository
+    public class ProjectRepository : Repository<Project>, IProjectRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public ProjectRepository(ApplicationDbContext context)
+        public ProjectRepository(ApplicationDbContext context) : base(context)
         {
             _context = context;
-        }
-
-        public async Task<Project?> GetProjectByIdAsync(int id)
-        {
-            return await _context.Projects.FirstOrDefaultAsync(p => p.Id == id);
-        }
-
-        public async Task<int> AddAsync(CreateProjectDto dto)
-        {
-            var project = new Project
-            {
-                Title = dto.Title,
-                Description = dto.Description,
-                Status = dto.Status,
-                CreatedBy = dto.CreatedBy,
-                StartDate = dto.StartDate,
-            };
-            project.SetEndDate(dto.EndDate);
-            _context.Projects.Add(project);
-            await _context.SaveChangesAsync();
-
-            return project.Id;
         }
     }
 }
