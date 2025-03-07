@@ -10,19 +10,19 @@ namespace TaskForge.Application.Services
 {
     public class UserProfileService : IUserProfileService
     {
-        private readonly IUserProfileRepository _userProfileRepository;
-        public UserProfileService(IUserProfileRepository userProfileRepository)
+        private readonly IUnitOfWork _unitOfWork;
+        public UserProfileService(IUnitOfWork unitOfWork)
         {
-            _userProfileRepository = userProfileRepository;
+            _unitOfWork = unitOfWork;
         }
         public async Task CreateUserProfileAsync(string userId, string FullName)
         {
-            await _userProfileRepository.CreateAsync(userId, FullName);
+            await _unitOfWork.UserProfiles.CreateAsync(userId, FullName);
         }
 
         public async Task<int> GetByUserIdAsync(string userId)
         {
-            return await _userProfileRepository.GetByUserIdAsync(userId);
+            return await _unitOfWork.UserProfiles.GetByUserIdAsync(userId);
         }
     }
 }

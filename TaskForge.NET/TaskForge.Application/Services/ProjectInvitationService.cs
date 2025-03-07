@@ -8,31 +8,23 @@ namespace TaskForge.Application.Services
 {
     public class ProjectInvitationService : IProjectInvitationService
     {
-        private readonly IProjectInvitationRepository _invitationRepository;
-        private readonly IUserProfileRepository _userProfileRepository;
-        private readonly IProjectMemberRepository _projectMemberRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<IdentityUser> _userManager;
 
-        public ProjectInvitationService(
-            IProjectInvitationRepository invitationRepository,
-            IUserProfileRepository userProfileRepository,
-            IProjectMemberRepository projectMemberRepository,
-            UserManager<IdentityUser> userManager)
+        public ProjectInvitationService(IUnitOfWork unitOfWork, UserManager<IdentityUser> userManager)
         {
-            _invitationRepository = invitationRepository;
-            _userProfileRepository = userProfileRepository;
-            _projectMemberRepository = projectMemberRepository;
+            _unitOfWork = unitOfWork;
             _userManager = userManager;
         }
 
         public async Task<ProjectInvitation?> GetByIdAsync(int invitationId)
         {
-            return await _invitationRepository.GetByIdAsync(invitationId);
+            return await _unitOfWork.ProjectInvitations.GetByIdAsync(invitationId);
         }
 
         public async Task<List<ProjectInvitation>> GetInvitationListAsync(int projectId)
         {
-            return await _invitationRepository.GetByProjectIdAsync(projectId);
+            return await _unitOfWork.ProjectInvitations.GetByProjectIdAsync(projectId);
         }
 
         public async Task<bool> AddAsync(int projectId, string invitedUserEmail, ProjectRole assignedRole)
@@ -45,13 +37,13 @@ namespace TaskForge.Application.Services
             }
 
             // Find the UserProfile for this user
-            var userProfileId = await _userProfileRepository.GetByUserIdAsync(user.Id);
+            var userProfileId = await _unitOfWork.UserProfiles.GetByUserIdAsync(user.Id);
             if (userProfileId == 0)
             {
                 return false; // User profile not found
             }
 
-            var member = await _projectMemberRepository.GetUserProjectRoleAsync(user.Id, projectId);
+            var member = await _unitOfWork.ProjectMembers.GetUserProjectRoleAsync(user.Id, projectId);
             if (member != null)
             {
                 return false; // User already exists.
@@ -70,13 +62,13 @@ namespace TaskForge.Application.Services
             };
 
             // Save to database
-            await _invitationRepository.AddAsync(invitation);
+            await _unitOfWork.ProjectInvitations.AddAsync(invitation);
             return true;
         }
 
         public async Task UpdateInvitationStatusAsync(int id, InvitationStatus status)
         {
-            await _invitationRepository.UpdateInvitationStatusAsync(id, status);
+            await _unitOfWork.ProjectInvitations.UpdateInvitationStatusAsync(id, status);
         }
     }
 }

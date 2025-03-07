@@ -17,17 +17,10 @@ namespace TaskForge.Application.Services
 {
     public class ProjectService: IProjectService
     {
-        private readonly IProjectRepository _projectRepository;
-        private readonly IUserProfileRepository _userProfileRepository;
-        private readonly IProjectMemberRepository _projectMemberRepository;
-        public ProjectService(
-            IProjectRepository projectRepository, 
-            IUserProfileRepository userProfileRepository, 
-            IProjectMemberRepository projectMemberRepository)
+        private readonly IUnitOfWork _unitOfWork;
+        public ProjectService(IUnitOfWork unitOfWork)
         {
-            _projectRepository = projectRepository;
-            _userProfileRepository = userProfileRepository;
-            _projectMemberRepository = projectMemberRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task CreateProjectAsync(CreateProjectDto dto)
@@ -42,14 +35,14 @@ namespace TaskForge.Application.Services
             };
             if (dto.EndDate != null) project.SetEndDate(dto.EndDate);
 
-            await _projectRepository.AddAsync(project);
+            await _unitOfWork.Projects.AddAsync(project);
 
             var projectId = project.Id;
-            var userProfileId = await _userProfileRepository.GetByUserIdAsync(dto.CreatedBy);
+            var userProfileId = await _unitOfWork.UserProfiles.GetByUserIdAsync(dto.CreatedBy);
             //if (userProfileId == null)
             //    throw new ArgumentException("User profile not found.");
             var projectMember = new ProjectMember { ProjectId = projectId, UserProfileId = userProfileId };
-            await _projectMemberRepository.AddAsync(projectMember);
+            await _unitOfWork.ProjectMembers.AddAsync(projectMember);
         }
 
         public Task<IEnumerable<SelectListItem>> GetProjectStatusOptions()
@@ -65,7 +58,7 @@ namespace TaskForge.Application.Services
 
         public async Task<Project?> GetProjectByIdAsync(int projectId)
         {
-            return await _projectRepository.GetByIdAsync(projectId);
+            return await _unitOfWork.Projects.GetByIdAsync(projectId);
         }
 
         public async Task<IEnumerable<Project>> GetFilteredProjectsAsync(ProjectFilterDto filter)
@@ -82,16 +75,16 @@ namespace TaskForge.Application.Services
         // Fetch projects for the user
         private async Task<IEnumerable<Project>> GetUserProjectsAsync(string userId)
         {
-            var userProfileId = await _userProfileRepository.GetByUserIdAsync(userId);
+            var userProfileId = await _unitOfWork.UserProfiles.GetByUserIdAsync(userId);
             if (userProfileId == null) return Enumerable.Empty<Project>();
 
-            var projectIds = await _projectMemberRepository.GetProjectIdsByUserProfileIdAsync(userProfileId);
+            var projectIds = await _unitOfWork.ProjectMembers.GetProjectIdsByUserProfileIdAsync(userProfileId);
             if (projectIds == null || !projectIds.Any()) return Enumerable.Empty<Project>();
 
             var projects = new List<Project>();
             foreach (var projectId in projectIds)
             {
-                var project = await _projectRepository.GetByIdAsync(projectId);
+                var project = await _unitOfWork.Projects.GetByIdAsync(projectId);
                 if (project != null) projects.Add(project);
             }
 
