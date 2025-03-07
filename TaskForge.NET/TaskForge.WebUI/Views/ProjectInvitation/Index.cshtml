@@ -1,0 +1,54 @@
+﻿@model List<ProjectInvitationViewModel>
+@{
+	ViewData["Title"] = "Index";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+	<h2>Project Invitations</h2>
+
+		<table class="table table-bordered table-hover">
+			<thead class="table-dark">
+				<tr>
+				<th class="text-center">#</th>
+					<th>Project</th>
+					<th>Status</th>
+					<th>Role</th>
+					<th>Invitation Sent</th>
+					<th>Accepted</th>
+					<th>Declined</th>
+				</tr>
+			</thead>
+			<tbody>
+			@if (Model != null && Model.Any())
+			{
+				var serial = 1;
+
+				@foreach (var invitation in Model)
+				{
+					<tr>
+						<td class="text-center">@(serial++)</td>
+						<td>@invitation.ProjectTitle</td>
+						<td>
+							<span class="badge 
+	                                @(invitation.Status == "Pending" ? "bg-warning" :
+	                                invitation.Status == "Accepted" ? "bg-success" : "bg-danger")">
+								@invitation.Status
+							</span>
+						</td>
+						<td>@invitation.Role</td>
+						<td>@invitation.InvitationSentDate.ToString("dd/MM/yyyy hh:mm:ss tt")</td>
+						<td>@(invitation.AcceptedDate.HasValue ? invitation.AcceptedDate.Value.ToString("g") : "Not Accepted")</td>
+						<td>@(invitation.DeclinedDate.HasValue ? invitation.DeclinedDate.Value.ToString("g") : "Not Declined")</td>
+					</tr>
+				}
+			}
+			else
+			{
+				<tr >
+					<td colspan="100" class="text-center">You have no invitations at the moment.</td>
+				</tr>
+			}
+			</tbody>
+		</table>
+</div>

@@ -12,7 +12,7 @@ namespace TaskForge.Application.Interfaces.Repositories
     {
         Task<List<int>> GetProjectIdsByUserProfileIdAsync(int userProfileId);
         Task AddAsync(int projectId,int userProfileId);
-        Task<bool> IsUserAssignedToProjectAsync(string userId, int projectId);
+        Task<ProjectMemberDto?> GetUserProjectRoleAsync(string userId, int projectId);
         Task<List<ProjectMemberDto>> GetProjectMembersAsync(int projectId);
     }
 }

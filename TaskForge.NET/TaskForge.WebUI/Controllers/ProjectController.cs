@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Application.Services;
+using TaskForge.Domain.Enums;
 using TaskForge.Web.Models;
 using TaskForge.WebUI.Models;
 
@@ -111,16 +112,16 @@ namespace TaskForge.WebUI.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            bool isMember = await _projectMemberService.IsUserAssignedToProjectAsync(user.Id, Id);
-            if (!isMember)
+            var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, Id);
+            if (member == null || member.Role != ProjectRole.Admin)
             {
-                return Forbid(); // User is not allowed to access this project
+                return Forbid(); // User is not an Admin, access denied
             }
 
             var project = await _projectService.GetProjectByIdAsync(Id); // Retrieve project info
             var projectMembers = await _projectMemberService.GetProjectMembersAsync(Id); // Get project members
 
-            var model = new ProjectMembersViewModel
+            var model = new ManageMembersViewModel
             {
                 ProjectId = Id,
                 ProjectTitle = project.Title,
@@ -134,6 +135,18 @@ namespace TaskForge.WebUI.Controllers
                 }).ToList()
             };
 
+            var projectInvitations = await _invitationService.GetInvitationListAsync(Id); // Get project members
+
+            model.ProjectInvitations = projectInvitations.Select(m => new InviteViewModel
+                                        {
+                                            Id = m.Id,
+                                            ProjectId = m.ProjectId,
+                                            InvitedUserEmail = m.InvitedUserProfile.User.UserName,
+                                            Status = m.Status,
+                                            InvitationSentDate = m.InvitationSentDate,
+                                            AssignedRole = m.AssignedRole
+                                        }).ToList();
+
             return View(model);
         }
 
@@ -144,17 +157,18 @@ namespace TaskForge.WebUI.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            bool isMember = await _projectMemberService.IsUserAssignedToProjectAsync(user.Id, viewModel.ProjectId);
-            if (!isMember)
+            var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, viewModel.ProjectId);
+
+            if (member == null || member.Role != ProjectRole.Admin)
             {
-                return Forbid(); // User is not allowed to access this project
+                return Forbid(); // User is not an Admin, access denied
             }
 
             // Send Invitation
-            var success = await _invitationService.SendInvitationAsync(viewModel.ProjectId, viewModel.InvitedUserEmail, viewModel.AssignedRole);
+            var success = await _invitationService.AddAsync(viewModel.ProjectId, viewModel.InvitedUserEmail, viewModel.AssignedRole);
             if (!success)
             {
-                ModelState.AddModelError("", "Failed to send invitation.");
+                TempData["ErrorMessage"] = "Failed to send invitation.";
                 return RedirectToAction("ManageMembers", new { Id = viewModel.ProjectId });
             }
 
@@ -163,6 +177,27 @@ namespace TaskForge.WebUI.Controllers
             return RedirectToAction("ManageMembers", new { Id = viewModel.ProjectId });
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken] // CSRF Protection
+        public async Task<IActionResult> UpdateInvitationStatus(int id, InvitationStatus status)
+        {
+            // Fetch the invitation
+            var invitation = await _invitationService.GetByIdAsync(id);
+            if (invitation == null)
+            {
+                return NotFound("Invitation not found.");
+            }
+
+            // Prevent invalid status changes
+            if (invitation.Status != InvitationStatus.Pending)
+            {
+                return BadRequest($"Cannot update an invitation that is already {invitation.Status.ToString().ToLower()}.");
+            }
+
+
+            await _invitationService.UpdateInvitationStatusAsync(id, status);
+            return RedirectToAction("ManageMembers", new { Id = invitation.ProjectId });
+        }
 
         // GET: Project/Details/5
         public async Task<IActionResult> Details(int Id)
@@ -171,10 +206,10 @@ namespace TaskForge.WebUI.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            bool isMember = await _projectMemberService.IsUserAssignedToProjectAsync(user.Id, Id);
-            if (!isMember)
+            var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, Id);
+            if (member == null)
             {
-                return Forbid(); // User is not allowed to access this project
+                return Forbid(); // User is not an Admin, access denied
             }
 
             var project = await _projectService.GetProjectByIdAsync(Id);
@@ -195,5 +230,6 @@ namespace TaskForge.WebUI.Controllers
 
             return View(viewModel);
         }
+
     }
 }

@@ -22,9 +22,9 @@ namespace TaskForge.Application.Services
         {
             _projectMemberRepository = projectMemberRepository;
         }
-        public async Task<bool> IsUserAssignedToProjectAsync(string userId, int projectId)
+        public async Task<ProjectMemberDto?> GetUserProjectRoleAsync(string userId, int projectId)
         {
-            return await _projectMemberRepository.IsUserAssignedToProjectAsync(userId, projectId);
+            return await _projectMemberRepository.GetUserProjectRoleAsync(userId, projectId);
         }
 
         public async Task<List<ProjectMemberDto>> GetProjectMembersAsync(int projectId)

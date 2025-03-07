@@ -1,9 +1,14 @@
-﻿using TaskForge.Domain.Enums;
+﻿using TaskForge.Domain.Entities;
+using TaskForge.Domain.Enums;
 
 namespace TaskForge.Application.Interfaces.Services
 {
     public interface IProjectInvitationService
     {
-        Task<bool> SendInvitationAsync(int projectId, string invitedUserEmail, ProjectRole assignedRole);
+        Task<ProjectInvitation?> GetByIdAsync(int invitationId);
+        Task<List<ProjectInvitation>> GetInvitationListAsync(int projectId);
+        Task<bool> AddAsync(int projectId, string invitedUserEmail, ProjectRole assignedRole);
+        Task UpdateInvitationStatusAsync(int id, InvitationStatus status);
+
     }
 }

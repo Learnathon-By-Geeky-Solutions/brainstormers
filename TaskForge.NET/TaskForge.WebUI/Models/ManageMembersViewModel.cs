@@ -5,12 +5,13 @@ using System.Collections.Generic;
 
 namespace TaskForge.WebUI.Models
 {
-    public class ProjectMembersViewModel
+    public class ManageMembersViewModel
     {
         public int ProjectId { get; set; }
         public string ProjectTitle { get; set; }
         public string ProjectDescription { get; set; }
         public List<ProjectMemberViewModel> ProjectMembers { get; set; } = new();
+        public List<InviteViewModel> ProjectInvitations { get; set; } = new();
 
         [Required]
         [EmailAddress]
@@ -23,11 +24,16 @@ namespace TaskForge.WebUI.Models
 
     public class InviteViewModel
     {
+        public int Id { get; set; }
         public int ProjectId { get; set; }
 
         [Required]
         [EmailAddress]
         public required string InvitedUserEmail { get; set; }
+
+        public InvitationStatus Status { get; set; } = InvitationStatus.Pending;
+
+        public DateTime InvitationSentDate { get; set; } = DateTime.UtcNow;
 
         [Required]
         public ProjectRole AssignedRole { get; set; }

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Domain.Entities;
+using TaskForge.Domain.Enums;
 using TaskForge.Infrastructure.Data;
 
 namespace TaskForge.Infrastructure.Repositories
@@ -25,7 +26,9 @@ namespace TaskForge.Infrastructure.Repositories
             var projectMember = new ProjectMember
             {
                 ProjectId = projectId,
-                UserProfileId = userProfileId
+                UserProfileId = userProfileId,
+                Role = ProjectRole.Admin,
+
             };
             await _context.AddAsync(projectMember);
             await _context.SaveChangesAsync();
@@ -39,10 +42,18 @@ namespace TaskForge.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<bool> IsUserAssignedToProjectAsync(string userId, int projectId)
+        public async Task<ProjectMemberDto?> GetUserProjectRoleAsync(string userId, int projectId)
         {
             return await _context.ProjectMembers
-                .AnyAsync(pm => pm.UserProfile.UserId == userId && pm.ProjectId == projectId);
+                .Where(pm => pm.UserProfile.UserId == userId && pm.ProjectId == projectId)
+                .Select(pm => new ProjectMemberDto
+                {
+                    Id = pm.Id,
+                    Name = pm.UserProfile.FullName,
+                    Email = pm.UserProfile.User.UserName,
+                    Role = pm.Role // Assuming Role is an enum or string
+                })
+                .FirstOrDefaultAsync();
         }
 
         public async Task<List<ProjectMemberDto>> GetProjectMembersAsync(int projectId)
