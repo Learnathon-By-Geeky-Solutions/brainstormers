@@ -54,7 +54,7 @@ namespace TaskForge.Infrastructure.common.Repositories
         public async Task<IEnumerable<T>> FindAsync(
             Expression<Func<T, bool>> predicate,
             Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
-            string[]? includes = null,
+            Expression<Func<T, object>>[]? includes = null,
             int? take = null,
             int? skip = null)
         {

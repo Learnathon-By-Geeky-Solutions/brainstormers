@@ -43,6 +43,8 @@ namespace TaskForge.Application.Services
             //    throw new ArgumentException("User profile not found.");
             var projectMember = new ProjectMember { ProjectId = projectId, UserProfileId = userProfileId };
             await _unitOfWork.ProjectMembers.AddAsync(projectMember);
+
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public Task<IEnumerable<SelectListItem>> GetProjectStatusOptions()
