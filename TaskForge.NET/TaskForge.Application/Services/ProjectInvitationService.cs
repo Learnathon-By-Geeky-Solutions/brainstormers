@@ -37,8 +37,11 @@ namespace TaskForge.Application.Services
             }
 
             // Find the UserProfile for this user
-            var userProfileId = await _unitOfWork.UserProfiles.GetByUserIdAsync(user.Id);
-            if (userProfileId == 0)
+            var userProfile = await _unitOfWork.UserProfiles
+                .FindAsync(up => up.UserId == user.Id); // Query using the UserId predicate
+
+            var userProfileId = userProfile.FirstOrDefault()?.Id; // Safe access to Id
+            if (!userProfileId.HasValue || userProfileId.Value == 0) // Check if the Id is null or 0
             {
                 return false; // User profile not found
             }
@@ -49,12 +52,11 @@ namespace TaskForge.Application.Services
                 return false; // User already exists.
             }
 
-
             // Create a new invitation
             var invitation = new ProjectInvitation
             {
                 ProjectId = projectId,
-                InvitedUserProfileId = userProfileId,
+                InvitedUserProfileId = userProfileId.Value, // Access the Value of the nullable int
                 Status = InvitationStatus.Pending,
                 AssignedRole = assignedRole,
                 InvitationSentDate = DateTime.UtcNow,
@@ -65,6 +67,7 @@ namespace TaskForge.Application.Services
             await _unitOfWork.ProjectInvitations.AddAsync(invitation);
             return true;
         }
+
 
         public async Task UpdateInvitationStatusAsync(int id, InvitationStatus status)
         {

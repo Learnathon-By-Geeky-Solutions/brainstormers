@@ -15,14 +15,19 @@ namespace TaskForge.Application.Services
         {
             _unitOfWork = unitOfWork;
         }
+       
+        
         public async Task CreateUserProfileAsync(string userId, string FullName)
         {
             await _unitOfWork.UserProfiles.CreateAsync(userId, FullName);
         }
 
-        public async Task<int> GetByUserIdAsync(string userId)
+        public async Task<int?> GetByUserIdAsync(string userId)
         {
-            return await _unitOfWork.UserProfiles.GetByUserIdAsync(userId);
+            var userProfile = await _unitOfWork.UserProfiles
+                .FindAsync(up => up.UserId == userId);
+
+            return userProfile.Select(up => up.Id).FirstOrDefault();
         }
     }
 }

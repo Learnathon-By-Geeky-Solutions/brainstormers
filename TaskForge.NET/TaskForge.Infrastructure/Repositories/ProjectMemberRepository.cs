@@ -22,14 +22,6 @@ namespace TaskForge.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<List<int>> GetProjectIdsByUserProfileIdAsync(int userProfileId)
-        {
-            return await _context.ProjectMembers
-                .Where(pm => pm.UserProfileId == userProfileId)
-                .Select(pm => pm.ProjectId)
-                .ToListAsync();
-        }
-
         public async Task<ProjectMemberDto?> GetUserProjectRoleAsync(string userId, int projectId)
         {
             return await _context.ProjectMembers

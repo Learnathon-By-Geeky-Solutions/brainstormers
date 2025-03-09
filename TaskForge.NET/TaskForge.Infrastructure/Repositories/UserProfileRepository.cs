@@ -29,18 +29,5 @@ namespace TaskForge.Infrastructure.Repositories
             _context.Add(userProfile);
             await _context.SaveChangesAsync();
         }
-
-        public async Task<int> GetByUserIdAsync(string? userId)
-        {
-            if(userId == null)
-            {
-                throw new ArgumentNullException(nameof(userId));
-            }
-            return await _context.UserProfiles
-                        .Where(up => up.UserId == userId)
-                        .Select(up => up.Id)
-                        .FirstOrDefaultAsync();
-        }
-
     }
 }
