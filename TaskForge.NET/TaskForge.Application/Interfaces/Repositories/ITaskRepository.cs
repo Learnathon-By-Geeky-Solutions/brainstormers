@@ -11,7 +11,5 @@ namespace TaskForge.Application.Interfaces.Repositories
 {
     public interface ITaskRepository : IRepository<TaskItem>
     {
-        Task<TaskItem?> GetByIdAsync(int id);
-        Task<IEnumerable<TaskItem>> GetFilteredAsync(TaskFilterDto filter);
     }
 }

@@ -2,8 +2,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
-using Microsoft.EntityFrameworkCore.Metadata;
-using SQLitePCL;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Application.Services;
@@ -23,8 +21,12 @@ namespace TaskForge.WebUI.Controllers
         private readonly IProjectInvitationService _invitationService;
         private readonly UserManager<IdentityUser> _userManager;
 
-        public ProjectController(IProjectMemberService projectMemberService, IProjectService projectService, 
-            ITaskService taskService, IUserProfileService userProfileService, IProjectInvitationService invitationService, 
+        public ProjectController(
+            IProjectMemberService projectMemberService,
+            IProjectService projectService,
+            ITaskService taskService,
+            IUserProfileService userProfileService,
+            IProjectInvitationService invitationService,
             UserManager<IdentityUser> userManager)
         {
             _projectMemberService = projectMemberService;
@@ -56,6 +58,7 @@ namespace TaskForge.WebUI.Controllers
 
             return View(viewModel);
         }
+
 
 
         // GET: Project/Create
@@ -107,39 +110,6 @@ namespace TaskForge.WebUI.Controllers
         }
 
 
-        // GET: Project/Details/5
-        public async Task<IActionResult> Details(int Id)
-        {
-            // Restrict project access to assigned users only
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Unauthorized();
-
-            var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, Id);
-            if (member == null)
-            {
-                return Forbid(); // User is not an Admin, access denied
-            }
-
-            var project = await _projectService.GetProjectByIdAsync(Id);
-
-            if (project == null)
-            {
-                return NotFound();
-            }
-
-            // return project.tasks = the tasks of this project
-
-            project.Tasks = (await _taskService.Get(Id)).ToList();
-
-            var viewModel = new ProjectDetailsViewModel
-            {
-                Project = project
-            };
-
-            return View(viewModel);
-        }
-
-
         // GET: Project/Invite
         [HttpGet]
         public async Task<IActionResult> ManageMembers(int Id)
@@ -174,55 +144,48 @@ namespace TaskForge.WebUI.Controllers
             var projectInvitations = await _invitationService.GetInvitationListAsync(Id); // Get project members
 
             model.ProjectInvitations = projectInvitations.Select(m => new InviteViewModel
-                                        {
-                                            Id = m.Id,
-                                            ProjectId = m.ProjectId,
-                                            InvitedUserEmail = m.InvitedUserProfile.User.UserName,
-                                            Status = m.Status,
-                                            InvitationSentDate = m.InvitationSentDate,
-                                            AssignedRole = m.AssignedRole
-                                        }).ToList();
+            {
+                Id = m.Id,
+                ProjectId = m.ProjectId,
+                InvitedUserEmail = m.InvitedUserProfile.User.UserName,
+                Status = m.Status,
+                InvitationSentDate = m.InvitationSentDate,
+                AssignedRole = m.AssignedRole
+            }).ToList();
 
             return View(model);
         }
 
-
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RemoveMember(int id)
+        public async Task<IActionResult> Invite(InviteViewModel viewModel)
         {
-            // Fetch the member
-            var member = await _projectMemberService.GetByIdAsync(id);
-            if (member == null)
-            {
-                return NotFound("Member not found.");
-            }
-
             // Restrict project access to assigned users only
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            var userMember = await _projectMemberService.GetUserProjectRoleAsync(user.Id, member.ProjectId);
-            if (userMember == null || userMember.Role != ProjectRole.Admin)
+            var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, viewModel.ProjectId);
+
+            if (member == null || member.Role != ProjectRole.Admin)
             {
-                return Forbid();
+                return Forbid(); // User is not an Admin, access denied
             }
 
-            if (userMember.Id == member.Id)
+            // Send Invitation
+            var success = await _invitationService.AddAsync(viewModel.ProjectId, viewModel.InvitedUserEmail, viewModel.AssignedRole);
+            if (!success)
             {
-                return BadRequest($"Invalid request.");
+                TempData["ErrorMessage"] = "Failed to send invitation.";
+                return RedirectToAction("ManageMembers", new { Id = viewModel.ProjectId });
             }
 
-            // Remove the member from the project
-            await _projectMemberService.RemoveAsync(id);
-
-            // Redirect back to the Project Management Members page
-            return RedirectToAction("ManageMembers", "Project", new { Id = member.ProjectId });
+            // Redirect to Manage Members Page with success message
+            TempData["SuccessMessage"] = "Invitation sent to " + viewModel.InvitedUserEmail + " successfully.";
+            return RedirectToAction("ManageMembers", new { Id = viewModel.ProjectId });
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CancelInvitation(int id)
+        [ValidateAntiForgeryToken] // CSRF Protection
+        public async Task<IActionResult> UpdateInvitationStatus(int id, InvitationStatus status)
         {
             // Fetch the invitation
             var invitation = await _invitationService.GetByIdAsync(id);
@@ -231,31 +194,48 @@ namespace TaskForge.WebUI.Controllers
                 return NotFound("Invitation not found.");
             }
 
+            // Prevent invalid status changes
+            if (invitation.Status != InvitationStatus.Pending)
+            {
+                return BadRequest($"Cannot update an invitation that is already {invitation.Status.ToString().ToLower()}.");
+            }
+
+
+            await _invitationService.UpdateInvitationStatusAsync(id, status);
+            return RedirectToAction("ManageMembers", new { Id = invitation.ProjectId });
+        }
+
+        // GET: Project/Details/5
+        public async Task<IActionResult> Details(int Id)
+        {
             // Restrict project access to assigned users only
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            var userMember = await _projectMemberService.GetUserProjectRoleAsync(user.Id, invitation.ProjectId);
-            if (userMember == null || userMember.Role != ProjectRole.Admin)
+            var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, Id);
+            if (member == null)
             {
-                return Forbid();
+                return Forbid(); // User is not an Admin, access denied
             }
 
-            // Prevent cancellation if the status is not "Pending"
-            if (invitation.Status != InvitationStatus.Pending)
+            var project = await _projectService.GetProjectByIdAsync(Id);
+
+            if (project == null)
             {
-                return BadRequest($"Cannot cancel an invitation that is already {invitation.Status.ToString().ToLower()}.");
+                return NotFound();
             }
 
-            invitation.Status = InvitationStatus.Canceled;
+            // return project.tasks = the tasks of this project
 
-            // Update the invitation status in the database
-            await _invitationService.UpdateInvitationStatusAsync(id, invitation.Status);
+            project.Tasks = (await _taskService.Get(Id)).ToList();
 
-            // Redirect back to the Project Management Members page
-            return RedirectToAction("ManageMembers", "Project", new { Id = invitation.ProjectId });
+            var viewModel = new ProjectDetailsViewModel
+            {
+                Project = project
+            };
+
+            return View(viewModel);
         }
-
 
     }
 }
