@@ -22,6 +22,12 @@ namespace TaskForge.Application.Services
         {
             _projectMemberRepository = projectMemberRepository;
         }
+
+        public async Task<ProjectMember?> GetByIdAsync(int memberId)
+        {
+            return await _projectMemberRepository.GetByIdAsync(memberId);
+        }
+
         public async Task<ProjectMemberDto?> GetUserProjectRoleAsync(string userId, int projectId)
         {
             return await _projectMemberRepository.GetUserProjectRoleAsync(userId, projectId);
@@ -32,5 +38,13 @@ namespace TaskForge.Application.Services
             return await _projectMemberRepository.GetProjectMembersAsync(projectId);
         }
 
+        public async Task RemoveAsync(int memberId)
+        {
+            var member = await GetByIdAsync(memberId);
+            if (member != null)
+            {
+                await _projectMemberRepository.RemoveAsync(member);
+            }
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
@@ -57,7 +58,6 @@ namespace TaskForge.Application.Services
                 return false; // User already exists.
             }
 
-
             // Create a new invitation
             var invitation = new ProjectInvitation
             {
@@ -76,7 +76,36 @@ namespace TaskForge.Application.Services
 
         public async Task UpdateInvitationStatusAsync(int id, InvitationStatus status)
         {
-            await _invitationRepository.UpdateInvitationStatusAsync(id, status);
+            var invitation = await GetByIdAsync(id);
+            if (invitation == null)
+            {
+                return;
+            }
+
+            invitation.Status = status;
+
+            if (status == InvitationStatus.Accepted)
+            {
+                invitation.AcceptedDate = DateTime.UtcNow;
+                invitation.DeclinedDate = null;
+
+                // Create a ProjectMember entry for the user
+                var projectMember = new ProjectMember
+                {
+                    ProjectId = invitation.ProjectId,
+                    UserProfileId = invitation.InvitedUserProfileId, // Assign the invited user
+                    Role = invitation.AssignedRole, // Assign the role from invitation
+                };
+
+                await _projectMemberRepository.AddAsync(projectMember);
+            }
+            else if (status == InvitationStatus.Declined)
+            {
+                invitation.DeclinedDate = DateTime.UtcNow;
+                invitation.AcceptedDate = null;
+            }
+
+            await _invitationRepository.UpdateAsync(invitation);
         }
     }
 }

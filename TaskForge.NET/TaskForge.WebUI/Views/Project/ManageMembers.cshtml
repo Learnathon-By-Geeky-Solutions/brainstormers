@@ -91,9 +91,17 @@
                                     <td>@member.Email</td>
                                     <td>@member.Role</td>
                                     <td>
-                                        @* <a asp-action="RemoveMember" asp-route-id="@member.Id" class="btn btn-danger btn-sm">
-		                                    <i class="bi bi-trash"></i> Remove
-		                                </a> *@
+                                        @if (member.Email != User.Identity.Name)
+                                        {
+	                                        <form asp-action="RemoveMember" asp-controller="Project" method="post"
+	                                              class="d-inline" onsubmit="return confirmAction('remove this member');">
+		                                        @Html.AntiForgeryToken()
+		                                        <input type="hidden" name="id" value="@member.Id"/>
+		                                        <button type="submit" class="btn btn-danger btn-sm">
+			                                        <i class="bi bi-x-circle"></i> Cancel
+		                                        </button>
+	                                        </form>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -157,10 +165,10 @@
                                     <td>
 	                                    @if (invitation.Status == InvitationStatus.Pending)
 	                                    {
-		                                    <form asp-action="UpdateInvitationStatus" method="post" class="d-inline">
+		                                    <form asp-action="CancelInvitation" asp-controller="Project" method="post"
+                                                  class="d-inline" onsubmit="return confirmAction('cancel this invitation');">
 			                                    @Html.AntiForgeryToken()
 			                                    <input type="hidden" name="id" value="@invitation.Id" />
-			                                    <input type="hidden" name="status" value="Canceled" />
 			                                    <button type="submit" class="btn btn-danger btn-sm">
 				                                    <i class="bi bi-x-circle"></i> Cancel
 			                                    </button>
@@ -168,7 +176,7 @@
 	                                    }
                                         else
                                         {
-                                            <a asp-action="UpdateInvitationStatus" asp-route-id="@invitation.Id" asp-route-status="Canceled" class="btn btn-danger btn-sm disabled">
+                                            <a class="btn btn-danger btn-sm disabled">
                                                 <i class="bi bi-x-circle"></i> Cancel
                                             </a>
 	                                    }
@@ -198,7 +206,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-	            <form id="inviteForm" asp-controller="Project" asp-action="Invite" method="post">
+	            <form id="inviteForm" asp-controller="ProjectInvitation" asp-action="Create" method="post">
 		            <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
 
                     <div class="mb-3">
@@ -230,4 +238,11 @@
 
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <script type="text/javascript">
+        function confirmAction(action) {
+            var message = `Are you sure you want to ${action}?`;
+            return confirm(message);
+        }
+    </script>
 }

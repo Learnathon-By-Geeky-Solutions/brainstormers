@@ -21,15 +21,13 @@ namespace TaskForge.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task AddAsync(int projectId, int userProfileId)
+        public async Task<ProjectMember?> GetByIdAsync(int memberId)
         {
-            var projectMember = new ProjectMember
-            {
-                ProjectId = projectId,
-                UserProfileId = userProfileId,
-                Role = ProjectRole.Admin,
+            return await _context.ProjectMembers.FindAsync(memberId);
+        }
 
-            };
+        public async Task AddAsync(ProjectMember projectMember)
+        {
             await _context.AddAsync(projectMember);
             await _context.SaveChangesAsync();
         }
@@ -70,6 +68,11 @@ namespace TaskForge.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task RemoveAsync(ProjectMember projectMember)
+        {
+            _context.ProjectMembers.Remove(projectMember);
+            await _context.SaveChangesAsync();
+        }
 
     }
 }

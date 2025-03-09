@@ -46,9 +46,16 @@ namespace TaskForge.Application.Services
 
             var projectId = project.Id;
             var userProfileId = await _userProfileRepository.GetByUserIdAsync(dto.CreatedBy);
-            //if (userProfileId == null)
-            //    throw new ArgumentException("User profile not found.");
-            await _projectMemberRepository.AddAsync(projectId, userProfileId);
+
+            // 2. Add the creator as a member of the project
+            var projectMember = new ProjectMember
+            {
+                ProjectId = projectId,
+                UserProfileId = userProfileId,
+                Role = ProjectRole.Admin
+            };
+
+            await _projectMemberRepository.AddAsync(projectMember);
         }
 
         public Task<IEnumerable<SelectListItem>> GetProjectStatusOptions()
