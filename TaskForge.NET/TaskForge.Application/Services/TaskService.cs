@@ -18,10 +18,10 @@ namespace TaskForge.Application.Services
 {
     public class TaskService: ITaskService
     {
-        private readonly ITaskRepository _taskRepository;
-        public TaskService(ITaskRepository taskRepository)
+        private readonly IUnitOfWork _unitOfWork;
+        public TaskService(IUnitOfWork unitOfWork)
         {
-            _taskRepository = taskRepository;
+            _unitOfWork = unitOfWork;
         }
 
 
@@ -29,7 +29,7 @@ namespace TaskForge.Application.Services
         {
             var filter = new TaskFilterDto();
             filter.ProjectId = projectId;
-            return await _taskRepository.GetFilteredAsync(filter);
+            return await _unitOfWork.Tasks.GetFilteredAsync(filter);
         }
 
     }

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using TaskForge.Application.DTOs;
@@ -17,18 +18,15 @@ namespace TaskForge.Application.Services
 {
     public class ProjectService: IProjectService
     {
-        private readonly IProjectRepository _projectRepository;
-        private readonly IUserProfileRepository _userProfileRepository;
-        private readonly IProjectMemberRepository _projectMemberRepository;
-        public ProjectService(
-            IProjectRepository projectRepository, 
-            IUserProfileRepository userProfileRepository, 
-            IProjectMemberRepository projectMemberRepository)
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserProfileService _userProfileService;
+        public ProjectService(IUnitOfWork unitOfWork, IUserProfileService userProfileService)
         {
-            _projectRepository = projectRepository;
-            _userProfileRepository = userProfileRepository;
-            _projectMemberRepository = projectMemberRepository;
+            _unitOfWork = unitOfWork;
+            _userProfileService = userProfileService;
         }
+
+
 
         public async Task CreateProjectAsync(CreateProjectDto dto)
         {
@@ -42,20 +40,13 @@ namespace TaskForge.Application.Services
             };
             if (dto.EndDate != null) project.SetEndDate(dto.EndDate);
 
-            await _projectRepository.AddAsync(project);
+            await _unitOfWork.Projects.AddAsync(project);
 
             var projectId = project.Id;
             var userProfileId = await _userProfileRepository.GetByUserIdAsync(dto.CreatedBy);
-
-            // 2. Add the creator as a member of the project
-            var projectMember = new ProjectMember
-            {
-                ProjectId = projectId,
-                UserProfileId = userProfileId,
-                Role = ProjectRole.Admin
-            };
-
-            await _projectMemberRepository.AddAsync(projectMember);
+            //if (userProfileId == null)
+            //    throw new ArgumentException("User profile not found.");
+            await _projectMemberRepository.AddAsync(projectId, userProfileId);
         }
 
         public Task<IEnumerable<SelectListItem>> GetProjectStatusOptions()
@@ -71,76 +62,58 @@ namespace TaskForge.Application.Services
 
         public async Task<Project?> GetProjectByIdAsync(int projectId)
         {
-            return await _projectRepository.GetByIdAsync(projectId);
+            return await _unitOfWork.Projects.GetByIdAsync(projectId);
         }
+
 
         public async Task<IEnumerable<Project>> GetFilteredProjectsAsync(ProjectFilterDto filter)
         {
-            var projects = await GetUserProjectsAsync(filter.UserId);
-            if (!projects.Any()) return Enumerable.Empty<Project>();
-
-            var filteredProjects = ApplyFilters(projects.AsQueryable(), filter);
-            var sortedProjects = ApplySorting(filteredProjects, filter.SortBy, filter.SortOrder);
-
-            return sortedProjects.ToList();
-        }
-
-        // Fetch projects for the user
-        private async Task<IEnumerable<Project>> GetUserProjectsAsync(string userId)
-        {
-            var userProfileId = await _userProfileRepository.GetByUserIdAsync(userId);
-            if (userProfileId == null) return Enumerable.Empty<Project>();
-
-            var projectIds = await _projectMemberRepository.GetProjectIdsByUserProfileIdAsync(userProfileId);
-            if (projectIds == null || !projectIds.Any()) return Enumerable.Empty<Project>();
-
-            var projects = new List<Project>();
-            foreach (var projectId in projectIds)
+            if (filter.UserId == null)
             {
-                var project = await _projectRepository.GetByIdAsync(projectId);
-                if (project != null) projects.Add(project);
+                return Enumerable.Empty<Project>(); // Handle the case when UserId is null, returning an empty collection
             }
 
-            return projects;
-        }
+            var userProfileId = await _userProfileService.GetByUserIdAsync(filter.UserId); // Safe access to non-nullable UserId
+            if (userProfileId == 0) return Enumerable.Empty<Project>(); // Return empty if user profile is not found
 
-        // Filter logic separated
-        private IQueryable<Project> ApplyFilters(IQueryable<Project> projects, ProjectFilterDto filter)
-        {
-            if (!string.IsNullOrWhiteSpace(filter.Title))
-                projects = projects.Where(p => p.Title.Contains(filter.Title, StringComparison.OrdinalIgnoreCase));
+            var projectIds = (await _unitOfWork.ProjectMembers.FindAsync(predicate: pm => pm.UserProfileId == userProfileId)).Select(pm => pm.ProjectId);
 
-            if (filter.Status.HasValue)
-                projects = projects.Where(p => p.Status == filter.Status.Value);
+            if (projectIds == null || !projectIds.Any()) return Enumerable.Empty<Project>(); // Return empty if no projects found for user
 
-            if (filter.StartDateFrom.HasValue)
-                projects = projects.Where(p => p.StartDate.Date >= filter.StartDateFrom.Value);
+            // Define the filtering predicate
+            Expression<Func<Project, bool>> _predicate = p =>
+                projectIds.Contains(p.Id) && // Filter by the user's project IDs
+                (string.IsNullOrWhiteSpace(filter.Title) || p.Title.Contains(filter.Title)) && // Filter by title (if provided)
+                (!filter.Status.HasValue || p.Status == filter.Status.Value) && // Filter by status (if provided)
+                (!filter.StartDateFrom.HasValue || p.StartDate.Date >= filter.StartDateFrom.Value) && // Filter by start date (if provided)
+                (!filter.StartDateTo.HasValue || p.StartDate.Date <= filter.StartDateTo.Value) && // Filter by start date range (if provided)
+                (!filter.EndDateFrom.HasValue || (p.EndDate.HasValue && p.EndDate.Value.Date >= filter.EndDateFrom.Value)) && // Filter by end date (if provided)
+                (!filter.EndDateTo.HasValue || (p.EndDate.HasValue && p.EndDate.Value.Date <= filter.EndDateTo.Value)); // Filter by end date range (if provided)
 
-            if (filter.StartDateTo.HasValue)
-                projects = projects.Where(p => p.StartDate.Date <= filter.StartDateTo.Value);
-
-            if (filter.EndDateFrom.HasValue)
-                projects = projects.Where(p => p.EndDate.HasValue && p.EndDate.Value.Date >= filter.EndDateFrom.Value);
-
-            if (filter.EndDateTo.HasValue)
-                projects = projects.Where(p => p.EndDate.HasValue && p.EndDate.Value.Date <= filter.EndDateTo.Value);
-
-            return projects;
-        }
-
-        // Sorting logic separated
-        private IQueryable<Project> ApplySorting(IQueryable<Project> projects, string? sortBy, string sortOrder = "asc")
-        {
-            bool isAscending = sortOrder?.ToLower() == "asc";
-
-            return sortBy?.ToLower() switch
+            // Define the sorting logic
+            Func<IQueryable<Project>, IOrderedQueryable<Project>> _orderBy = query =>
             {
-                "title" => isAscending ? projects.OrderBy(p => p.Title) : projects.OrderByDescending(p => p.Title),
-                "status" => isAscending ? projects.OrderBy(p => p.Status) : projects.OrderByDescending(p => p.Status),
-                "startdate" => isAscending ? projects.OrderBy(p => p.StartDate) : projects.OrderByDescending(p => p.StartDate),
-                "enddate" => isAscending ? projects.OrderBy(p => p.EndDate) : projects.OrderByDescending(p => p.EndDate),
-                _ => projects.OrderBy(p => p.Id)
+                var sortOrder = filter.SortOrder?.ToLower() ?? "asc"; // Default to ascending order if SortOrder is null
+
+                return filter.SortBy?.ToLower() switch
+                {
+                    "title" => sortOrder == "asc" ? query.OrderBy(p => p.Title) : query.OrderByDescending(p => p.Title),
+                    "status" => sortOrder == "asc" ? query.OrderBy(p => p.Status) : query.OrderByDescending(p => p.Status),
+                    "startdate" => sortOrder == "asc" ? query.OrderBy(p => p.StartDate) : query.OrderByDescending(p => p.StartDate),
+                    "enddate" => sortOrder == "asc" ? query.OrderBy(p => p.EndDate) : query.OrderByDescending(p => p.EndDate),
+                    _ => query.OrderBy(p => p.Id) // Default sorting by ID
+                };
             };
+
+            // Fetch the filtered and sorted projects
+            var filteredProjects = await _unitOfWork.Projects.FindAsync(
+                predicate: _predicate,
+                orderBy: _orderBy
+            );
+
+            return filteredProjects ?? Enumerable.Empty<Project>(); // Return an empty collection if FindAsync returns null
         }
+
+
     }
 }

@@ -71,6 +71,10 @@ namespace TaskForge.WebUI
             builder.Services.AddControllersWithViews();
             builder.Services.AddRazorPages();
 
+
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+
             // Register Generic Repository
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 

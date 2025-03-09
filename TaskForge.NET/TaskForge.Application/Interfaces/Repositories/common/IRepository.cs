@@ -14,7 +14,7 @@ namespace TaskForge.Application.Interfaces.Repositories.common
         Task<IEnumerable<T>> FindAsync(
             Expression<Func<T, bool>> predicate,      // WHERE condition
             Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, // ORDER BY
-            string[]? includes = null,                // Include navigation properties
+            Expression<Func<T, object>>[]? includes = null,                // Include navigation properties
             int? take = null,                         // Pagination
             int? skip = null                          // Pagination
         );

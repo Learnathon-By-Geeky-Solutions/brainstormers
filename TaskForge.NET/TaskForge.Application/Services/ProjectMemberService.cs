@@ -17,10 +17,10 @@ namespace TaskForge.Application.Services
 {
     public class ProjectMemberService: IProjectMemberService
     {
-        private readonly IProjectMemberRepository _projectMemberRepository;
-        public ProjectMemberService(IProjectMemberRepository projectMemberRepository)
+        private readonly IUnitOfWork _unitOfWork;
+        public ProjectMemberService(IUnitOfWork unitOfWork)
         {
-            _projectMemberRepository = projectMemberRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<ProjectMember?> GetByIdAsync(int memberId)
@@ -30,12 +30,12 @@ namespace TaskForge.Application.Services
 
         public async Task<ProjectMemberDto?> GetUserProjectRoleAsync(string userId, int projectId)
         {
-            return await _projectMemberRepository.GetUserProjectRoleAsync(userId, projectId);
+            return await _unitOfWork.ProjectMembers.GetUserProjectRoleAsync(userId, projectId);
         }
 
         public async Task<List<ProjectMemberDto>> GetProjectMembersAsync(int projectId)
         {
-            return await _projectMemberRepository.GetProjectMembersAsync(projectId);
+            return await _unitOfWork.ProjectMembers.GetProjectMembersAsync(projectId);
         }
 
         public async Task RemoveAsync(int memberId)

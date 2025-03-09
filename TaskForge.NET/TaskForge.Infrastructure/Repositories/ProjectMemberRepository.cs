@@ -8,15 +8,16 @@ using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
+using TaskForge.Infrastructure.common.Repositories;
 using TaskForge.Infrastructure.Data;
 
 namespace TaskForge.Infrastructure.Repositories
 {
-    public class ProjectMemberRepository : IProjectMemberRepository
+    public class ProjectMemberRepository : Repository<ProjectMember>, IProjectMemberRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public ProjectMemberRepository(ApplicationDbContext context)
+        public ProjectMemberRepository(ApplicationDbContext context) : base(context)
         {
             _context = context;
         }
