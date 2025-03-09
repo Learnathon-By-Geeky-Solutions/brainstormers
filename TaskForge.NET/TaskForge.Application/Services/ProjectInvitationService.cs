@@ -25,7 +25,7 @@ namespace TaskForge.Application.Services
 
         public async Task<List<ProjectInvitation>> GetInvitationListAsync(int projectId)
         {
-            return await _unitOfWork.ProjectInvitations.GetByProjectIdAsync(projectId);
+            return (await _unitOfWork.ProjectInvitations.FindAsync(pi => pi.ProjectId == projectId)).ToList();
         }
 
         public async Task<bool> AddAsync(int projectId, string invitedUserEmail, ProjectRole assignedRole)
@@ -47,7 +47,7 @@ namespace TaskForge.Application.Services
                 return false; // User profile not found
             }
 
-            var member = await _unitOfWork.ProjectMembers.GetUserProjectRoleAsync(user.Id, projectId);
+            var member = await _unitOfWork.ProjectMembers.FindAsync(pm => pm.UserProfile.UserId == user.Id && pm.ProjectId == projectId);
             if (member != null)
             {
                 return false; // User already exists.
@@ -93,15 +93,15 @@ namespace TaskForge.Application.Services
                     Role = invitation.AssignedRole, // Assign the role from invitation
                 };
 
-                await _projectMemberRepository.AddAsync(projectMember);
+                await _unitOfWork.ProjectMembers.AddAsync(projectMember);
             }
             else if (status == InvitationStatus.Declined)
             {
                 invitation.DeclinedDate = DateTime.UtcNow;
                 invitation.AcceptedDate = null;
             }
-
-            await _invitationRepository.UpdateAsync(invitation);
+            
+            _unitOfWork.ProjectInvitations.Update(invitation);
         }
     }
 }

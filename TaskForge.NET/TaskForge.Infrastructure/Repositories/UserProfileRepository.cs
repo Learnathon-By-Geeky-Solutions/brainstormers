@@ -20,14 +20,5 @@ namespace TaskForge.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task CreateAsync(string userId, string FullName)
-        {
-            var userProfile = new UserProfile();
-            userProfile.UserId = userId;
-            userProfile.FullName = FullName;
-            userProfile.CreatedBy = userId;
-            _context.Add(userProfile);
-            await _context.SaveChangesAsync();
-        }
     }
 }

@@ -10,6 +10,6 @@ namespace TaskForge.Application.Interfaces.Repositories
 {
     public interface IUserProfileRepository : IRepository<UserProfile>
     {
-        Task CreateAsync(string userId, string FullName);
+
     }
 }

@@ -25,25 +25,43 @@ namespace TaskForge.Application.Services
 
         public async Task<ProjectMember?> GetByIdAsync(int memberId)
         {
-            return await _projectMemberRepository.GetByIdAsync(memberId);
+            return await _unitOfWork.ProjectMembers.GetByIdAsync(memberId);
         }
 
         public async Task<ProjectMemberDto?> GetUserProjectRoleAsync(string userId, int projectId)
         {
-            return await _unitOfWork.ProjectMembers.GetUserProjectRoleAsync(userId, projectId);
+             var projectMemberDto = (await _unitOfWork.ProjectMembers.FindAsync(pm => pm.UserProfile.UserId == userId && pm.ProjectId == projectId))
+                                                                 .Select(pm => new ProjectMemberDto
+                                                                 {
+                                                                     Id = pm.Id,
+                                                                     Name = pm.UserProfile.FullName,
+                                                                     Email = pm.UserProfile.User.UserName,
+                                                                     Role = pm.Role // Assuming Role is an enum or string
+                                                                 }).FirstOrDefault();
+
+            return projectMemberDto;
         }
 
         public async Task<List<ProjectMemberDto>> GetProjectMembersAsync(int projectId)
         {
-            return await _unitOfWork.ProjectMembers.GetProjectMembersAsync(projectId);
+            var projectMemberDtoList = (await _unitOfWork.ProjectMembers.FindAsync(pm => pm.ProjectId == projectId))
+                                        .Select(pm => new ProjectMemberDto
+                                        {
+                                            Id = pm.Id,
+                                            Name = pm.UserProfile.FullName,
+                                            Email = pm.UserProfile.User.UserName,
+                                            Role = pm.Role
+                                        })
+                                        .ToList();
+            return projectMemberDtoList;
         }
 
         public async Task RemoveAsync(int memberId)
         {
             var member = await GetByIdAsync(memberId);
             if (member != null)
-            {
-                await _projectMemberRepository.RemoveAsync(member);
+            { 
+                _unitOfWork.ProjectMembers.Remove(member);
             }
         }
     }

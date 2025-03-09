@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Services;
+using TaskForge.Domain.Entities;
 
 namespace TaskForge.Application.Services
 {
@@ -15,11 +16,16 @@ namespace TaskForge.Application.Services
         {
             _unitOfWork = unitOfWork;
         }
-       
-        
+
+
         public async Task CreateUserProfileAsync(string userId, string FullName)
         {
-            await _unitOfWork.UserProfiles.CreateAsync(userId, FullName);
+            var userProfile = new UserProfile
+            {
+                UserId = userId,
+                FullName = FullName
+            };
+            await _unitOfWork.UserProfiles.AddAsync(userProfile);
         }
 
         public async Task<int?> GetByUserIdAsync(string userId)

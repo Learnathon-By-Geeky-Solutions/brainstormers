@@ -11,8 +11,6 @@ namespace TaskForge.Application.Interfaces.Repositories
 {
     public interface IProjectMemberRepository : IRepository<ProjectMember>
     {
-        Task<ProjectMemberDto?> GetUserProjectRoleAsync(string userId, int projectId);
-        Task<List<ProjectMemberDto>> GetProjectMembersAsync(int projectId);
-        Task RemoveAsync(ProjectMember projectMember);
+
     }
 }
