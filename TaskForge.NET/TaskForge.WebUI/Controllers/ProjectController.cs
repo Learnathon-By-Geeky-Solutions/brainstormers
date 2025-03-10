@@ -53,7 +53,7 @@ namespace TaskForge.WebUI.Controllers
             var viewModel = new ProjectListViewModel
             {
                 Filter = filter,
-                ProjectWithRoleDto = projects // Project List
+                ProjectWithRoleDto = (IEnumerable<ProjectWithRoleDto>)projects // Project List
             };
 
             return View(viewModel);
@@ -180,7 +180,7 @@ namespace TaskForge.WebUI.Controllers
             };
 
             var projectInvitations = await _invitationService.GetInvitationListAsync(Id); // Get project members
-
+            
             model.ProjectInvitations = projectInvitations.Select(m => new InviteViewModel
             {
                 Id = m.Id,

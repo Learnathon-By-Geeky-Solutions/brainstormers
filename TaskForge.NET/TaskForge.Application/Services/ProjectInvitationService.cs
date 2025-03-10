@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Services;
@@ -26,7 +27,11 @@ namespace TaskForge.Application.Services
 
         public async Task<List<ProjectInvitation>> GetInvitationListAsync(int projectId)
         {
-            return (await _unitOfWork.ProjectInvitations.FindAsync(pi => pi.ProjectId == projectId)).ToList();
+            return (await _unitOfWork.ProjectInvitations.FindAsync(pi => pi.ProjectId == projectId, includes: new Expression<Func<ProjectInvitation, object>>[]
+        {
+            pi => pi.InvitedUserProfile,   // Include UserProfile
+            pi => pi.InvitedUserProfile.User // Include User inside UserProfile
+        })).ToList();
         }
 
         public async Task<ServiceResult> AddAsync(int projectId, string invitedUserEmail, ProjectRole assignedRole)
