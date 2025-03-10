@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
@@ -28,36 +29,45 @@ namespace TaskForge.Application.Services
             return (await _unitOfWork.ProjectInvitations.FindAsync(pi => pi.ProjectId == projectId)).ToList();
         }
 
-        public async Task<bool> AddAsync(int projectId, string invitedUserEmail, ProjectRole assignedRole)
+        public async Task<ServiceResult> AddAsync(int projectId, string invitedUserEmail, ProjectRole assignedRole)
         {
             // Find the user by email
             var user = await _userManager.FindByEmailAsync(invitedUserEmail);
             if (user == null)
             {
-                return false; // User not found
+                return ServiceResult.FailureResult("User not found.");
             }
 
             // Find the UserProfile for this user
             var userProfile = await _unitOfWork.UserProfiles
-                .FindAsync(up => up.UserId == user.Id); // Query using the UserId predicate
+                .FindAsync(up => up.UserId == user.Id);
 
-            var userProfileId = userProfile.FirstOrDefault()?.Id; // Safe access to Id
-            if (!userProfileId.HasValue || userProfileId.Value == 0) // Check if the Id is null or 0
+            var userProfileId = userProfile.FirstOrDefault()?.Id;
+            if (!userProfileId.HasValue || userProfileId.Value == 0)
             {
-                return false; // User profile not found
+                return ServiceResult.FailureResult("User profile not found.");
             }
 
+            // Check if the user is already a member of the project
             var member = await _unitOfWork.ProjectMembers.FindAsync(pm => pm.UserProfile.UserId == user.Id && pm.ProjectId == projectId);
-            if (member != null)
+            if (member != null && member.Any())
             {
-                return false; // User already exists.
+                return ServiceResult.FailureResult("User is already a member of this project.");
+            }
+
+            // Check if an invitation already exists
+            var existingInvitation = await _unitOfWork.ProjectInvitations.FindAsync(i => i.InvitedUserProfileId == userProfileId.Value 
+                                            && i.ProjectId == projectId && i.Status == InvitationStatus.Pending);
+            if (existingInvitation.Any())
+            {
+                return ServiceResult.FailureResult("An invitation has already been sent to this user.");
             }
 
             // Create a new invitation
             var invitation = new ProjectInvitation
             {
                 ProjectId = projectId,
-                InvitedUserProfileId = userProfileId.Value, // Access the Value of the nullable int
+                InvitedUserProfileId = userProfileId.Value,
                 Status = InvitationStatus.Pending,
                 AssignedRole = assignedRole,
                 InvitationSentDate = DateTime.UtcNow,
@@ -66,7 +76,8 @@ namespace TaskForge.Application.Services
 
             // Save to database
             await _unitOfWork.ProjectInvitations.AddAsync(invitation);
-            return true;
+            await _unitOfWork.SaveChangesAsync();
+            return ServiceResult.SuccessResult("Invitation sent successfully.");
         }
 
 
@@ -102,6 +113,7 @@ namespace TaskForge.Application.Services
             }
             
             _unitOfWork.ProjectInvitations.Update(invitation);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

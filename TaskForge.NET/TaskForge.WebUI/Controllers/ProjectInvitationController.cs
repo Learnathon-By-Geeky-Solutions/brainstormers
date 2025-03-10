@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using SQLitePCL;
+using System.Data;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Application.Services;
 using TaskForge.Domain.Entities;
@@ -69,10 +71,10 @@ namespace TaskForge.WebUI.Controllers
             }
 
             // Send Invitation
-            var success = await _invitationService.AddAsync(viewModel.ProjectId, viewModel.InvitedUserEmail, viewModel.AssignedRole);
-            if (!success)
+            var result = await _invitationService.AddAsync(viewModel.ProjectId, viewModel.InvitedUserEmail, viewModel.AssignedRole);
+            if (!result.Success)
             {
-                TempData["ErrorMessage"] = "Failed to send invitation.";
+                TempData["ErrorMessage"] = "Failed to send invitation: " + result.Message;
                 return RedirectToAction("ManageMembers", "Project", new { Id = viewModel.ProjectId });
             }
 

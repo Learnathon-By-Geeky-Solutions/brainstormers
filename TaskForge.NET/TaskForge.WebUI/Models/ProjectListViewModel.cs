@@ -11,6 +11,6 @@ namespace TaskForge.Web.Models
     public class ProjectListViewModel
     {
         public ProjectFilterDto? Filter { get; set; }
-        public IEnumerable<Project>? Projects { get; set; }
+        public IEnumerable<ProjectWithRoleDto>? ProjectWithRoleDto { get; set; }
     }
 }

@@ -1,8 +1,11 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Threading.Tasks;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Infrastructure.Data;
 using TaskForge.Infrastructure.Repositories;
+using System.Data;
 
 namespace TaskForge.Infrastructure.common.Repositories
 {
@@ -29,6 +32,11 @@ namespace TaskForge.Infrastructure.common.Repositories
         public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
+        }
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
+        {
+            return await _context.Database.BeginTransactionAsync(isolationLevel);
         }
 
         public void Dispose()

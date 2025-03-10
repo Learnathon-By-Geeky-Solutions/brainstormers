@@ -12,7 +12,7 @@ namespace TaskForge.Application.Interfaces.Services
     public interface IProjectService
     {
         Task<Project?> GetProjectByIdAsync(int projectId);
-        Task<IEnumerable<Project>> GetFilteredProjectsAsync(ProjectFilterDto filter);
+        Task<IEnumerable<ProjectWithRoleDto>> GetFilteredProjectsAsync(ProjectFilterDto filter);
         Task<IEnumerable<SelectListItem>> GetProjectStatusOptions();
         Task CreateProjectAsync(CreateProjectDto dto);
     }

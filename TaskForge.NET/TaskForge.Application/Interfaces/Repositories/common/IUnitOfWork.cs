@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using System;
+using System.Data;
 using System.Threading.Tasks;
 
 namespace TaskForge.Application.Interfaces.Repositories
@@ -10,6 +12,7 @@ namespace TaskForge.Application.Interfaces.Repositories
         IProjectMemberRepository ProjectMembers { get; }
         IProjectInvitationRepository ProjectInvitations { get; }
         IUserProfileRepository UserProfiles { get; }
+        Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted);
 
         Task<int> SaveChangesAsync(); // Commit transactions
     }

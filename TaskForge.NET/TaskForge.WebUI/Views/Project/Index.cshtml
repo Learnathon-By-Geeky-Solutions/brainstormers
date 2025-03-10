@@ -49,6 +49,19 @@
             <input name="EndDateTo" type="date" value="@Model.Filter?.EndDateTo?.ToString("yyyy-MM-dd")" class="form-control" />
         </div>
 
+        <div class="col-md-3">
+            <label for="Role" class="form-label">Role</label>
+            <select name="Role" class="form-select">
+                <option value="">All</option>
+                @foreach (ProjectRole Role in Enum.GetValues(typeof(ProjectRole)))
+                {
+                    <option value="@((int)Role)" selected="@(Model.Filter?.Role == Role ? "selected" : null)">
+                        @Role
+                    </option>
+                }
+            </select>
+        </div>
+
         <div class="col-md-2">
             <button type="submit" class="btn btn-primary w-100">Filter</button>
         </div>
@@ -73,6 +86,10 @@
                 Status
                 <i class="bi @(currentSortBy == "Status" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="statusSortIcon"></i>
             </th>
+            <th class="header-cell" onclick="sortTable('Role')" tabindex="0">
+                Role
+                <i class="bi @(currentSortBy == "Role" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="RoleSortIcon"></i>
+            </th>
             <th class="header-cell" onclick="sortTable('StartDate')" tabindex="0">
                 Start Date
                 <i class="bi @(currentSortBy == "StartDate" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="startDateSortIcon"></i>
@@ -85,21 +102,22 @@
         </tr>
     </thead>
     <tbody>
-        @if (Model.Projects != null && Model.Projects.Any())
+        @if (Model.ProjectWithRoleDto != null && Model.ProjectWithRoleDto.Any())
         {
-	        var serial = 1;
+            var serial = 1;
 
-            foreach (var project in Model.Projects)
+            foreach (var projectMember in Model.ProjectWithRoleDto)
             {
                 <tr class="text-center">
                     <td>@(serial++)</td>
-                    <td>@project.Title</td>
-                    <td>@project.Status</td>
-                    <td>@project.StartDate.ToString("yyyy-MM-dd")</td>
-                    <td>@project.EndDate?.ToString("yyyy-MM-dd")</td>
+                    <td>@projectMember.Title</td>
+                    <td>@projectMember.Status</td>
+                    <td>@projectMember.UserRoleInThisProject</td>
+                    <td>@projectMember.StartDate?.ToString("yyyy-MM-dd")</td>
+                    <td>@projectMember.EndDate?.ToString("yyyy-MM-dd")</td>
                     <td>
-	                    <a asp-action="Details" class="btn btn-info" asp-route-id="@project.Id">Details</a>
-	                    <a asp-action="ManageMembers" class="btn btn-warning" asp-route-id="@project.Id">Members</a>
+                        <a asp-action="Details" class="btn btn-info" asp-route-id="@projectMember.ProjectId">Details</a>
+                        <a asp-action="ManageMembers" class="btn btn-warning" asp-route-id="@projectMember.ProjectId">Members</a>
                     </td>
                 </tr>
             }

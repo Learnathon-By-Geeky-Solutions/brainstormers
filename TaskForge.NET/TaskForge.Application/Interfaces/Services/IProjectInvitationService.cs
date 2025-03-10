@@ -1,4 +1,5 @@
-﻿using TaskForge.Domain.Entities;
+﻿using TaskForge.Application.DTOs;
+using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
 
 namespace TaskForge.Application.Interfaces.Services
@@ -7,7 +8,7 @@ namespace TaskForge.Application.Interfaces.Services
     {
         Task<ProjectInvitation?> GetByIdAsync(int invitationId);
         Task<List<ProjectInvitation>> GetInvitationListAsync(int projectId);
-        Task<bool> AddAsync(int projectId, string invitedUserEmail, ProjectRole assignedRole);
+        Task<ServiceResult> AddAsync(int projectId, string invitedUserEmail, ProjectRole assignedRole);
         Task UpdateInvitationStatusAsync(int id, InvitationStatus status);
 
     }

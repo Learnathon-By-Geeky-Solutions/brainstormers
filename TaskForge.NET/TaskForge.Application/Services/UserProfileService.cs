@@ -26,6 +26,7 @@ namespace TaskForge.Application.Services
                 FullName = FullName
             };
             await _unitOfWork.UserProfiles.AddAsync(userProfile);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<int?> GetByUserIdAsync(string userId)
