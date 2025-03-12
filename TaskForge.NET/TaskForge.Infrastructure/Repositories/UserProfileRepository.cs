@@ -6,18 +6,18 @@ using System.Text;
 using System.Threading.Tasks;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Domain.Entities;
-using TaskForge.Infrastructure.common.Repositories;
+using TaskForge.Infrastructure.Repositories;
+using TaskForge.Infrastructure.Repositories.Common;
 using TaskForge.Infrastructure.Data;
+using TaskForge.Application.Interfaces.Services;
 
 namespace TaskForge.Infrastructure.Repositories
 {
     public class UserProfileRepository : Repository<UserProfile>, IUserProfileRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public UserProfileRepository(ApplicationDbContext context) : base(context)
+        public UserProfileRepository(ApplicationDbContext context, IUserContextService userContextService) : base(context, userContextService)
         {
-            _context = context;
+
         }
 
     }

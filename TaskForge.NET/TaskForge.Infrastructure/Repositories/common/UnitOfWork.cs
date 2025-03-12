@@ -6,8 +6,10 @@ using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Infrastructure.Data;
 using TaskForge.Infrastructure.Repositories;
 using System.Data;
+using TaskForge.Application.Interfaces.Services;
+using TaskForge.Application.Interfaces.Repositories.Common;
 
-namespace TaskForge.Infrastructure.common.Repositories
+namespace TaskForge.Infrastructure.Repositories.Common
 {
     public class UnitOfWork : IUnitOfWork
     {
@@ -19,14 +21,15 @@ namespace TaskForge.Infrastructure.common.Repositories
         public IProjectInvitationRepository ProjectInvitations { get; }
         public IUserProfileRepository UserProfiles { get; }
 
-        public UnitOfWork(ApplicationDbContext context)
+        public UnitOfWork(ApplicationDbContext context, IUserContextService userContextService)
         {
             _context = context;
-            Projects = new ProjectRepository(context);
-            Tasks = new TaskRepository(context);
-            ProjectMembers = new ProjectMemberRepository(context);
-            ProjectInvitations = new ProjectInvitationRepository(context);
-            UserProfiles = new UserProfileRepository(context);
+
+            Projects = new ProjectRepository(context, userContextService);
+            Tasks = new TaskRepository(context, userContextService);
+            ProjectMembers = new ProjectMemberRepository(context, userContextService);
+            ProjectInvitations = new ProjectInvitationRepository(context, userContextService);
+            UserProfiles = new UserProfileRepository(context, userContextService);
         }
 
         public async Task<int> SaveChangesAsync()

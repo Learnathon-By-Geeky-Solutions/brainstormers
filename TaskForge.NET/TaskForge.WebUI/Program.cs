@@ -8,8 +8,9 @@ using Serilog;
 using TaskForge.Infrastructure.Repositories;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Services;
-using TaskForge.Infrastructure.common.Repositories;
-using TaskForge.Application.Interfaces.Repositories.common;
+using TaskForge.Application.Interfaces.Repositories.Common;
+using TaskForge.Infrastructure.Repositories.Common;
+using TaskForge.Infrastructure.Services;
 
 namespace TaskForge.WebUI
 {
@@ -77,6 +78,7 @@ namespace TaskForge.WebUI
 
             // Register Generic Repository
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            builder.Services.AddScoped<IUserContextService, UserContextService>();
 
 
             builder.Services.AddScoped<IProjectRepository, ProjectRepository>();

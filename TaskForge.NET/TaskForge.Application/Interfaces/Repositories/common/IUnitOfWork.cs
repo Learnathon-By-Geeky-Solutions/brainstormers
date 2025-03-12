@@ -2,8 +2,9 @@
 using System;
 using System.Data;
 using System.Threading.Tasks;
+using TaskForge.Application.Interfaces.Repositories;
 
-namespace TaskForge.Application.Interfaces.Repositories
+namespace TaskForge.Application.Interfaces.Repositories.Common
 {
     public interface IUnitOfWork : IDisposable
     {
@@ -14,6 +15,6 @@ namespace TaskForge.Application.Interfaces.Repositories
         IUserProfileRepository UserProfiles { get; }
         Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted);
 
-        Task<int> SaveChangesAsync(); // Commit transactions
+        Task<int> SaveChangesAsync();
     }
 }

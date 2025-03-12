@@ -7,18 +7,18 @@ using System.Threading.Tasks;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
-using TaskForge.Infrastructure.common.Repositories;
+using TaskForge.Infrastructure.Repositories;
+using TaskForge.Infrastructure.Repositories.Common;
 using TaskForge.Infrastructure.Data;
+using TaskForge.Application.Interfaces.Services;
 
 namespace TaskForge.Infrastructure.Repositories
 {
     public class ProjectInvitationRepository : Repository<ProjectInvitation>, IProjectInvitationRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public ProjectInvitationRepository(ApplicationDbContext context) : base(context)
+        public ProjectInvitationRepository(ApplicationDbContext context, IUserContextService userContextService) : base(context, userContextService)
         {
-            _context = context;
+
         }
 
     }

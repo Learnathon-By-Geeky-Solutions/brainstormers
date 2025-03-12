@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Repositories;
+using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
@@ -50,7 +51,7 @@ namespace TaskForge.Application.Services
                 var projectId = project.Id;
 
                 // 2. Get the UserProfileId for CreatedBy
-                var userProfileId = (await _unitOfWork.UserProfiles.FindAsync(up => up.UserId == dto.CreatedBy))
+                var userProfileId = (await _unitOfWork.UserProfiles.FindByExpressionAsync(up => up.UserId == dto.CreatedBy))
                                    .Select(up => up.Id)
                                    .FirstOrDefault();
 
@@ -105,7 +106,7 @@ namespace TaskForge.Application.Services
             var userProfileId = await _userProfileService.GetByUserIdAsync(filter.UserId); // Safe access to non-nullable UserId
             if (userProfileId == 0) return Enumerable.Empty<ProjectWithRoleDto>(); // Return empty if user profile is not found
 
-            var projectMembers = await _unitOfWork.ProjectMembers.FindAsync(
+            var projectMembers = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
                 predicate: pm => pm.UserProfileId == userProfileId,
                 orderBy: null, // Optional: Add sorting if needed
                 includes: new Expression<Func<ProjectMember, object>>[] { pm => pm.Project }, // Correct include expression

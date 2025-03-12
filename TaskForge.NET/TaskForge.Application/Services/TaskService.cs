@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Repositories;
+using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
@@ -26,7 +27,7 @@ namespace TaskForge.Application.Services
 
         public async Task<IEnumerable<TaskItem>> Get(int projectId)
         {
-            return await _unitOfWork.Tasks.FindAsync(
+            return await _unitOfWork.Tasks.FindByExpressionAsync(
                 t => t.ProjectId == projectId,  // Filtering by ProjectId
                 orderBy: q => q.OrderBy(t => t.DueDate) // Example sorting
             );
@@ -41,8 +42,6 @@ namespace TaskForge.Application.Services
                 ProjectId = taskDto.ProjectId,
                 Status = TaskWorkflowStatus.ToDo,
                 Priority = TaskPriority.Medium,
-                CreatedDate = DateTime.UtcNow,
-                CreatedBy = taskDto.CreatedBy
             };
             if (taskDto.DueDate != null) taskItem.SetDueDate(taskDto.DueDate);
 

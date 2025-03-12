@@ -1,21 +1,20 @@
 ﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
-using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Domain.Entities;
-using TaskForge.Infrastructure.common.Repositories;
 using TaskForge.Infrastructure.Data;
+using TaskForge.Infrastructure.Repositories.Common;
+using TaskForge.Application.Interfaces.Services;
 
 namespace TaskForge.Infrastructure.Repositories
 {
     public class ProjectRepository : Repository<Project>, IProjectRepository
     {
-        private readonly ApplicationDbContext _context;
 
-        public ProjectRepository(ApplicationDbContext context) : base(context)
+        // Pass the context and IUserContextService to the base Repository class
+        public ProjectRepository(ApplicationDbContext context, IUserContextService userContextService) : base(context, userContextService)
         {
-            _context = context;
+
         }
+
     }
 }

@@ -1,28 +1,28 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using TaskForge.Application.Interfaces.Repositories;
-using TaskForge.Application.Interfaces.Repositories.common;
+using TaskForge.Application.Interfaces.Repositories.Common;
+using TaskForge.Application.Interfaces.Services;
+using TaskForge.Domain.Entities.Common;
 using TaskForge.Infrastructure.Data;
+using TaskForge.Infrastructure.Services;
 
-namespace TaskForge.Infrastructure.common.Repositories
+namespace TaskForge.Infrastructure.Repositories.Common
 {
-    public class Repository<T> : IRepository<T> where T : class
+    public class Repository<T> : IRepository<T> where T : BaseEntity
     {
-        private readonly ApplicationDbContext _context;
         private readonly DbSet<T> _dbSet;
+        private readonly ApplicationDbContext _context;
+        private readonly IUserContextService _userContextService;
 
-        public Repository(ApplicationDbContext context)
+        public Repository(ApplicationDbContext context, IUserContextService userContextService)
         {
-            _context = context;
             _dbSet = context.Set<T>();
-        }
-
-        public async Task<T?> GetByIdAsync(int id)
-        {
-            return await _dbSet.FindAsync(id);
+            _context = context;
+            _userContextService = userContextService;
         }
 
         public async Task<IEnumerable<T>> GetAllAsync()
@@ -30,27 +30,80 @@ namespace TaskForge.Infrastructure.common.Repositories
             return await _dbSet.ToListAsync();
         }
 
+        public async Task<T?> GetByIdAsync(int id)
+        {
+            return await _dbSet.FindAsync(id);
+        }
+
         public async Task AddAsync(T entity)
         {
+            entity.CreatedDate = DateTime.UtcNow;
+            entity.CreatedBy = await _userContextService.GetCurrentUserIdAsync();
             await _dbSet.AddAsync(entity);
         }
 
-        public void Update(T entity)
+        public async Task UpdateAsync(T entity)
         {
+            entity.UpdatedDate = DateTime.UtcNow;
+            entity.UpdatedBy = await _userContextService.GetCurrentUserIdAsync();
             _dbSet.Update(entity);
         }
 
-        public void Remove(T entity)
+        public async Task DeleteByIdAsync(int id)
         {
-            _dbSet.Remove(entity);
+            var entity = await _dbSet.FindAsync(id);
+            if (entity != null)
+            {
+                entity.IsDeleted = true;
+                entity.UpdatedBy = await _userContextService.GetCurrentUserIdAsync();
+                entity.UpdatedDate = DateTime.UtcNow;
+                _dbSet.Update(entity);
+            }
+        }
+
+        public async Task DeleteByIdsAsync(IEnumerable<int> ids)
+        {
+            var entities = await _dbSet.Where(e => ids.Contains(e.Id)).ToListAsync();
+            foreach (var entity in entities)
+            {
+                entity.IsDeleted = true;
+                entity.UpdatedBy = await _userContextService.GetCurrentUserIdAsync();
+                entity.UpdatedDate = DateTime.UtcNow;
+                _dbSet.Update(entity);
+            }
+        }
+
+
+        public async Task RestoreByIdAsync(int id)
+        {
+            var entity = await _dbSet.FindAsync(id);
+            if (entity != null)
+            {
+                entity.IsDeleted = false;
+                entity.UpdatedBy = await _userContextService.GetCurrentUserIdAsync();
+                entity.UpdatedDate = DateTime.UtcNow;
+                _dbSet.Update(entity);
+            }
+        }
+
+        public async Task RestoreByIdsAsync(IEnumerable<int> ids)
+        {
+            var entities = await _dbSet.Where(e => ids.Contains(e.Id)).ToListAsync();
+            foreach (var entity in entities)
+            {
+                entity.IsDeleted = false;
+                entity.UpdatedBy = await _userContextService.GetCurrentUserIdAsync();
+                entity.UpdatedDate = DateTime.UtcNow;
+                _dbSet.Update(entity);
+            }
         }
 
         public async Task<bool> ExistsAsync(int id)
         {
-            return await _dbSet.AnyAsync(e => EF.Property<int>(e, "Id") == id);
+            return await _dbSet.AnyAsync(e => e.Id == id);
         }
 
-        public async Task<IEnumerable<T>> FindAsync(
+        public async Task<IEnumerable<T>> FindByExpressionAsync(
             Expression<Func<T, bool>> predicate,
             Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
             Expression<Func<T, object>>[]? includes = null,
@@ -59,7 +112,6 @@ namespace TaskForge.Infrastructure.common.Repositories
         {
             IQueryable<T> query = _dbSet;
 
-            // Apply includes
             if (includes != null)
             {
                 foreach (var include in includes)
@@ -68,19 +120,16 @@ namespace TaskForge.Infrastructure.common.Repositories
                 }
             }
 
-            // Apply predicate (filter)
             if (predicate != null)
             {
                 query = query.Where(predicate);
             }
 
-            // Apply sorting
             if (orderBy != null)
             {
                 query = orderBy(query);
             }
 
-            // Apply pagination
             if (skip.HasValue)
             {
                 query = query.Skip(skip.Value);

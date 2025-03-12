@@ -1,22 +1,28 @@
-﻿using System.Linq.Expressions;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
+using TaskForge.Domain.Entities.Common;
 
-namespace TaskForge.Application.Interfaces.Repositories.common
+namespace TaskForge.Application.Interfaces.Repositories.Common
 {
-    public interface IRepository<T> where T : class
+    public interface IRepository<T> where T : BaseEntity
     {
-        Task<T?> GetByIdAsync(int id);
         Task<IEnumerable<T>> GetAllAsync();
+        Task<IEnumerable<T>> FindByExpressionAsync(
+           Expression<Func<T, bool>> predicate,
+           Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+           Expression<Func<T, object>>[]? includes = null,
+           int? take = null,
+           int? skip = null);
+        Task<T?> GetByIdAsync(int id);
         Task AddAsync(T entity);
-        void Update(T entity);
-        void Remove(T entity);
+        Task UpdateAsync(T entity);
+        Task DeleteByIdAsync(int id);
+        Task DeleteByIdsAsync(IEnumerable<int> ids);
+        Task RestoreByIdAsync(int id);
+        Task RestoreByIdsAsync(IEnumerable<int> ids);
         Task<bool> ExistsAsync(int id);
-
-        Task<IEnumerable<T>> FindAsync(
-            Expression<Func<T, bool>> predicate,      // WHERE condition
-            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, // ORDER BY
-            Expression<Func<T, object>>[]? includes = null,                // Include navigation properties
-            int? take = null,                         // Pagination
-            int? skip = null                          // Pagination
-        );
+       
     }
 }
