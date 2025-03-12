@@ -86,7 +86,7 @@ namespace TaskForge.Application.Services
                    .Select(status => new SelectListItem
                    {
                        Value = status.ToString(),
-                       Text = status.ToString()
+                       Text = status.GetDisplayName().ToString()
                    }));
         }
 
@@ -106,21 +106,8 @@ namespace TaskForge.Application.Services
             var userProfileId = await _userProfileService.GetByUserIdAsync(filter.UserId); // Safe access to non-nullable UserId
             if (userProfileId == 0) return Enumerable.Empty<ProjectWithRoleDto>(); // Return empty if user profile is not found
 
-            var projectMembers = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
-                predicate: pm => pm.UserProfileId == userProfileId,
-                orderBy: null, // Optional: Add sorting if needed
-                includes: new Expression<Func<ProjectMember, object>>[] { pm => pm.Project }, // Correct include expression
-                take: null, // Optional: Add pagination if needed
-                skip: null  // Optional: Add pagination if needed
-            );
-
-
-            if (projectMembers == null || !projectMembers.Any())
-            {
-                return Enumerable.Empty<ProjectWithRoleDto>(); // No projects found
-            }
-
             Expression<Func<ProjectMember, bool>> _predicate = pm => 
+                    pm.UserProfileId == userProfileId &&
                     (string.IsNullOrWhiteSpace(filter.Title) || pm.Project.Title.Contains(filter.Title)) &&
                     (!filter.Status.HasValue || pm.Project.Status == filter.Status.Value) &&
                     (!filter.Role.HasValue || pm.Role == filter.Role.Value) &&
@@ -128,7 +115,6 @@ namespace TaskForge.Application.Services
                     (!filter.StartDateTo.HasValue || pm.Project.StartDate.Date <= filter.StartDateTo.Value) &&
                     (!filter.EndDateFrom.HasValue || (pm.Project.EndDate.HasValue && pm.Project.EndDate.Value.Date >= filter.EndDateFrom.Value)) &&
                     (!filter.EndDateTo.HasValue || (pm.Project.EndDate.HasValue && pm.Project.EndDate.Value.Date <= filter.EndDateTo.Value));
-
 
             // Define the sorting logic
             Func<IQueryable<ProjectMember>, IOrderedQueryable<ProjectMember>> _orderBy = query =>

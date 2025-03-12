@@ -116,8 +116,8 @@ namespace TaskForge.Application.Services
                 invitation.DeclinedDate = DateTime.UtcNow;
                 invitation.AcceptedDate = null;
             }
-            
-            _unitOfWork.ProjectInvitations.UpdateAsync(invitation);
+
+            await _unitOfWork.ProjectInvitations.UpdateAsync(invitation);
             await _unitOfWork.SaveChangesAsync();
         }
     }

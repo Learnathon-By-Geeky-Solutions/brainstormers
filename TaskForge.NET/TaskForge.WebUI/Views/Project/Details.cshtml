@@ -1,4 +1,5 @@
 ﻿@model TaskForge.WebUI.Models.ProjectDetailsViewModel
+@using TaskForge.Domain.Enums
 
 @{
     ViewData["Title"] = "Project Details - " + Model.Project.Title;
@@ -14,7 +15,7 @@
 <div class="mb-4">
     <h4>@Model.Project.Title</h4>
 
-    <p><strong>Status:</strong> @Model.Project.Status</p>
+    <p><strong>Status:</strong> @Model.Project.Status.GetDisplayName()</p>
 
     <!-- Handle Description with null check -->
     <p><strong>Description:</strong> @(string.IsNullOrEmpty(Model.Project.Description) ? "No description available." : Model.Project.Description)</p>
@@ -43,7 +44,7 @@
             {
                 <tr class="text-center">
                     <td>@task.Title</td>
-                    <td><span class="badge bg-secondary">@task.Status</span></td>
+                    <td><span class="badge bg-secondary">@task.Status.GetDisplayName()</span></td>
                     <td>@(task.DueDate?.ToString("yyyy-MM-dd") ?? "No Due Date")</td>
                 </tr>
             }

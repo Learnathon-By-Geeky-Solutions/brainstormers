@@ -23,7 +23,7 @@
                 @foreach (ProjectStatus status in Enum.GetValues(typeof(ProjectStatus)))
                 {
                     <option value="@((int)status)" selected="@(Model.Filter?.Status == status ? "selected" : null)">
-                        @status
+                        @status.GetDisplayName()
                     </option>
                 }
             </select>
@@ -56,7 +56,7 @@
                 @foreach (ProjectRole Role in Enum.GetValues(typeof(ProjectRole)))
                 {
                     <option value="@((int)Role)" selected="@(Model.Filter?.Role == Role ? "selected" : null)">
-                        @Role
+                        @Role.GetDisplayName()
                     </option>
                 }
             </select>
@@ -115,7 +115,7 @@
                 <tr class="text-center">
                     <td>@(serial++)</td>
                     <td>@projectMember.Title</td>
-                    <td>@projectMember.Status</td>
+                    <td>@projectMember.Status?.GetDisplayName()</td>
                     <td>@projectMember.UserRoleInThisProject</td>
                     <td>@projectMember.StartDate?.ToString("yyyy-MM-dd")</td>
                     <td>@projectMember.EndDate?.ToString("yyyy-MM-dd")</td>

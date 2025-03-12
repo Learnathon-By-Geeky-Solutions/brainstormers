@@ -32,34 +32,44 @@ namespace TaskForge.Application.Services
 
         public async Task<ProjectMemberDto?> GetUserProjectRoleAsync(string userId, int projectId)
         {
-            var projectMemberDto = (await _unitOfWork.ProjectMembers.FindByExpressionAsync(
-                    pm => pm.UserProfile.UserId == userId && pm.ProjectId == projectId,
-                    includes: new Expression<Func<ProjectMember, object>>[] { pm => pm.UserProfile, pm => pm.UserProfile.User }))
-                    .Select(pm => new ProjectMemberDto
-                    {
-                        Id = pm.Id,
-                        Name = pm.UserProfile.FullName ?? "Unknown User", // Fallback if FullName is null
-                        Email = pm.UserProfile.User?.UserName ?? "No Email", // Safe null handling
-                        Role = pm.Role
-                    }).FirstOrDefault();
+            var projectMember = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
+                pm => pm.UserProfile.UserId == userId && pm.ProjectId == projectId,
+                includes: new Expression<Func<ProjectMember, object>>[]
+                {
+                    pm => pm.UserProfile,
+                    pm => pm.UserProfile.User
+                });
 
+            var member = projectMember.FirstOrDefault();
+            if (member == null)
+                return null;
 
-            return projectMemberDto;
+            return new ProjectMemberDto
+            {
+                Id = member.Id,
+                Name = member.UserProfile.FullName ?? "Unknown User",
+                Email = member.UserProfile.User?.UserName ?? "No Email",
+                Role = member.Role
+            };
         }
 
         public async Task<List<ProjectMemberDto>> GetProjectMembersAsync(int projectId)
         {
-            var projectMemberDtoList = (await _unitOfWork.ProjectMembers.FindByExpressionAsync(pm => pm.ProjectId == projectId))
-                                        .Select(pm => new ProjectMemberDto
-                                        {
-                                            Id = pm.Id,
-                                            Name = pm.UserProfile.FullName ?? "Unknown User", // Fallback if FullName is null
-                                            Email = pm.UserProfile.User?.UserName ?? "No Email", // Safe null handling
-                                            Role = pm.Role
-                                        })
-                                        .ToList();
+            var projectMembers = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
+                pm => pm.ProjectId == projectId,
+                includes: new Expression<Func<ProjectMember, object>>[]
+                {
+                    pm => pm.UserProfile,
+                    pm => pm.UserProfile.User
+                });
 
-            return projectMemberDtoList;
+            return projectMembers.Select(pm => new ProjectMemberDto
+            {
+                Id = pm.Id,
+                Name = pm.UserProfile.FullName ?? "Unknown User",
+                Email = pm.UserProfile.User?.UserName ?? "No Email",
+                Role = pm.Role
+            }).ToList();
         }
 
         public async Task RemoveAsync(int memberId)
