@@ -120,56 +120,51 @@ namespace TaskForge.Application.Services
                 return Enumerable.Empty<ProjectWithRoleDto>(); // No projects found
             }
 
-            // Apply filtering
-            var filteredProjects = projectMembers
-                .Where(pm =>
+            Expression<Func<ProjectMember, bool>> _predicate = pm => 
                     (string.IsNullOrWhiteSpace(filter.Title) || pm.Project.Title.Contains(filter.Title)) &&
                     (!filter.Status.HasValue || pm.Project.Status == filter.Status.Value) &&
                     (!filter.Role.HasValue || pm.Role == filter.Role.Value) &&
                     (!filter.StartDateFrom.HasValue || pm.Project.StartDate.Date >= filter.StartDateFrom.Value) &&
                     (!filter.StartDateTo.HasValue || pm.Project.StartDate.Date <= filter.StartDateTo.Value) &&
                     (!filter.EndDateFrom.HasValue || (pm.Project.EndDate.HasValue && pm.Project.EndDate.Value.Date >= filter.EndDateFrom.Value)) &&
-                    (!filter.EndDateTo.HasValue || (pm.Project.EndDate.HasValue && pm.Project.EndDate.Value.Date <= filter.EndDateTo.Value))
-                )
-                .Select(pm => new ProjectWithRoleDto
-                {
-                    ProjectId = pm.Project.Id,
-                    Title = pm.Project.Title,
-                    Status = pm.Project.Status,
-                    StartDate = pm.Project.StartDate,
-                    EndDate = pm.Project.EndDate,
-                    UserRoleInThisProject = pm.Role 
-                });
+                    (!filter.EndDateTo.HasValue || (pm.Project.EndDate.HasValue && pm.Project.EndDate.Value.Date <= filter.EndDateTo.Value));
 
 
             // Define the sorting logic
-            Func<IQueryable<ProjectWithRoleDto>, IOrderedQueryable<ProjectWithRoleDto>> _orderBy = query =>
+            Func<IQueryable<ProjectMember>, IOrderedQueryable<ProjectMember>> _orderBy = query =>
             {
                 var sortOrder = filter.SortOrder?.ToLower() ?? "asc"; // Default to ascending order if SortOrder is null
 
                 return filter.SortBy?.ToLower() switch
                 {
-                    "title" => sortOrder == "asc" ? query.OrderBy(p => p.Title) : query.OrderByDescending(p => p.Title),
-                    "status" => sortOrder == "asc" ? query.OrderBy(p => p.Status) : query.OrderByDescending(p => p.Status),
-                    "role" => sortOrder == "asc" ? query.OrderBy(p => p.UserRoleInThisProject) : query.OrderByDescending(p => p.UserRoleInThisProject),
-                    "startdate" => sortOrder == "asc" ? query.OrderBy(p => p.StartDate) : query.OrderByDescending(p => p.StartDate),
-                    "enddate" => sortOrder == "asc" ? query.OrderBy(p => p.EndDate) : query.OrderByDescending(p => p.EndDate),
-                    _ => query.OrderBy(p => p.ProjectId) // Default sorting by ID
+                    "title" => sortOrder == "asc" ? query.OrderBy(pm => pm.Project.Title) : query.OrderByDescending(pm => pm.Project.Title),
+                    "status" => sortOrder == "asc" ? query.OrderBy(pm => pm.Project.Status) : query.OrderByDescending(pm => pm.Project.Status),
+                    "role" => sortOrder == "asc" ? query.OrderBy(pm => pm.Role) : query.OrderByDescending(pm => pm.Role),
+                    "startdate" => sortOrder == "asc" ? query.OrderBy(pm => pm.Project.StartDate) : query.OrderByDescending(pm => pm.Project.StartDate),
+                    "enddate" => sortOrder == "asc" ? query.OrderBy(pm => pm.Project.EndDate) : query.OrderByDescending(pm => pm.Project.EndDate),
+                    _ => query.OrderBy(pm => pm.ProjectId) // Default sorting by ID
                 };
             };
 
-            // Apply sorting
-            return filter.SortBy?.ToLower() switch
+            var filteredProject = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
+                predicate: _predicate,
+                orderBy: (Func<IQueryable<ProjectMember>, IOrderedQueryable<ProjectMember>>?)_orderBy,
+                includes: new Expression<Func<ProjectMember, object>>[] { pm => pm.Project },
+                take: null,
+                skip: null
+            );
+
+
+            var projectWithRoleDtos = filteredProject.Select(pm => new ProjectWithRoleDto
             {
-                "title" => filter.SortOrder == "desc" ? filteredProjects.OrderByDescending(p => p.Title) : filteredProjects.OrderBy(p => p.Title),
-                "status" => filter.SortOrder == "desc" ? filteredProjects.OrderByDescending(p => p.Status) : filteredProjects.OrderBy(p => p.Status),
-                "role" => filter.SortOrder == "desc" ? filteredProjects.OrderByDescending(p => p.UserRoleInThisProject) : filteredProjects.OrderBy(p => p.UserRoleInThisProject),
-                "startdate" => filter.SortOrder == "desc" ? filteredProjects.OrderByDescending(p => p.StartDate) : filteredProjects.OrderBy(p => p.StartDate),
-                "enddate" => filter.SortOrder == "desc" ? filteredProjects.OrderByDescending(p => p.EndDate) : filteredProjects.OrderBy(p => p.EndDate),
-                _ => filteredProjects.OrderBy(p => p.ProjectId) // Default sorting by ID
-            };
+                ProjectId = pm.Project.Id,
+                Title = pm.Project.Title,
+                Status = pm.Project.Status,
+                StartDate = pm.Project.StartDate,
+                EndDate = pm.Project.EndDate,
+                UserRoleInThisProject = pm.Role
+            });
+            return projectWithRoleDtos;
         }
-
-
     }
 }
