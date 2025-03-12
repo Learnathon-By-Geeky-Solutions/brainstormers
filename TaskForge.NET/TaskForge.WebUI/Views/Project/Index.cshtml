@@ -49,7 +49,7 @@
             <input name="EndDateTo" type="date" value="@Model.Filter?.EndDateTo?.ToString("yyyy-MM-dd")" class="form-control" />
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-2">
             <label for="Role" class="form-label">Role</label>
             <select name="Role" class="form-select">
                 <option value="">All</option>
@@ -64,6 +64,10 @@
 
         <div class="col-md-2">
             <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+
+        <div class="col-md-2">
+            <button type="button" class="btn btn-secondary w-100" id="clearFilters">Clear</button>
         </div>
     </form>
 </div>
@@ -135,4 +139,5 @@
 
 @section Scripts {
     <script src="~/js/sortTable.js"></script>
+    <script src="~/js/clearProjectFilter.js"></script>
 }

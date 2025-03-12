@@ -29,7 +29,7 @@ namespace TaskForge.Domain.Entities
         public virtual ICollection<TaskAssignment> AssignedUsers { get; set; } = new List<TaskAssignment>();
         public void SetDueDate(DateTime? dueDate)
         {
-            if (dueDate.HasValue && dueDate < CreatedDate)
+            if (dueDate.HasValue && dueDate?.Date < CreatedDate.Date)
             {
                 throw new ArgumentException("DueDate cannot be earlier than the CreatedDate.");
             }

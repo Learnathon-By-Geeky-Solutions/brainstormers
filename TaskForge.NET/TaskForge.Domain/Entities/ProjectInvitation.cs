@@ -30,6 +30,6 @@ namespace TaskForge.Domain.Entities
         public DateTime? DeclinedDate { get; set; }
 
         // The role assigned to the invited user (if they accept the invitation)
-        public ProjectRole AssignedRole { get; set; } = ProjectRole.Read; // Default role can be "Read"
+        public ProjectRole AssignedRole { get; set; } = ProjectRole.Viewer; // Default role can be "Read"
     }
 }

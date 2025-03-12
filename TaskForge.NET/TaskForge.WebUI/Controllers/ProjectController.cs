@@ -53,7 +53,7 @@ namespace TaskForge.WebUI.Controllers
             var viewModel = new ProjectListViewModel
             {
                 Filter = filter,
-                ProjectWithRoleDto = (IEnumerable<ProjectWithRoleDto>)projects // Project List
+                ProjectWithRoleDto = projects // Project List
             };
 
             return View(viewModel);
