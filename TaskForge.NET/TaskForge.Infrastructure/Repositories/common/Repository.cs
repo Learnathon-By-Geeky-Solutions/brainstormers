@@ -15,24 +15,22 @@ namespace TaskForge.Infrastructure.Repositories.Common
     public class Repository<T> : IRepository<T> where T : BaseEntity
     {
         private readonly DbSet<T> _dbSet;
-        private readonly ApplicationDbContext _context;
         private readonly IUserContextService _userContextService;
 
         public Repository(ApplicationDbContext context, IUserContextService userContextService)
         {
             _dbSet = context.Set<T>();
-            _context = context;
             _userContextService = userContextService;
         }
 
         public async Task<IEnumerable<T>> GetAllAsync()
         {
-            return await _dbSet.ToListAsync();
+            return await _dbSet.Where(e => !e.IsDeleted).ToListAsync();
         }
 
         public async Task<T?> GetByIdAsync(int id)
         {
-            return await _dbSet.FindAsync(id);
+            return await _dbSet.FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
         }
 
         public async Task AddAsync(T entity)
@@ -77,7 +75,7 @@ namespace TaskForge.Infrastructure.Repositories.Common
         public async Task RestoreByIdAsync(int id)
         {
             var entity = await _dbSet.FindAsync(id);
-            if (entity != null)
+            if (entity != null && entity.IsDeleted)
             {
                 entity.IsDeleted = false;
                 entity.UpdatedBy = await _userContextService.GetCurrentUserIdAsync();
@@ -88,7 +86,7 @@ namespace TaskForge.Infrastructure.Repositories.Common
 
         public async Task RestoreByIdsAsync(IEnumerable<int> ids)
         {
-            var entities = await _dbSet.Where(e => ids.Contains(e.Id)).ToListAsync();
+            var entities = await _dbSet.Where(e => ids.Contains(e.Id) && e.IsDeleted).ToListAsync();
             foreach (var entity in entities)
             {
                 entity.IsDeleted = false;
@@ -100,7 +98,7 @@ namespace TaskForge.Infrastructure.Repositories.Common
 
         public async Task<bool> ExistsAsync(int id)
         {
-            return await _dbSet.AnyAsync(e => e.Id == id);
+            return await _dbSet.AnyAsync(e => e.Id == id && !e.IsDeleted);
         }
 
         public async Task<IEnumerable<T>> FindByExpressionAsync(
@@ -110,7 +108,7 @@ namespace TaskForge.Infrastructure.Repositories.Common
             int? take = null,
             int? skip = null)
         {
-            IQueryable<T> query = _dbSet;
+            IQueryable<T> query = _dbSet.Where(e => !e.IsDeleted);
 
             if (includes != null)
             {
