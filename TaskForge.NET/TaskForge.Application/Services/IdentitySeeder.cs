@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using TaskForge.Application.Interfaces.Services;
 
 namespace TaskForge.Application.Services
 {
@@ -13,13 +9,20 @@ namespace TaskForge.Application.Services
     {
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly IUserProfileService _userProfileService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<IdentitySeeder> _logger;
 
-        public IdentitySeeder(RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager, IConfiguration configuration, ILogger<IdentitySeeder> logger)
+        public IdentitySeeder(
+            RoleManager<IdentityRole> roleManager,
+            UserManager<IdentityUser> userManager,
+            IUserProfileService userProfileService,
+            IConfiguration configuration,
+            ILogger<IdentitySeeder> logger)
         {
             _roleManager = roleManager;
             _userManager = userManager;
+            _userProfileService = userProfileService;
             _configuration = configuration;
             _logger = logger;
         }
@@ -62,6 +65,26 @@ namespace TaskForge.Application.Services
                     _logger.LogInformation("Super admin user created successfully.");
                 }
             }
+            else
+            {
+                _logger.LogInformation("Super admin user already exists.");
+            }
+
+            var adminUserProfileId = await _userProfileService.GetByUserIdAsync(adminUser.Id);
+            if (adminUserProfileId == 0)
+            {
+                // Create UserProfile for Super Admin
+
+                await _userProfileService.CreateUserProfileAsync(adminUser.Id, "Super Admin");
+
+                _logger.LogInformation("Super admin UserProfile created successfully.");
+                
+            }
+            else
+            {
+                _logger.LogInformation("Super admin UserProfile already exists.");
+            }
+
         }
     }
 

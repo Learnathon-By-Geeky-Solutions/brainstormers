@@ -1,0 +1,248 @@
+﻿@using TaskForge.Domain.Enums
+@model TaskForge.WebUI.Models.ManageMembersViewModel
+
+@{
+    ViewData["Title"] = "Project Members - " + Model.ProjectTitle;
+}
+
+<div class="w-100 card border-0 p-4">
+    <div class="card-header bg-primary bg-gradient ml-0 py-3">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h2 class="text-white py-2">Project Members</h2>
+            </div>
+        </div>
+    </div>
+    <div class="card-body border p-4">
+
+        <!-- Project Info -->
+        <div class="mb-4">
+	        <div class="card">
+		        <div class="card-body">
+			        <h5 class="card-title">Project: @Model.ProjectTitle</h5>
+			        <p class="card-text">@Model.ProjectDescription</p>
+		        </div>
+	        </div>
+        </div>
+        
+        <!-- Invite Button (Triggers Modal) -->
+        <div class ="row align-items-center mb-3">
+	        <div class="col-sm-8 text-start">
+		        <!-- Success Message (if any) -->
+		        @if (TempData["SuccessMessage"] != null)
+		        {
+			        <div class="alert alert-success alert-dismissible fade show mb-0" role="alert" id="successAlert">
+				        <i class="bi bi-check-circle me-2"></i> 
+				        @TempData["SuccessMessage"]
+				        <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+			        </div>
+		        }
+		        <!-- Error Message (if any) -->
+		        @if (TempData["ErrorMessage"] != null)
+		        {
+			        <div class="alert alert-danger alert-dismissible fade show mb-0" role="alert" id="errorAlert">
+				        <i class="bi bi-check-circle me-2"></i>
+				        @TempData["ErrorMessage"]
+				        <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+			        </div>
+		        }
+	        </div>
+            
+	        <div class="col-sm-4 text-end">
+		        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#inviteModal">
+			        <i class="bi bi-person-plus"></i> Invite Member
+		        </button>
+	        </div>
+        </div>
+
+        <!-- Project Members & Invitations -->
+        <ul class="nav nav-tabs" id="projectTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="members-tab" data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab">Current Members</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="invitations-tab" data-bs-toggle="tab" data-bs-target="#invitations" type="button" role="tab">Invitations</button>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3" id="projectTabsContent">
+            <!-- Current Members Section -->
+            <div class="tab-pane fade show active" id="members" role="tabpanel">
+                <h4 class="mb-3">Current Members</h4>
+                <table class="table table-bordered table-hover">
+                    <thead class="table-dark">
+                        <tr class="text-center">
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ProjectMembers != null && Model.ProjectMembers.Any())
+                        {
+                            var serial = 1;
+                            foreach (var member in Model.ProjectMembers)
+                            {
+                                <tr class="text-center">
+                                    <td>@(serial++)</td>
+                                    <td>@member.Name</td>
+                                    <td>@member.Email</td>
+                                    <td>@member.Role</td>
+                                    <td>
+                                        @if (member.Email != User.Identity.Name)
+                                        {
+	                                        <form asp-action="RemoveMember" asp-controller="Project" method="post"
+	                                              class="d-inline" onsubmit="return confirmAction('remove this member');">
+		                                        @Html.AntiForgeryToken()
+		                                        <input type="hidden" name="id" value="@member.Id"/>
+		                                        <button type="submit" class="btn btn-danger btn-sm">
+			                                        <i class="bi bi-x-circle"></i> Cancel
+		                                        </button>
+	                                        </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center">No members found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Project Invitations Section -->
+            <div class="tab-pane fade" id="invitations" role="tabpanel">
+                <h4 class="mb-3">Pending Invitations</h4>
+                <table class="table table-bordered table-hover">
+                    <thead class="table-dark">
+                        <tr class="text-center">
+                            <th>#</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Sent Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ProjectInvitations != null && Model.ProjectInvitations.Any())
+                        {
+                            var serial = 1;
+                            foreach (var invitation in Model.ProjectInvitations)
+                            {
+                                <tr class="text-center">
+                                    <td>@(serial++)</td>
+                                    <td>@invitation.InvitedUserEmail</td>
+                                    <td>@invitation.AssignedRole.ToString()</td>
+                                    <td>@invitation.InvitationSentDate.ToString("dd/MM/yyyy hh:mm:ss tt")</td>
+                                    <td>
+	                                    @switch (invitation.Status)
+	                                    {
+		                                    case InvitationStatus.Pending:
+			                                    <span class="badge bg-warning text-dark">Pending</span>
+			                                    break;
+		                                    case InvitationStatus.Accepted:
+			                                    <span class="badge bg-success">Accepted</span>
+			                                    break;
+		                                    case InvitationStatus.Canceled:
+			                                    <span class="badge bg-danger">Canceled</span>
+			                                    break;
+		                                    case InvitationStatus.Declined:
+			                                    <span class="badge bg-secondary">Declined</span>
+			                                    break;
+		                                    default:
+			                                    <span class="badge bg-light text-dark">Unknown</span>
+			                                    break;
+	                                    }
+                                    </td>
+
+                                    <td>
+	                                    @if (invitation.Status == InvitationStatus.Pending)
+	                                    {
+		                                    <form asp-action="CancelInvitation" asp-controller="Project" method="post"
+                                                  class="d-inline" onsubmit="return confirmAction('cancel this invitation');">
+			                                    @Html.AntiForgeryToken()
+			                                    <input type="hidden" name="id" value="@invitation.Id" />
+			                                    <button type="submit" class="btn btn-danger btn-sm">
+				                                    <i class="bi bi-x-circle"></i> Cancel
+			                                    </button>
+		                                    </form>
+	                                    }
+                                        else
+                                        {
+                                            <a class="btn btn-danger btn-sm disabled">
+                                                <i class="bi bi-x-circle"></i> Cancel
+                                            </a>
+	                                    }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="105" class="text-center">No invitations found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Modal -->
+<div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inviteModalLabel">Send Project Invitation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+	            <form id="inviteForm" asp-controller="ProjectInvitation" asp-action="Create" method="post">
+		            <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
+
+                    <div class="mb-3">
+                        <label for="InvitedUserEmail" class="form-label">Username</label>
+                        <input asp-for="InvitedUserEmail" class="form-control" />
+                        <span asp-validation-for="InvitedUserEmail" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+	                    <label for="AssignedRole" class="form-label">Role</label>
+	                    <select asp-for="AssignedRole" class="form-select" asp-items="Html.GetEnumSelectList<ProjectRole>()"></select>
+	                    <span asp-validation-for="AssignedRole" class="text-danger"></span>
+                    </div>
+
+                    <!-- Submit and Cancel Buttons -->
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-check-circle"></i> Send Invitation
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <script type="text/javascript">
+        function confirmAction(action) {
+            var message = `Are you sure you want to ${action}?`;
+            return confirm(message);
+        }
+    </script>
+}

@@ -18,6 +18,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using TaskForge.Application.Interfaces.Repositories;
+using TaskForge.Application.Interfaces.Services;
 
 namespace TaskForge.WebUI.Areas.Identity.Pages.Account
 {
@@ -29,13 +31,15 @@ namespace TaskForge.WebUI.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<IdentityUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly IUserProfileService _userProfileService;
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
             IUserStore<IdentityUser> userStore,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            IUserProfileService userProfileService)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -43,6 +47,7 @@ namespace TaskForge.WebUI.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _userProfileService = userProfileService;
         }
 
         /// <summary>
@@ -122,9 +127,18 @@ namespace TaskForge.WebUI.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("User created a new account with password.");
 
+
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+                    await _userProfileService.CreateUserProfileAsync(userId, Input.Email.Split('@')[0]);
+
+
+                    // Optionally: Add user to roles
+                    await _userManager.AddToRoleAsync(user, "User"); // Ensure the role exists
+
+
                     var callbackUrl = Url.Page(
                         "/Account/ConfirmEmail",
                         pageHandler: null,

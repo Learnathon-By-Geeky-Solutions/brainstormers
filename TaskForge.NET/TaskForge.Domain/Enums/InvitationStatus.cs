@@ -11,6 +11,6 @@ namespace TaskForge.Domain.Enums
         Pending = 0,    // Invitation is pending (not yet accepted or declined)
         Accepted = 1,   // Invitation has been accepted
         Declined = 2,   // Invitation has been declined
-        Expired = 3     // Optional: if the invitation expires after a certain period
+        Canceled = 3    // Invitation has been canceled
     }
 }

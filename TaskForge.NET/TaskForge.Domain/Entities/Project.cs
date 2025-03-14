@@ -18,12 +18,13 @@ namespace TaskForge.Domain.Entities
         [MaxLength(1000)]
         public string? Description { get; set; }
 
-        public DateTime StartDate { get; private set; } = DateTime.UtcNow;
+        public DateTime StartDate { get; set; } = DateTime.UtcNow;
         public DateTime? EndDate { get; private set; }
 
         public ProjectStatus Status { get; set; } = ProjectStatus.NotStarted; // Enum for status
 
         public virtual ICollection<ProjectMember> Members { get; set; } = new List<ProjectMember>();
+        public virtual ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>(); 
 
 
 

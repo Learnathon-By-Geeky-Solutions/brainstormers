@@ -363,6 +363,100 @@ namespace TaskForge.Infrastructure.Migrations
                     b.ToTable("ProjectMembers", (string)null);
                 });
 
+            modelBuilder.Entity("TaskForge.Domain.Entities.TaskAssignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("TaskItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserProfileId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskItemId");
+
+                    b.HasIndex("UserProfileId");
+
+                    b.ToTable("TaskAssignments", (string)null);
+                });
+
+            modelBuilder.Entity("TaskForge.Domain.Entities.TaskItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("TaskItems", (string)null);
+                });
+
             modelBuilder.Entity("TaskForge.Domain.Entities.UserProfile", b =>
                 {
                     b.Property<int>("Id")
@@ -514,7 +608,7 @@ namespace TaskForge.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("TaskForge.Domain.Entities.UserProfile", "UserProfile")
-                        .WithMany()
+                        .WithMany("Projects")
                         .HasForeignKey("UserProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -522,6 +616,36 @@ namespace TaskForge.Infrastructure.Migrations
                     b.Navigation("Project");
 
                     b.Navigation("UserProfile");
+                });
+
+            modelBuilder.Entity("TaskForge.Domain.Entities.TaskAssignment", b =>
+                {
+                    b.HasOne("TaskForge.Domain.Entities.TaskItem", "TaskItem")
+                        .WithMany("AssignedUsers")
+                        .HasForeignKey("TaskItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TaskForge.Domain.Entities.UserProfile", "UserProfile")
+                        .WithMany("AssignedTasks")
+                        .HasForeignKey("UserProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TaskItem");
+
+                    b.Navigation("UserProfile");
+                });
+
+            modelBuilder.Entity("TaskForge.Domain.Entities.TaskItem", b =>
+                {
+                    b.HasOne("TaskForge.Domain.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("TaskForge.Domain.Entities.UserProfile", b =>
@@ -538,6 +662,18 @@ namespace TaskForge.Infrastructure.Migrations
             modelBuilder.Entity("TaskForge.Domain.Entities.Project", b =>
                 {
                     b.Navigation("Members");
+                });
+
+            modelBuilder.Entity("TaskForge.Domain.Entities.TaskItem", b =>
+                {
+                    b.Navigation("AssignedUsers");
+                });
+
+            modelBuilder.Entity("TaskForge.Domain.Entities.UserProfile", b =>
+                {
+                    b.Navigation("AssignedTasks");
+
+                    b.Navigation("Projects");
                 });
 #pragma warning restore 612, 618
         }

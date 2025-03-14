@@ -1,0 +1,143 @@
+﻿@model TaskForge.Web.Models.ProjectListViewModel
+@using TaskForge.Domain.Enums
+
+@{
+    ViewData["Title"] = "Projects List";
+    string currentSortBy = Context.Request.Query["sortBy"].ToString() ?? "defaultSortBy";
+    string currentSortOrder = Context.Request.Query["sortOrder"].ToString() ?? "asc";
+}
+
+<h2>Projects</h2>
+
+<div class="mb-4">
+    <form asp-action="Index" method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label for="Title" class="form-label">Title</label>
+            <input name="Title" value="@Model.Filter?.Title" class="form-control" placeholder="Enter project title" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="Status" class="form-label">Status</label>
+            <select name="Status" class="form-select">
+                <option value="">All</option>
+                @foreach (ProjectStatus status in Enum.GetValues(typeof(ProjectStatus)))
+                {
+                    <option value="@((int)status)" selected="@(Model.Filter?.Status == status ? "selected" : null)">
+                        @status.GetDisplayName()
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label for="StartDateFrom" class="form-label">Start Date (From)</label>
+            <input name="StartDateFrom" type="date" value="@Model.Filter?.StartDateFrom?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="StartDateTo" class="form-label">Start Date (To)</label>
+            <input name="StartDateTo" type="date" value="@Model.Filter?.StartDateTo?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="EndDateFrom" class="form-label">End Date (From)</label>
+            <input name="EndDateFrom" type="date" value="@Model.Filter?.EndDateFrom?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="EndDateTo" class="form-label">End Date (To)</label>
+            <input name="EndDateTo" type="date" value="@Model.Filter?.EndDateTo?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-2">
+            <label for="Role" class="form-label">Role</label>
+            <select name="Role" class="form-select">
+                <option value="">All</option>
+                @foreach (ProjectRole Role in Enum.GetValues(typeof(ProjectRole)))
+                {
+                    <option value="@((int)Role)" selected="@(Model.Filter?.Role == Role ? "selected" : null)">
+                        @Role.GetDisplayName()
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+
+        <div class="col-md-2">
+            <button type="button" class="btn btn-secondary w-100" id="clearFilters">Clear</button>
+        </div>
+    </form>
+</div>
+
+<div class="text-end mb-3">
+    <a asp-action="Create" class="btn btn-success">Create New Project</a>
+</div>
+
+<p class="text-center">Click Table Column Headers for Sorting</p>
+
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th class="text-center">#</th>
+            <th class="header-cell" onclick="sortTable('Title')" tabindex="0">
+                Project Name
+                <i class="bi @(currentSortBy == "Title" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="titleSortIcon"></i>
+            </th>
+            <th class="header-cell" onclick="sortTable('Status')" tabindex="0">
+                Status
+                <i class="bi @(currentSortBy == "Status" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="statusSortIcon"></i>
+            </th>
+            <th class="header-cell" onclick="sortTable('Role')" tabindex="0">
+                Role
+                <i class="bi @(currentSortBy == "Role" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="RoleSortIcon"></i>
+            </th>
+            <th class="header-cell" onclick="sortTable('StartDate')" tabindex="0">
+                Start Date
+                <i class="bi @(currentSortBy == "StartDate" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="startDateSortIcon"></i>
+            </th>
+            <th class="header-cell" onclick="sortTable('EndDate')" tabindex="0">
+                End Date
+                <i class="bi @(currentSortBy == "EndDate" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="endDateSortIcon"></i>
+            </th>
+            <th class="text-center">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.ProjectWithRoleDto != null && Model.ProjectWithRoleDto.Any())
+        {
+            var serial = 1;
+
+            foreach (var projectMember in Model.ProjectWithRoleDto)
+            {
+                <tr class="text-center">
+                    <td>@(serial++)</td>
+                    <td>@projectMember.Title</td>
+                    <td>@projectMember.Status?.GetDisplayName()</td>
+                    <td>@projectMember.UserRoleInThisProject</td>
+                    <td>@projectMember.StartDate?.ToString("yyyy-MM-dd")</td>
+                    <td>@projectMember.EndDate?.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        <a asp-action="Details" class="btn btn-info" asp-route-id="@projectMember.ProjectId">Details</a>
+                        <a asp-action="ManageMembers" class="btn btn-warning" asp-route-id="@projectMember.ProjectId">Members</a>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="6" class="text-center">
+                    <p>No projects available.</p>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script src="~/js/sortTable.js"></script>
+    <script src="~/js/clearProjectFilter.js"></script>
+}

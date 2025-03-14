@@ -47,7 +47,9 @@ namespace TaskForge.Domain.Entities
         [ForeignKey(nameof(UserId))]
         public virtual IdentityUser User { get; set; } = null!;
 
-        public virtual ICollection<ProjectMember> Members { get; set; } = new List<ProjectMember>();
+        public virtual ICollection<ProjectMember> Projects { get; set; } = new List<ProjectMember>();
+        public virtual ICollection<TaskAssignment> AssignedTasks { get; set; } = new List<TaskAssignment>();
+
     }
 
 }

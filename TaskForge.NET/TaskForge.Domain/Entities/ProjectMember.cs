@@ -18,7 +18,7 @@ namespace TaskForge.Domain.Entities
         public int UserProfileId { get; set; } // FK to UserProfile
         public virtual UserProfile UserProfile { get; set; } = null!; // Navigational property to UserProfile
 
-        public ProjectRole Role { get; set; } = ProjectRole.Read; // Default role is "Read"
+        public ProjectRole Role { get; set; } = ProjectRole.Admin; // Default role is "Read" (Who created the project, will be Admin by default)
     }
 
 }
