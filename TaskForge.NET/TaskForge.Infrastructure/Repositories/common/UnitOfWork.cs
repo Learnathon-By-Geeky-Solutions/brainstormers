@@ -20,6 +20,7 @@ namespace TaskForge.Infrastructure.Repositories.Common
         public IProjectMemberRepository ProjectMembers { get; }
         public IProjectInvitationRepository ProjectInvitations { get; }
         public IUserProfileRepository UserProfiles { get; }
+        public ITaskAttachmentRepository TaskAttachments { get; }
 
         public UnitOfWork(ApplicationDbContext context, IUserContextService userContextService)
         {
@@ -30,6 +31,7 @@ namespace TaskForge.Infrastructure.Repositories.Common
             ProjectMembers = new ProjectMemberRepository(context, userContextService);
             ProjectInvitations = new ProjectInvitationRepository(context, userContextService);
             UserProfiles = new UserProfileRepository(context, userContextService);
+            TaskAttachments = new TaskAttachmentRepository(context, userContextService);
         }
 
         public async Task<int> SaveChangesAsync()
