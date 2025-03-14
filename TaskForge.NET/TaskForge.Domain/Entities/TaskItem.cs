@@ -25,6 +25,8 @@ namespace TaskForge.Domain.Entities
         public DateTime? StartDate { get; set; }
         public DateTime? DueDate { get; private set; }
 
+        public ICollection<TaskAttachment> Attachments { get; set; } = new List<TaskAttachment>();
+
 
         public virtual ICollection<TaskAssignment> AssignedUsers { get; set; } = new List<TaskAssignment>();
         public void SetDueDate(DateTime? dueDate)
