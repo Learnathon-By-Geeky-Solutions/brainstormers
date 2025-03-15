@@ -1,0 +1,25 @@
+﻿using TaskForge.Domain.Enums;
+
+namespace TaskForge.WebUI.Models
+{
+    public class ProjectDashboardViewModel
+    {
+        public int ProjectId { get; set; }
+        public string ProjectTitle { get; set; }
+        public ProjectStatus ProjectStatus { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public ProjectRole? UserRoleInThisProject { get; set; }
+
+
+        // Task Summary
+        public int TotalTasks { get; set; }
+        public int PendingTasks { get; set; }
+        public int CompletedTasks { get; set; }
+
+        // Team Members
+        public List<string> TeamMembers { get; set; } = new();
+
+    }
+
+}

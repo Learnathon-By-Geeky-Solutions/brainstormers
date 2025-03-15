@@ -7,6 +7,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Query;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Repositories.Common;
@@ -92,7 +93,14 @@ namespace TaskForge.Application.Services
 
         public async Task<Project?> GetProjectByIdAsync(int projectId)
         {
-            return await _unitOfWork.Projects.GetByIdAsync(projectId);
+            return (await 
+                    _unitOfWork.Projects.FindByExpressionAsync(
+                        predicate: p => p.Id == projectId,
+                        includes: new Expression<Func<Project, object>>[] {
+                            p => p.Members,
+                            p => p.Tasks
+                        })
+                    ).FirstOrDefault();
         }
 
 
@@ -144,10 +152,10 @@ namespace TaskForge.Application.Services
             var projectWithRoleDtos = filteredProject.Select(pm => new ProjectWithRoleDto
             {
                 ProjectId = pm.Project.Id,
-                Title = pm.Project.Title,
-                Status = pm.Project.Status,
-                StartDate = pm.Project.StartDate,
-                EndDate = pm.Project.EndDate,
+                ProjectTitle = pm.Project.Title,
+                ProjectStatus = pm.Project.Status,
+                ProjectStartDate = pm.Project.StartDate,
+                ProjectEndDate = pm.Project.EndDate,
                 UserRoleInThisProject = pm.Role
             });
             return projectWithRoleDtos;

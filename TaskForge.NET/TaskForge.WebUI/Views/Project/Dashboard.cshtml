@@ -1,0 +1,169 @@
+﻿@using TaskForge.Domain.Enums
+@model ProjectDashboardViewModel
+
+@{
+    ViewData["Title"] = "Project ";
+    ViewData["Title"] = "Project Dashboard - " + Model.ProjectTitle;
+
+}
+
+<div class="container mt-4">
+    <!-- Project Overview -->
+    <div class="row">
+        <div class="col-md-8">
+            <h2 class="fw-bold"><i class="bi bi-kanban"></i> @Model.ProjectTitle</h2>
+            <p class="text-muted">
+	            Project Status:
+                @if (Model.ProjectStatus == ProjectStatus.NotStarted)
+	            {
+		            <span class="badge bg-secondary">@Model.ProjectStatus</span>
+	            }
+				else if (Model.ProjectStatus == ProjectStatus.InProgress)
+				{
+					<span class="badge bg-info">@Model.ProjectStatus</span>
+				}
+                else if (Model.ProjectStatus == ProjectStatus.OnHold)
+                {
+                    <span class="badge bg-warning">@Model.ProjectStatus</span>
+                }
+                else if (Model.ProjectStatus == ProjectStatus.Completed)
+                {
+	                <span class="badge bg-success">@Model.ProjectStatus</span>
+                }
+                else if (Model.ProjectStatus == ProjectStatus.Cancelled)
+                {
+	                <span class="badge bg-danger">@Model.ProjectStatus</span>
+                }
+                else
+                {
+                    <span class="badge bg-dark">@Model.ProjectStatus</span>
+                }
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a asp-action="Index" asp-route-id="@Model.ProjectId" class="btn btn-outline-primary">
+                <i class="bi bi-pencil-square"></i> Edit Project
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row my-3">
+	    <div class="col-md-12">
+            @if (Model.UserRoleInThisProject == ProjectRole.Admin || Model.UserRoleInThisProject == ProjectRole.Contributor)
+		    {
+			    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+				    <i class="bi bi-plus-circle"></i> Add Task
+			    </button>
+			}
+		    @if (Model.UserRoleInThisProject == ProjectRole.Admin)
+		    {
+			    <a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="btn btn-warning">
+				    <i class="bi bi-people"></i> Manage Members
+			    </a>
+            }
+	    </div>
+    </div>
+
+    <!-- Dashboard Widgets -->
+    <div class="row">
+        <!-- Task Summary -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-primary">
+                <div class="card-body text-center">
+                    <h5 class="card-title"><i class="bi bi-list-task text-primary"></i> Task Summary</h5>
+                    <p class="mb-1"><strong>Total Tasks:</strong> @Model.TotalTasks</p>
+                    <p class="mb-1 text-warning"><strong>Pending:</strong> @Model.PendingTasks</p>
+                    <p class="mb-1 text-success"><strong>Completed:</strong> @Model.CompletedTasks</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Members -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-info">
+                <div class="card-body text-center">
+                    <h5 class="card-title"><i class="bi bi-people text-info"></i> Team Members</h5>
+                    <p class="mb-1"><strong>Total:</strong> @Model.TeamMembers.Count</p>
+                    <p class="mb-0"><a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="text-info">View Members</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Dates -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-secondary">
+                <div class="card-body text-center">
+                    <h5 class="card-title"><i class="bi bi-calendar-check text-secondary"></i> Project Timeline</h5>
+                    <p class="mb-1"><strong>Start Date:</strong> @Model.StartDate.ToString("yyyy-MM-dd")</p>
+                    <p class="mb-1"><strong>End Date:</strong> @Model.EndDate?.ToString("yyyy-MM-dd")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    @* <div class="row mt-4">
+        <div class="col-md-12">
+            <h4><i class="bi bi-clock-history"></i> Recent Activity</h4>
+            <ul class="list-group">
+                @foreach (var activity in Model.RecentActivities)
+                {
+                    <li class="list-group-item">
+                        <i class="bi bi-arrow-right-circle text-primary"></i>
+                        @activity.Action by @activity.UserName on @activity.Date.ToString("yyyy-MM-dd HH:mm")
+                    </li>
+                }
+            </ul>
+        </div>
+    </div> *@
+</div>
+
+
+<!-- Modal for Adding Task -->
+<div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm" asp-controller="Task" asp-action="Create" method="post">
+                    <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
+
+                    <div class="mb-3">
+                        <label for="taskTitle" class="form-label">Task Title</label>
+                        <input type="text" class="form-control" id="taskTitle" name="Title" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="taskDescription" class="form-label">Task Description</label>
+                        <textarea class="form-control" id="taskDescription" name="Description"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="taskDueDate" class="form-label">Due Date</label>
+                        <input type="date" class="form-control" id="taskDueDate" name="DueDate" required />
+                    </div>
+
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function () {
+                            // Get today's date in YYYY-MM-DD format
+                            let today = new Date().toISOString().split('T')[0];
+
+                            // Set the min attribute to today to prevent past date selection
+                            document.getElementById("taskDueDate").setAttribute("min", today);
+                        });
+                    </script>
+
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">Save Task</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

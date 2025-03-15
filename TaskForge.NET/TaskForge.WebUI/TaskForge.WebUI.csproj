@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\lib\fontawesome-free\**" />
+    <Content Remove="wwwroot\lib\fontawesome-free\**" />
+    <EmbeddedResource Remove="wwwroot\lib\fontawesome-free\**" />
+    <None Remove="wwwroot\lib\fontawesome-free\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.13" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.2">
       <PrivateAssets>all</PrivateAssets>

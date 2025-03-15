@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Application.Services;
@@ -58,7 +59,6 @@ namespace TaskForge.WebUI.Controllers
 
             return View(viewModel);
         }
-
 
 
         // GET: Project/Create
@@ -143,6 +143,45 @@ namespace TaskForge.WebUI.Controllers
         }
 
 
+        // GET: Project/Dashboard/5
+        public async Task<IActionResult> Dashboard(int Id)
+        {
+            // Restrict project access to assigned users only
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, Id);
+            if (member == null)
+            {
+                return Forbid(); // User is not an Admin, access denied
+            }
+
+            var project = await _projectService.GetProjectByIdAsync(Id);
+
+            if (project == null)
+            {
+                return NotFound();
+            }
+
+            var model = new ProjectDashboardViewModel
+            {
+                ProjectId = project.Id,
+                ProjectTitle = project.Title,
+                ProjectStatus = project.Status,
+                StartDate = project.StartDate,
+                EndDate = project.EndDate,
+                UserRoleInThisProject = member.Role,
+                TotalTasks = project.Tasks.Count,
+                PendingTasks = project.Tasks.Count(t => t.Status == TaskWorkflowStatus.ToDo),
+                CompletedTasks = project.Tasks.Count(t => t.Status == TaskWorkflowStatus.Done),
+                TeamMembers = project.Members.Select(m => m.UserProfile.FullName).ToList(),
+            };
+
+            return View(model);
+
+        }
+       
+
         // GET: Project/Invite
         [HttpGet]
         public async Task<IActionResult> ManageMembers(int Id)
@@ -180,7 +219,7 @@ namespace TaskForge.WebUI.Controllers
             };
 
             var projectInvitations = await _invitationService.GetInvitationListAsync(Id); // Get project members
-            
+
             model.ProjectInvitations = projectInvitations.Select(m => new InviteViewModel
             {
                 Id = m.Id,
@@ -264,6 +303,7 @@ namespace TaskForge.WebUI.Controllers
             // Redirect back to the Project Management Members page
             return RedirectToAction("ManageMembers", "Project", new { Id = invitation.ProjectId });
         }
+
 
     }
 }
