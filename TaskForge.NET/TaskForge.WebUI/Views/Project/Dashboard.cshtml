@@ -64,59 +64,122 @@
             }
 	    </div>
     </div>
+	
+    <!-- Bootstrap Tabs -->
+    <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+	    <!-- Summary Tab -->
+	    <li class="nav-item" role="presentation">
+		    <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">
+			    <i class="bi bi-bar-chart-fill"></i> Summary
+		    </button>
+	    </li>
+	    <!-- Tasks Tab -->
+	    <li class="nav-item" role="presentation">
+		    <button class="nav-link" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab" aria-controls="tasks" aria-selected="false">
+			    <i class="bi bi-list-task"></i> Tasks
+		    </button>
+	    </li>
+    </ul>
 
-    <!-- Dashboard Widgets -->
-    <div class="row">
-        <!-- Task Summary -->
-        <div class="col-md-4">
-            <div class="card shadow-sm border-primary">
-                <div class="card-body text-center">
-                    <h5 class="card-title"><i class="bi bi-list-task text-primary"></i> Task Summary</h5>
-                    <p class="mb-1"><strong>Total Tasks:</strong> @Model.TotalTasks</p>
-                    <p class="mb-1 text-warning"><strong>Pending:</strong> @Model.PendingTasks</p>
-                    <p class="mb-1 text-success"><strong>Completed:</strong> @Model.CompletedTasks</p>
+    <!-- Tab Content -->
+    <div class="tab-content mt-3" id="dashboardTabsContent">
+        <!-- Summary Content -->
+        <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+            <div class="row">
+                <!-- Task Summary -->
+                <div class="col-md-4">
+	                <div class="card shadow-sm border-primary">
+		                <div class="card-body text-center">
+			                <h5 class="card-title"><i class="bi bi-list-task text-primary"></i> Task Summary</h5>
+			                <p class="mb-1"><strong>Total Tasks:</strong> @Model.TotalTasks</p>
+			                <p class="mb-1 text-warning"><strong>Pending:</strong> @Model.PendingTasks</p>
+			                <p class="mb-1 text-success"><strong>Completed:</strong> @Model.CompletedTasks</p>
+		                </div>
+	                </div>
+                </div>
+
+                <!-- Team Members -->
+                <div class="col-md-4">
+	                <div class="card shadow-sm border-info">
+		                <div class="card-body text-center">
+			                <h5 class="card-title"><i class="bi bi-people text-info"></i> Team Members</h5>
+                            <p class="mb-1"><strong>Admin:</strong> @Model.TeamMembers.Where(m => m.Role == ProjectRole.Admin).ToList().Count</p>
+                            <p class="mb-1"><strong>Contributor:</strong> @Model.TeamMembers.Where(m => m.Role == ProjectRole.Contributor).ToList().Count</p>
+                            <p class="mb-1"><strong>Viewer:</strong> @Model.TeamMembers.Where(m => m.Role == ProjectRole.Viewer).ToList().Count</p>
+			                <p class="mb-1"><strong>Pending Invitations:</strong> @Model.Invitations.Count</p>
+			                @* <p class="mb-1"><a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="text-info">View Members</a></p> *@
+		                </div>
+	                </div>
+                </div>
+
+                <!-- Project Dates -->
+                <div class="col-md-4">
+	                <div class="card shadow-sm border-secondary">
+		                <div class="card-body text-center">
+			                <h5 class="card-title"><i class="bi bi-calendar-check text-secondary"></i> Project Timeline</h5>
+			                <p class="mb-1"><strong>Start Date:</strong> @Model.StartDate.ToString("yyyy-MM-dd")</p>
+			                <p class="mb-1"><strong>End Date:</strong> @Model.EndDate?.ToString("yyyy-MM-dd")</p>
+		                </div>
+	                </div>
                 </div>
             </div>
+            <!-- Recent Activity -->
+            @* <div class="row mt-4">
+		        <div class="col-md-12">
+		            <h4><i class="bi bi-clock-history"></i> Recent Activity</h4>
+		            <ul class="list-group">
+		                @foreach (var activity in Model.RecentActivities)
+		                {
+		                    <li class="list-group-item">
+		                        <i class="bi bi-arrow-right-circle text-primary"></i>
+		                        @activity.Action by @activity.UserName on @activity.Date.ToString("yyyy-MM-dd HH:mm")
+		                    </li>
+		                }
+		            </ul>
+		        </div>
+		    </div> *@
         </div>
 
-        <!-- Team Members -->
-        <div class="col-md-4">
-            <div class="card shadow-sm border-info">
-                <div class="card-body text-center">
-                    <h5 class="card-title"><i class="bi bi-people text-info"></i> Team Members</h5>
-                    <p class="mb-1"><strong>Total:</strong> @Model.TeamMembers.Count</p>
-                    <p class="mb-0"><a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="text-info">View Members</a></p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Project Dates -->
-        <div class="col-md-4">
-            <div class="card shadow-sm border-secondary">
-                <div class="card-body text-center">
-                    <h5 class="card-title"><i class="bi bi-calendar-check text-secondary"></i> Project Timeline</h5>
-                    <p class="mb-1"><strong>Start Date:</strong> @Model.StartDate.ToString("yyyy-MM-dd")</p>
-                    <p class="mb-1"><strong>End Date:</strong> @Model.EndDate?.ToString("yyyy-MM-dd")</p>
-                </div>
+        <!-- Tasks Content -->
+        <div class="tab-pane fade" id="tasks" role="tabpanel" aria-labelledby="tasks-tab">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Task</th>
+                            <th>Status</th>
+                            <th>Due Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Design UI for Dashboard</td>
+                            <td><span class="badge bg-warning">In Progress</span></td>
+                            <td>2025-03-20</td>
+                            <td>
+                                <button class="btn btn-sm btn-info"><i class="bi bi-eye"></i></button>
+                                <button class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Implement Authentication</td>
+                            <td><span class="badge bg-success">Completed</span></td>
+                            <td>2025-03-10</td>
+                            <td>
+                                <button class="btn btn-sm btn-info"><i class="bi bi-eye"></i></button>
+                                <button class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- Recent Activity -->
-    @* <div class="row mt-4">
-        <div class="col-md-12">
-            <h4><i class="bi bi-clock-history"></i> Recent Activity</h4>
-            <ul class="list-group">
-                @foreach (var activity in Model.RecentActivities)
-                {
-                    <li class="list-group-item">
-                        <i class="bi bi-arrow-right-circle text-primary"></i>
-                        @activity.Action by @activity.UserName on @activity.Date.ToString("yyyy-MM-dd HH:mm")
-                    </li>
-                }
-            </ul>
-        </div>
-    </div> *@
 </div>
 
 

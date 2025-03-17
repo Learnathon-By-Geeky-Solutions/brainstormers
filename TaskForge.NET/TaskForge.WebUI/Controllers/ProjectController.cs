@@ -174,7 +174,22 @@ namespace TaskForge.WebUI.Controllers
                 TotalTasks = project.Tasks.Count,
                 PendingTasks = project.Tasks.Count(t => t.Status == TaskWorkflowStatus.ToDo),
                 CompletedTasks = project.Tasks.Count(t => t.Status == TaskWorkflowStatus.Done),
-                TeamMembers = project.Members.Select(m => m.UserProfile.FullName).ToList(),
+                TeamMembers = project.Members.Select(m => new ProjectMemberViewModel
+                {
+                    Id = m.Id,
+                    Name = m.UserProfile.FullName,
+                    Email = m.UserProfile.User.UserName,
+                    Role = m.Role
+                }).ToList(),
+                Invitations = project.Invitations.Select(m => new InviteViewModel
+                {
+                    Id = m.Id,
+                    ProjectId = m.ProjectId,
+                    InvitedUserEmail = m.InvitedUserProfile?.User?.UserName ?? "No User", // Safe null handling
+                    Status = m.Status,
+                    InvitationSentDate = m.InvitationSentDate,
+                    AssignedRole = m.AssignedRole
+                }).ToList(),
             };
 
             return View(model);

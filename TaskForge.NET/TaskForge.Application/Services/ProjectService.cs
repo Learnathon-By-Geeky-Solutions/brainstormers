@@ -98,7 +98,10 @@ namespace TaskForge.Application.Services
                     includes: query => query
                         .Include(p => p.Members)
                             .ThenInclude(m => m.UserProfile)
-                        .Include(p => p.Tasks)))
+                                .ThenInclude(u => u.User)
+                        .Include(p => p.Tasks)
+                        .Include(p => p.Invitations)
+                            .ThenInclude(i => i.InvitedUserProfile)))
                 .FirstOrDefault();
         }
 
@@ -160,5 +163,6 @@ namespace TaskForge.Application.Services
             });
             return projectWithRoleDtos;
         }
+
     }
 }
