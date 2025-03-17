@@ -28,11 +28,12 @@ namespace TaskForge.Application.Services
 
         public async Task<List<ProjectInvitation>> GetInvitationListAsync(int projectId)
         {
-            return (await _unitOfWork.ProjectInvitations.FindByExpressionAsync(pi => pi.ProjectId == projectId, includes: new Expression<Func<ProjectInvitation, object>>[]
-        {
-            pi => pi.InvitedUserProfile,   // Include UserProfile
-            pi => pi.InvitedUserProfile.User // Include User inside UserProfile
-        })).ToList();
+            return (await _unitOfWork.ProjectInvitations.FindByExpressionAsync(
+                predicate: pi => pi.ProjectId == projectId, 
+                includes: query => query
+                    .Include(pi => pi.InvitedUserProfile) // Include UserProfile
+                        .ThenInclude(pi => pi.User)  // Include User inside UserProfile
+               )).ToList();
         }
 
         public async Task<ServiceResult> AddAsync(int projectId, string invitedUserEmail, ProjectRole assignedRole)

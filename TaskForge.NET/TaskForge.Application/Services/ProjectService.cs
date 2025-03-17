@@ -93,14 +93,13 @@ namespace TaskForge.Application.Services
 
         public async Task<Project?> GetProjectByIdAsync(int projectId)
         {
-            return (await 
-                    _unitOfWork.Projects.FindByExpressionAsync(
-                        predicate: p => p.Id == projectId,
-                        includes: new Expression<Func<Project, object>>[] {
-                            p => p.Members,
-                            p => p.Tasks
-                        })
-                    ).FirstOrDefault();
+            return (await _unitOfWork.Projects.FindByExpressionAsync(
+                    predicate: p => p.Id == projectId,
+                    includes: query => query
+                        .Include(p => p.Members)
+                            .ThenInclude(m => m.UserProfile)
+                        .Include(p => p.Tasks)))
+                .FirstOrDefault();
         }
 
 
@@ -143,7 +142,8 @@ namespace TaskForge.Application.Services
             var filteredProject = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
                 predicate: _predicate,
                 orderBy: (Func<IQueryable<ProjectMember>, IOrderedQueryable<ProjectMember>>?)_orderBy,
-                includes: new Expression<Func<ProjectMember, object>>[] { pm => pm.Project },
+                includes: query => query
+                    .Include(pm => pm.Project),
                 take: null,
                 skip: null
             );

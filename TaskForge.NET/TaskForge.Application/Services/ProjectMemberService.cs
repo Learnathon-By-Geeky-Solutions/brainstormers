@@ -34,11 +34,10 @@ namespace TaskForge.Application.Services
         {
             var projectMember = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
                 pm => pm.UserProfile.UserId == userId && pm.ProjectId == projectId,
-                includes: new Expression<Func<ProjectMember, object>>[]
-                {
-                    pm => pm.UserProfile,
-                    pm => pm.UserProfile.User
-                });
+                includes: query => query
+                    .Include(pm => pm.UserProfile)
+                        .ThenInclude(pm => pm.User)
+                );
 
             var member = projectMember.FirstOrDefault();
             if (member == null)
@@ -57,11 +56,10 @@ namespace TaskForge.Application.Services
         {
             var projectMembers = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
                 pm => pm.ProjectId == projectId,
-                includes: new Expression<Func<ProjectMember, object>>[]
-                {
-                    pm => pm.UserProfile,
-                    pm => pm.UserProfile.User
-                });
+                includes: query => query
+                    .Include(pm => pm.UserProfile)
+                        .ThenInclude(pm => pm.User)
+                );
 
             return projectMembers.Select(pm => new ProjectMemberDto
             {

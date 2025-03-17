@@ -104,18 +104,16 @@ namespace TaskForge.Infrastructure.Repositories.Common
         public async Task<IEnumerable<T>> FindByExpressionAsync(
             Expression<Func<T, bool>> predicate,
             Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
-            Expression<Func<T, object>>[]? includes = null,
+            Func<IQueryable<T>, IQueryable<T>>? includes = null, 
             int? take = null,
             int? skip = null)
         {
             IQueryable<T> query = _dbSet.Where(e => !e.IsDeleted);
 
+
             if (includes != null)
             {
-                foreach (var include in includes)
-                {
-                    query = query.Include(include);
-                }
+                query = includes(query);
             }
 
             if (predicate != null)
