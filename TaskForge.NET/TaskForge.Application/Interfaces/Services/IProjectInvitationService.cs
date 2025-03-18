@@ -10,6 +10,6 @@ namespace TaskForge.Application.Interfaces.Services
         Task<List<ProjectInvitation>> GetInvitationListAsync(int projectId);
         Task<ServiceResult> AddAsync(int projectId, string invitedUserEmail, ProjectRole assignedRole);
         Task UpdateInvitationStatusAsync(int id, InvitationStatus status);
-
+        Task<List<ProjectInvitation>> GetInvitationsForUserAsync(int? userProfileId);
     }
 }
