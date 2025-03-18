@@ -21,7 +21,8 @@ namespace TaskForge.WebUI.Models
         public int CompletedTasks { get; set; }
 
         // Team Members
-        public List<string> TeamMembers { get; set; } = new();
+        public List<ProjectMemberViewModel> TeamMembers { get; set; } = new();
+        public List<InviteViewModel> Invitations { get; set; } = new();
 
     }
 

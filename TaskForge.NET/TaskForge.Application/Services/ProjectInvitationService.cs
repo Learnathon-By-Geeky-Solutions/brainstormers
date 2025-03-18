@@ -121,5 +121,18 @@ namespace TaskForge.Application.Services
             await _unitOfWork.ProjectInvitations.UpdateAsync(invitation);
             await _unitOfWork.SaveChangesAsync();
         }
+        public async Task<List<ProjectInvitation>> GetInvitationsForUserAsync(int? userProfileId)
+        {
+            if (!userProfileId.HasValue)
+            {
+                return new List<ProjectInvitation>();
+            }
+
+            return (await _unitOfWork.ProjectInvitations.FindByExpressionAsync(
+                predicate: pi => pi.InvitedUserProfileId == userProfileId,
+                includes: query => query
+                    .Include(pi => pi.Project)
+               )).ToList();
+        }
     }
 }
