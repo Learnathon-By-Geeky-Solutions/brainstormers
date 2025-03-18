@@ -80,6 +80,25 @@ namespace TaskForge.Application.Services
             }
         }
 
+
+        public async Task UpdateProjectAsync(Project dto)
+        {
+                var project = new Project
+                {
+                    Title = dto.Title,
+                    Description = dto.Description,
+                    Status = dto.Status,
+                    StartDate = dto.StartDate,
+                    UpdatedBy = dto.UpdatedBy,
+                    UpdatedDate = dto.UpdatedDate,
+                };
+
+                if (dto.EndDate != null) project.SetEndDate(dto.EndDate);
+
+                await _unitOfWork.Projects.UpdateAsync(project);
+                await _unitOfWork.SaveChangesAsync();
+        }
+
         public Task<IEnumerable<SelectListItem>> GetProjectStatusOptions()
         {
             return Task.FromResult(Enum.GetValues(typeof(ProjectStatus))

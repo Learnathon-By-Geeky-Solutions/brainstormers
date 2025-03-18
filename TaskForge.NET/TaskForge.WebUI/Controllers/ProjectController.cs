@@ -2,13 +2,13 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
-using Microsoft.EntityFrameworkCore;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
-using TaskForge.Application.Services;
 using TaskForge.Domain.Enums;
+using TaskForge.Domain.Entities;
 using TaskForge.Web.Models;
 using TaskForge.WebUI.Models;
+using Project = TaskForge.Domain.Entities.Project;
 
 namespace TaskForge.WebUI.Controllers
 {
@@ -110,6 +110,70 @@ namespace TaskForge.WebUI.Controllers
         }
 
 
+
+        [HttpGet]
+        public async Task<IActionResult> Update(int id)
+        {
+            var project = await _projectService.GetProjectByIdAsync(id);
+            if (project == null) return NotFound();
+
+            var viewModel = new ProjectUpdateViewModel
+            {
+                Id = project.Id,
+                    Title = project.Title,
+                    Description = project.Description,
+                    StartDate = project.StartDate,
+                    Status = project.Status,
+                    EndDateInput = project.EndDate,
+            };
+
+            return PartialView("_EditProjectForm", viewModel);
+        }
+
+        // POST: Projects/Update
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Update(ProjectUpdateViewModel viewModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    Console.WriteLine($"ModelState Error: {error.ErrorMessage}");
+                }
+
+                return PartialView("_EditProjectForm", viewModel); // Return form with errors
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var existingProject = await _projectService.GetProjectByIdAsync(viewModel.Id);
+            if (existingProject == null)
+            {
+                return NotFound();
+            }
+
+            // Update properties
+            existingProject.Title = viewModel.Title;
+            existingProject.Description = viewModel.Description;
+            existingProject.StartDate = viewModel.StartDate;
+            existingProject.SetEndDate(viewModel.EndDateInput);
+            existingProject.Status = viewModel.Status;
+            existingProject.UpdatedBy = user.Id;
+            existingProject.UpdatedDate = DateTime.UtcNow;
+
+            await _projectService.UpdateProjectAsync(existingProject);
+
+            return RedirectToAction("Dashboard", "Project", new { id = existingProject.Id });
+        }
+
+
+
+
         // GET: Project/Details/5
         public async Task<IActionResult> Details(int Id)
         {
@@ -175,6 +239,17 @@ namespace TaskForge.WebUI.Controllers
                 PendingTasks = project.Tasks.Count(t => t.Status == TaskWorkflowStatus.ToDo),
                 CompletedTasks = project.Tasks.Count(t => t.Status == TaskWorkflowStatus.Done),
                 TeamMembers = project.Members.Select(m => m.UserProfile.FullName).ToList(),
+
+                // Corrected UpdateViewModel Initialization
+                UpdateViewModel = new ProjectUpdateViewModel
+                {
+                    Id = project.Id,
+                        Title = project.Title,
+                        Description = project.Description,
+                        StartDate = project.StartDate,
+                        Status = project.Status,
+                        EndDateInput = project.EndDate
+                }
             };
 
             return View(model);

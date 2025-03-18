@@ -2,9 +2,7 @@
 @model ProjectDashboardViewModel
 
 @{
-    ViewData["Title"] = "Project ";
     ViewData["Title"] = "Project Dashboard - " + Model.ProjectTitle;
-
 }
 
 <div class="container mt-4">
@@ -13,26 +11,26 @@
         <div class="col-md-8">
             <h2 class="fw-bold"><i class="bi bi-kanban"></i> @Model.ProjectTitle</h2>
             <p class="text-muted">
-	            Project Status:
+                Project Status:
                 @if (Model.ProjectStatus == ProjectStatus.NotStarted)
-	            {
-		            <span class="badge bg-secondary">@Model.ProjectStatus</span>
-	            }
-				else if (Model.ProjectStatus == ProjectStatus.InProgress)
-				{
-					<span class="badge bg-info">@Model.ProjectStatus</span>
-				}
+                {
+                    <span class="badge bg-secondary">@Model.ProjectStatus</span>
+                }
+                else if (Model.ProjectStatus == ProjectStatus.InProgress)
+                {
+                    <span class="badge bg-info">@Model.ProjectStatus</span>
+                }
                 else if (Model.ProjectStatus == ProjectStatus.OnHold)
                 {
                     <span class="badge bg-warning">@Model.ProjectStatus</span>
                 }
                 else if (Model.ProjectStatus == ProjectStatus.Completed)
                 {
-	                <span class="badge bg-success">@Model.ProjectStatus</span>
+                    <span class="badge bg-success">@Model.ProjectStatus</span>
                 }
                 else if (Model.ProjectStatus == ProjectStatus.Cancelled)
                 {
-	                <span class="badge bg-danger">@Model.ProjectStatus</span>
+                    <span class="badge bg-danger">@Model.ProjectStatus</span>
                 }
                 else
                 {
@@ -40,12 +38,40 @@
                 }
             </p>
         </div>
-        <div class="col-md-4 text-end">
-            <a asp-action="Index" asp-route-id="@Model.ProjectId" class="btn btn-outline-primary">
-                <i class="bi bi-pencil-square"></i> Edit Project
-            </a>
+
+        <!-- Button to trigger the Edit Modal -->
+         @if (Model.UserRoleInThisProject == ProjectRole.Admin){
+            <div class="col-md-4 text-end">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProjectModal">
+                    <i class="bi bi-pencil-square"></i> Edit Project
+                </button>
+            </div>
+         }
+    </div>
+
+    <!-- Modal for Editing Project -->
+    <div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editProjectModalLabel">Edit Project</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @if (Model.UpdateViewModel != null)
+                    {
+                        @await Html.PartialAsync("~/Views/Project/_EditProjectForm.cshtml", Model.UpdateViewModel)
+                    }
+                    else
+                    {
+                        <p class="text-danger">Error loading project details.</p>
+                    }
+                </div>
+            </div>
         </div>
     </div>
+</div>
+
 
     <!-- Quick Actions -->
     <div class="row my-3">

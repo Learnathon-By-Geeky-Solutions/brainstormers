@@ -12,6 +12,9 @@ namespace TaskForge.WebUI.Models
         public ProjectRole? UserRoleInThisProject { get; set; }
 
 
+        public ProjectUpdateViewModel UpdateViewModel { get; set; } = new ProjectUpdateViewModel();
+
+
         // Task Summary
         public int TotalTasks { get; set; }
         public int PendingTasks { get; set; }

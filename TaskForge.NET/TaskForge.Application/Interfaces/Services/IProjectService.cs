@@ -15,5 +15,6 @@ namespace TaskForge.Application.Interfaces.Services
         Task<IEnumerable<ProjectWithRoleDto>> GetFilteredProjectsAsync(ProjectFilterDto filter);
         Task<IEnumerable<SelectListItem>> GetProjectStatusOptions();
         Task CreateProjectAsync(CreateProjectDto dto);
+        Task UpdateProjectAsync(Project dto);
     }
 }
