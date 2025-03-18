@@ -1,8 +1,63 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model HomeViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mt-4">
+    <h2>Welcome to TaskForge</h2>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">Total Projects</div>
+                <div class="card-body">
+                    <h4 class="card-title">@Model.TotalProjects</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Total Tasks</div>
+                <div class="card-body">
+                    <h4 class="card-title">@Model.TotalTasks</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-header">Completed Tasks</div>
+                <div class="card-body">
+                    <h4 class="card-title">@Model.CompletedTasks</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3>Recent Tasks</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Due Date</th>
+                <th>Project</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var task in Model.UserTasks)
+            {
+                <tr>
+                    <td>@task.Title</td>
+                    <td>@task.Status</td>
+                    <td>@task.Priority</td>
+                    <td>@task.DueDate</td>
+                    <td>@task.ProjectId</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>

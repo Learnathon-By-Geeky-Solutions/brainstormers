@@ -10,7 +10,7 @@ using TaskForge.Application.Services;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
 using TaskForge.Infrastructure.Data;
-using TaskForge.WebUI.Models; // Your ViewModel for displaying invitations
+using TaskForge.WebUI.Models;
 
 namespace TaskForge.WebUI.Controllers
 {
@@ -20,27 +20,47 @@ namespace TaskForge.WebUI.Controllers
         private readonly IProjectInvitationService _invitationService;
         private readonly IProjectMemberService _projectMemberService;
         private readonly UserManager<IdentityUser> _userManager;
-        private readonly ApplicationDbContext _context;
+        private readonly IUserProfileService _userProfileService;
 
-        public ProjectInvitationController(ApplicationDbContext context, 
+        public ProjectInvitationController (
             IProjectInvitationService invitationService,
             IProjectMemberService projectMemberService,
+            IUserProfileService userProfileService,
             UserManager<IdentityUser> userManager)
         {
             _invitationService = invitationService;
             _projectMemberService = projectMemberService;
             _userManager = userManager;
-            _context = context;
+            _userProfileService = userProfileService;
         }
 
         // Action method to display the current user's invitations
         public async Task<IActionResult> Index()
         {
-            // Get the invitations for the logged-in user
-            var invitations = _context.ProjectInvitations.Include(i => i.Project)
-                                    .Where(i => i.InvitedUserProfile.User.UserName == User.Identity.Name).ToList();
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "You must be logged in to view your invitations.";
+                return RedirectToAction("Login", "Account");
+            }
 
-            // Map the invitations to a ViewModel for display
+            string userId = user.Id;
+
+            var userProfileId = await _userProfileService.GetByUserIdAsync(userId);
+            if (userProfileId == null)
+            {
+                TempData["ErrorMessage"] = "User profile not found.";
+                return RedirectToAction("Index", "Home"); // Redirect to home or another appropriate page
+            }
+
+            var invitations = await _invitationService.GetInvitationsForUserAsync(userProfileId);
+
+            if (invitations == null || !invitations.Any())
+            {
+                ViewData["NoInvitationsMessage"] = "You have no pending invitations.";
+                return View(new List<ProjectInvitationViewModel>());
+            }
+
             var invitationViewModels = invitations.Select(invitation => new ProjectInvitationViewModel
             {
                 Id = invitation.Id,
@@ -52,7 +72,6 @@ namespace TaskForge.WebUI.Controllers
                 DeclinedDate = invitation.DeclinedDate
             }).ToList();
 
-            // Return the view with the list of invitations
             return View(invitationViewModels);
         }
 
@@ -105,7 +124,5 @@ namespace TaskForge.WebUI.Controllers
             await _invitationService.UpdateInvitationStatusAsync(viewModel.Id, viewModel.Status);
             return RedirectToAction("Index");
         }
-
-
     }
 }

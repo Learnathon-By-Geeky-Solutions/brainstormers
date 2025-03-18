@@ -75,5 +75,15 @@ namespace TaskForge.Application.Services
             await _unitOfWork.ProjectMembers.DeleteByIdAsync(memberId);
             await _unitOfWork.SaveChangesAsync();
         }
+
+        public async Task<int> GetUserProjectCountAsync(int? userProfileId)
+        {
+            var projectMembers = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
+                predicate: pm => pm.UserProfileId == userProfileId
+            );
+
+            return projectMembers.Select(pm => pm.ProjectId).Distinct().Count();
+        }
+
     }
 }
