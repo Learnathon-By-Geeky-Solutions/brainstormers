@@ -14,27 +14,27 @@
                 Project Status:
                 @if (Model.ProjectStatus == ProjectStatus.NotStarted)
                 {
-                    <span class="badge bg-secondary">@Model.ProjectStatus</span>
+                    <span class="badge bg-secondary">@Model.ProjectStatus.GetDisplayName()</span>
                 }
                 else if (Model.ProjectStatus == ProjectStatus.InProgress)
                 {
-                    <span class="badge bg-info">@Model.ProjectStatus</span>
+                    <span class="badge bg-info">@Model.ProjectStatus.GetDisplayName()</span>
                 }
                 else if (Model.ProjectStatus == ProjectStatus.OnHold)
                 {
-                    <span class="badge bg-warning">@Model.ProjectStatus</span>
+                    <span class="badge bg-warning">@Model.ProjectStatus.GetDisplayName()</span>
                 }
                 else if (Model.ProjectStatus == ProjectStatus.Completed)
                 {
-                    <span class="badge bg-success">@Model.ProjectStatus</span>
+                    <span class="badge bg-success">@Model.ProjectStatus.GetDisplayName()</span>
                 }
                 else if (Model.ProjectStatus == ProjectStatus.Cancelled)
                 {
-                    <span class="badge bg-danger">@Model.ProjectStatus</span>
+                    <span class="badge bg-danger">@Model.ProjectStatus.GetDisplayName()</span>
                 }
                 else
                 {
-                    <span class="badge bg-dark">@Model.ProjectStatus</span>
+                    <span class="badge bg-dark">@Model.ProjectStatus.GetDisplayName()</span>
                 }
             </p>
         </div>
@@ -60,7 +60,7 @@
                 <div class="modal-body">
                     @if (Model.UpdateViewModel != null)
                     {
-                        @await Html.PartialAsync("~/Views/Project/_EditProjectForm.cshtml", Model.UpdateViewModel)
+                        @await Html.PartialAsync("~/Views/Project/PartialViews/_EditProjectForm.cshtml", Model.UpdateViewModel)
                     }
                     else
                     {
@@ -73,25 +73,46 @@
 </div>
 
 
-    <!-- Quick Actions -->
-    <div class="row my-3">
-	    <div class="col-md-12">
-            @if (Model.UserRoleInThisProject == ProjectRole.Admin || Model.UserRoleInThisProject == ProjectRole.Contributor)
-		    {
-			    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
-				    <i class="bi bi-plus-circle"></i> Add Task
-			    </button>
-			}
-		    @if (Model.UserRoleInThisProject == ProjectRole.Admin)
-		    {
-			    <a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="btn btn-warning">
-				    <i class="bi bi-people"></i> Manage Members
-			    </a>
-            }
-	    </div>
+<!-- Quick Actions -->
+<div class="row my-3">
+    <div class="col-md-12">
+        @if (Model.UserRoleInThisProject == ProjectRole.Admin || Model.UserRoleInThisProject == ProjectRole.Contributor)
+	    {
+		    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+			    <i class="bi bi-plus-circle"></i> Add Task
+		    </button>
+
+            
+		    <!-- Modal for Adding Task -->
+		    <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+			    <div class="modal-dialog">
+				    <div class="modal-content">
+					    <div class="modal-header">
+						    <h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
+						    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					    </div>
+					    <div class="modal-body">
+						    <!-- Render the Partial View for Task Form -->
+						    @await Html.PartialAsync("~/Views/Task/PartialViews/_AddTaskForm.cshtml", new TaskItemViewModel {
+							    ProjectId = Model.ProjectId 
+                            })					    
+						</div>
+				    </div>
+			    </div>
+		    </div>
+		}
+	    @if (Model.UserRoleInThisProject == ProjectRole.Admin)
+	    {
+		    <a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="btn btn-warning">
+			    <i class="bi bi-people"></i> Manage Members
+		    </a>
+        }
     </div>
+</div>
 	
-    <!-- Bootstrap Tabs -->
+<!-- Main Section -->
+<div class="">
+	<!-- Bootstrap Tabs -->
     <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
 	    <!-- Summary Tab -->
 	    <li class="nav-item" role="presentation">
@@ -168,91 +189,77 @@
 
         <!-- Tasks Content -->
         <div class="tab-pane fade" id="tasks" role="tabpanel" aria-labelledby="tasks-tab">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>#</th>
-                            <th>Task</th>
-                            <th>Status</th>
-                            <th>Due Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>Design UI for Dashboard</td>
-                            <td><span class="badge bg-warning">In Progress</span></td>
-                            <td>2025-03-20</td>
-                            <td>
-                                <button class="btn btn-sm btn-info"><i class="bi bi-eye"></i></button>
-                                <button class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i></button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Implement Authentication</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                            <td>2025-03-10</td>
-                            <td>
-                                <button class="btn btn-sm btn-info"><i class="bi bi-eye"></i></button>
-                                <button class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i></button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow-sm border-primary">
+                        <div class="card-body">
+	                        <h5 class="card-title"><i class="bi bi-clipboard-check text-primary"></i> Project Tasks</h5>
+
+                            <!-- Nav Tabs -->
+                            <ul class="nav nav-pills mb-3" id="taskTabs">
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="todo-tab" data-bs-toggle="pill" href="#todo">To Do</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="inprogress-tab" data-bs-toggle="pill" href="#inprogress">In Progress</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="completed-tab" data-bs-toggle="pill" href="#completed">Completed</a>
+                                </li>
+                                <li class="nav-item">
+	                                <a class="nav-link" id="blocked-tab" data-bs-toggle="pill" href="#blocked">Blocked</a>
+                                </li>
+                            </ul>
+
+                            <!-- Tab Content -->
+                            <div class="tab-content">
+                                <!-- To Do Tab -->
+                                <div class="tab-pane fade show active" id="todo">
+                                    <div class="row">
+                                        @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.ToDo))
+                                        {
+                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- In Progress Tab -->
+                                <div class="tab-pane fade" id="inprogress">
+                                    <div class="row">
+                                        @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.InProgress))
+                                        {
+	                                        @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- Completed Tab -->
+                                <div class="tab-pane fade" id="completed">
+	                                <div class="row">
+		                                @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Done))
+		                                {
+			                                @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+		                                }
+	                                </div>
+                                </div>
+
+                                <!-- Blocked Tab -->
+                                <div class="tab-pane fade" id="blocked">
+	                                <div class="row">
+		                                @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Blocked))
+		                                {
+			                                @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+		                                }
+	                                </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
     </div>
 
-</div>
-
-
-<!-- Modal for Adding Task -->
-<div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="taskForm" asp-controller="Task" asp-action="Create" method="post">
-                    <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
-
-                    <div class="mb-3">
-                        <label for="taskTitle" class="form-label">Task Title</label>
-                        <input type="text" class="form-control" id="taskTitle" name="Title" required />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="taskDescription" class="form-label">Task Description</label>
-                        <textarea class="form-control" id="taskDescription" name="Description"></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="taskDueDate" class="form-label">Due Date</label>
-                        <input type="date" class="form-control" id="taskDueDate" name="DueDate" required />
-                    </div>
-
-                    <script>
-                        document.addEventListener("DOMContentLoaded", function () {
-                            // Get today's date in YYYY-MM-DD format
-                            let today = new Date().toISOString().split('T')[0];
-
-                            // Set the min attribute to today to prevent past date selection
-                            document.getElementById("taskDueDate").setAttribute("min", today);
-                        });
-                    </script>
-
-
-                    <div class="text-end">
-                        <button type="submit" class="btn btn-primary">Save Task</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 </div>

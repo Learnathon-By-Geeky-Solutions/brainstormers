@@ -39,11 +39,12 @@ namespace TaskForge.Application.Services
         {
             var taskItem = new TaskItem
             {
+                ProjectId = taskDto.ProjectId,
                 Title = taskDto.Title,
                 Description = taskDto.Description,
-                ProjectId = taskDto.ProjectId,
-                Status = TaskWorkflowStatus.ToDo,
-                Priority = TaskPriority.Medium,
+                StartDate = taskDto.StartDate,
+                Status = taskDto.Status,
+                Priority = taskDto.Priority,
             };
             if (taskDto.DueDate != null) taskItem.SetDueDate(taskDto.DueDate);
 

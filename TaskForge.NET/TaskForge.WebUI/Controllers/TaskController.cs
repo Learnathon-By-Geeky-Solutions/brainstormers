@@ -22,20 +22,12 @@ namespace TaskForge.WebUI.Controllers
             _userManager = userManager;
         }
 
-        [HttpGet]
-        public IActionResult Create(int projectId)
-        {
-            var model = new TaskItemViewModel { ProjectId = projectId };
-            return View(model);
-        }
-
-
         [HttpPost]
-        public async Task<IActionResult> Create(TaskItemViewModel model)
+        public async Task<IActionResult> Create(TaskItemCreateViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                return View(model); // Return the form with validation errors
+                return RedirectToAction("Dashboard", "Project", new { Id = model.ProjectId });
             }
 
             var user = await _userManager.GetUserAsync(User);
@@ -46,18 +38,17 @@ namespace TaskForge.WebUI.Controllers
 
             var taskDto = new TaskDto
             {
+                ProjectId = model.ProjectId,
                 Title = model.Title,
                 Description = model.Description,
-                ProjectId = model.ProjectId,
-                CreatedBy = user.Id,
-                Status = TaskWorkflowStatus.ToDo,
-                Priority = TaskPriority.Medium,
-                StartDate = DateTime.UtcNow,
-                DueDate = model.DueDate
+                StartDate = model.StartDate,
+                DueDate = model.DueDate,
+                Status = model.Status,
+                Priority = model.Priority
             };
             await _taskService.CreateTaskAsync(taskDto);
 
-            return RedirectToAction("Details", "Project", new { Id = model.ProjectId });
+            return RedirectToAction("Dashboard", "Project", new { Id = model.ProjectId });
         }
 
     }

@@ -1,0 +1,49 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using TaskForge.Domain.Enums
+@model TaskItemViewModel
+
+<div class="col-md-4">
+	<div class="card shadow-sm mb-3">
+		<div class="card-body">
+			<h6 class="card-title text-primary"><i class="bi bi-clipboard-check"></i> @Model.Title</h6>
+			<p class="text-muted">@Model.Description?.Substring(0, Math.Min(Model.Description.Length, 100))...</p>
+
+			<!-- Task Info -->
+			<div class="d-flex justify-content-between">
+				<span class="badge bg-secondary">
+					<i class="bi bi-calendar"></i> @Model.StartDate?.ToShortDateString() @Model.StartDate?.ToShortTimeString()
+				</span>
+				<span class="badge bg-danger">
+					<i class="bi bi-clock"></i> @Model.DueDate?.ToShortDateString() @Model.DueDate?.ToShortTimeString()
+				</span>
+			</div>
+
+			<!-- Status & Priority -->
+			<div class="mt-2">
+				<span class="badge @(Model.Status == TaskWorkflowStatus.Done ? "bg-success" 
+				                   : Model.Status == TaskWorkflowStatus.InProgress ? "bg-warning text-dark" 
+				                   : Model.Status == TaskWorkflowStatus.Blocked ? "bg-danger text-light" 
+				                   : "bg-light text-dark")">
+					@Model.Status.GetDisplayName()
+				</span>
+
+				<span class="badge @(Model.Priority == TaskPriority.Critical ? "bg-danger" :
+				                   Model.Priority == TaskPriority.High ? "bg-danger" :
+				                   Model.Priority == TaskPriority.Medium ? "bg-warning text-dark" : "bg-secondary")">
+					<i class="bi bi-exclamation-circle"></i> @Model.Priority
+				</span>
+
+			</div>
+
+			<!-- Action Buttons -->
+			<div class="mt-3 d-flex justify-content-between">
+				<a @* asp-action="EditTask" asp-route-id="@Model.Id"  *@class="btn btn-sm btn-outline-primary">
+					<i class="bi bi-pencil"></i> Edit
+				</a>
+				<a @* asp-action="DeleteTask" asp-route-id="@Model.Id" *@ class="btn btn-sm btn-outline-danger">
+					<i class="bi bi-trash"></i> Delete
+				</a>
+			</div>
+		</div>
+	</div>
+</div>

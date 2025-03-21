@@ -130,6 +130,7 @@ namespace TaskForge.WebUI.Controllers
             return PartialView("_EditProjectForm", viewModel);
         }
 
+
         // POST: Projects/Update
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -172,22 +173,20 @@ namespace TaskForge.WebUI.Controllers
         }
 
 
-
-
         // GET: Project/Details/5
-        public async Task<IActionResult> Details(int Id)
+        public async Task<IActionResult> Details(int id)
         {
             // Restrict project access to assigned users only
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, Id);
+            var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, id);
             if (member == null)
             {
                 return Forbid(); // User is not an Admin, access denied
             }
 
-            var project = await _projectService.GetProjectByIdAsync(Id);
+            var project = await _projectService.GetProjectByIdAsync(id);
 
             if (project == null)
             {
@@ -196,7 +195,7 @@ namespace TaskForge.WebUI.Controllers
 
             // return project.tasks = the tasks of this project
 
-            project.Tasks = (await _taskService.Get(Id)).ToList();
+            project.Tasks = (await _taskService.Get(id)).ToList();
 
             var viewModel = new ProjectDetailsViewModel
             {
@@ -208,19 +207,19 @@ namespace TaskForge.WebUI.Controllers
 
 
         // GET: Project/Dashboard/5
-        public async Task<IActionResult> Dashboard(int Id)
+        public async Task<IActionResult> Dashboard(int id)
         {
             // Restrict project access to assigned users only
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, Id);
+            var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, id);
             if (member == null)
             {
                 return Forbid(); // User is not an Admin, access denied
             }
 
-            var project = await _projectService.GetProjectByIdAsync(Id);
+            var project = await _projectService.GetProjectByIdAsync(id);
 
             if (project == null)
             {
@@ -254,7 +253,16 @@ namespace TaskForge.WebUI.Controllers
                     InvitationSentDate = m.InvitationSentDate,
                     AssignedRole = m.AssignedRole
                 }).ToList(),
-                // Corrected UpdateViewModel Initialization
+                TaskItems = project.Tasks.Select(t => new TaskItemViewModel
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Description = t.Description,
+                    Status = t.Status,
+                    Priority = t.Priority,
+                    StartDate = t.StartDate,
+                    DueDate = t.DueDate
+                }).ToList(),
                 UpdateViewModel = new ProjectUpdateViewModel
                 {
                     Id = project.Id,
@@ -264,7 +272,6 @@ namespace TaskForge.WebUI.Controllers
                     Status = project.Status,
                     EndDateInput = project.EndDate
                 }
-
             };
 
             return View(model);

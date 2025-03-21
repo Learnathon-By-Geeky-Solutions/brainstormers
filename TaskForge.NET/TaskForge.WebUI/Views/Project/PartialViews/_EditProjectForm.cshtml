@@ -1,4 +1,6 @@
-﻿@model TaskForge.WebUI.Models.ProjectUpdateViewModel
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using TaskForge.Domain.Enums
+@model TaskForge.WebUI.Models.ProjectUpdateViewModel
 
 <form id="editProjectForm" asp-controller="Project" asp-action="Update" method="post">
     <input type="hidden" asp-for="Id" />
@@ -25,12 +27,7 @@
 
     <div class="mb-3">
         <label class="form-label">Status</label>
-        <select class="form-control" asp-for="Status">
-            @foreach (var status in Enum.GetValues(typeof(TaskForge.Domain.Enums.ProjectStatus)))
-            {
-                <option value="@status">@status</option>
-            }
-        </select>
+        <select class="form-select" asp-for="Status" asp-items="Html.GetEnumSelectList<ProjectStatus>()"></select>
     </div>
 
     <div class="text-end">

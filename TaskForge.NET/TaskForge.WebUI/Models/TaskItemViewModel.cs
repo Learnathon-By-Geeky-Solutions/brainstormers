@@ -1,10 +1,37 @@
-﻿namespace TaskForge.WebUI.Models
+﻿using TaskForge.Domain.Enums;
+
+namespace TaskForge.WebUI.Models
 {
-    public class TaskItemViewModel
+    public class TaskItemCreateViewModel
     {
         public int ProjectId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
+        public DateTime? StartDate { get; set; }
         public DateTime? DueDate { get; set; }
+        public TaskWorkflowStatus Status { get; set; }
+        public TaskPriority Priority { get; set; }
+
+
+    }
+
+    public class TaskItemUpdateViewModel
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public DateTime? DueDate { get; set; }
+    }
+
+    public class TaskItemViewModel
+    {
+        public int Id { get; set; }
+        public int ProjectId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? DueDate { get; set; }
+        public TaskWorkflowStatus Status { get; set; }
+        public TaskPriority Priority { get; set; }
     }
 }

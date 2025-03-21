@@ -27,8 +27,8 @@ namespace TaskForge.Domain.Entities
 
         public ICollection<TaskAttachment> Attachments { get; set; } = new List<TaskAttachment>();
 
-
         public virtual ICollection<TaskAssignment> AssignedUsers { get; set; } = new List<TaskAssignment>();
+
         public void SetDueDate(DateTime? dueDate)
         {
             if (dueDate.HasValue && dueDate?.Date < CreatedDate.Date)
