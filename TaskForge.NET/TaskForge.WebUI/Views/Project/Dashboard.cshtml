@@ -41,72 +41,38 @@
 
         <!-- Button to trigger the Edit Modal -->
          @if (Model.UserRoleInThisProject == ProjectRole.Admin){
-            <div class="col-md-4 text-end">
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProjectModal">
-                    <i class="bi bi-pencil-square"></i> Edit Project
-                </button>
-            </div>
+	         <div class="col-md-4 text-end">
+		         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProjectModal">
+			         <i class="bi bi-pencil-square"></i> Edit Project
+		         </button>
+
+		         <a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="btn btn-warning">
+			         <i class="bi bi-people"></i> Manage Members
+		         </a>
+	         </div>
+             
+	         <!-- Modal for Editing Project -->
+	         <div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
+		         <div class="modal-dialog">
+			         <div class="modal-content">
+				         <div class="modal-header">
+					         <h5 class="modal-title" id="editProjectModalLabel">Edit Project</h5>
+					         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				         </div>
+				         <div class="modal-body">
+					         @if (Model.UpdateViewModel != null)
+					         {
+						         @await Html.PartialAsync("~/Views/Project/PartialViews/_EditProjectForm.cshtml", Model.UpdateViewModel)
+					         }
+					         else
+					         {
+						         <p class="text-danger">Error loading project details.</p>
+					         }
+				         </div>
+			         </div>
+		         </div>
+	         </div>
          }
-    </div>
-
-    <!-- Modal for Editing Project -->
-    <div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editProjectModalLabel">Edit Project</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    @if (Model.UpdateViewModel != null)
-                    {
-                        @await Html.PartialAsync("~/Views/Project/PartialViews/_EditProjectForm.cshtml", Model.UpdateViewModel)
-                    }
-                    else
-                    {
-                        <p class="text-danger">Error loading project details.</p>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<!-- Quick Actions -->
-<div class="row my-3">
-    <div class="col-md-12">
-        @if (Model.UserRoleInThisProject == ProjectRole.Admin || Model.UserRoleInThisProject == ProjectRole.Contributor)
-	    {
-		    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
-			    <i class="bi bi-plus-circle"></i> Add Task
-		    </button>
-
-            
-		    <!-- Modal for Adding Task -->
-		    <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
-			    <div class="modal-dialog">
-				    <div class="modal-content">
-					    <div class="modal-header">
-						    <h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
-						    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-					    </div>
-					    <div class="modal-body">
-						    <!-- Render the Partial View for Task Form -->
-						    @await Html.PartialAsync("~/Views/Task/PartialViews/_AddTaskForm.cshtml", new TaskItemViewModel {
-							    ProjectId = Model.ProjectId 
-                            })					    
-						</div>
-				    </div>
-			    </div>
-		    </div>
-		}
-	    @if (Model.UserRoleInThisProject == ProjectRole.Admin)
-	    {
-		    <a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="btn btn-warning">
-			    <i class="bi bi-people"></i> Manage Members
-		    </a>
-        }
     </div>
 </div>
 	
@@ -191,25 +157,83 @@
         <div class="tab-pane fade" id="tasks" role="tabpanel" aria-labelledby="tasks-tab">
             <div class="row mt-4">
                 <div class="col-12">
-                    <div class="card shadow-sm border-primary">
+                    <div class="card shadow-sm border">
                         <div class="card-body">
-	                        <h5 class="card-title"><i class="bi bi-clipboard-check text-primary"></i> Project Tasks</h5>
+                            @* <h5 class="card-title"><i class="bi bi-clipboard-check text-primary"></i> Project Tasks</h5> *@
 
-                            <!-- Nav Tabs -->
-                            <ul class="nav nav-pills mb-3" id="taskTabs">
-                                <li class="nav-item">
-                                    <a class="nav-link active" id="todo-tab" data-bs-toggle="pill" href="#todo">To Do</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="inprogress-tab" data-bs-toggle="pill" href="#inprogress">In Progress</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="completed-tab" data-bs-toggle="pill" href="#completed">Completed</a>
-                                </li>
-                                <li class="nav-item">
-	                                <a class="nav-link" id="blocked-tab" data-bs-toggle="pill" href="#blocked">Blocked</a>
-                                </li>
-                            </ul>
+							<div class="d-flex justify-content-between bg-light p-2 mb-3">
+	                            <!-- Custom Styles for Nav Pills -->
+	                            <style>
+									.nav-pills .nav-link {
+										transition: background-color 0.3s, color 0.3s;
+									}
+
+									.nav-pills .nav-link.active {
+										background-color: #007bff;
+										color: #fff;
+									}
+
+									.nav-pills .nav-link:hover {
+										background-color: rgba(0, 123, 255, 0.1);
+										color: #0056b3;
+									}
+
+									.nav-pills .nav-link[data-bs-toggle="pill"]:focus {
+										box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5);
+									}
+								</style>
+	                            
+	                            <!-- Nav Tabs -->
+	                            <ul class="nav nav-pills" id="taskTabs">
+		                            <li class="nav-item me-1">
+			                            <a class="nav-link active" id="todo-tab" data-bs-toggle="pill" href="#todo">
+				                            <i class="bi bi-check-circle"></i> To Do
+			                            </a>
+		                            </li>
+		                            <li class="nav-item me-1">
+			                            <a class="nav-link" id="inprogress-tab" data-bs-toggle="pill" href="#inprogress">
+				                            <i class="bi bi-hourglass-split"></i> In Progress
+			                            </a>
+		                            </li>
+		                            <li class="nav-item me-1">
+			                            <a class="nav-link" id="completed-tab" data-bs-toggle="pill" href="#completed">
+				                            <i class="bi bi-check2-circle"></i> Completed
+			                            </a>
+		                            </li>
+		                            <li class="nav-item me-1">
+			                            <a class="nav-link" id="blocked-tab" data-bs-toggle="pill" href="#blocked">
+				                            <i class="bi bi-slash-circle"></i> Blocked
+			                            </a>
+		                            </li>
+	                            </ul>
+                                
+	                            @if (Model.UserRoleInThisProject == ProjectRole.Admin || Model.UserRoleInThisProject == ProjectRole.Contributor)
+	                            {
+		                            <!-- Add Task Button -->
+		                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+			                            <i class="bi bi-plus-circle"></i> Add New Task
+		                            </button>
+
+		                            <!-- Modal for Adding Task -->
+		                            <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+			                            <div class="modal-dialog modal-lg">
+				                            <div class="modal-content">
+					                            <div class="modal-header">
+						                            <h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
+						                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					                            </div>
+					                            <div class="modal-body">
+						                            <!-- Render the Partial View for Task Form -->
+						                            @await Html.PartialAsync("~/Views/Task/PartialViews/_AddTaskForm.cshtml", new TaskItemViewModel
+						                            {
+							                            ProjectId = Model.ProjectId
+						                            })
+					                            </div>
+				                            </div>
+			                            </div>
+		                            </div>
+	                            }
+                            </div>
 
                             <!-- Tab Content -->
                             <div class="tab-content">
