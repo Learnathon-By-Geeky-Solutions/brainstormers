@@ -31,9 +31,9 @@ namespace TaskForge.Domain.Entities
 
         public void SetDueDate(DateTime? dueDate)
         {
-            if (dueDate.HasValue && dueDate?.Date < CreatedDate.Date)
+            if (dueDate.HasValue && StartDate.HasValue && dueDate < StartDate)
             {
-                throw new ArgumentException("DueDate cannot be earlier than the CreatedDate.");
+                throw new ArgumentException("Due date cannot be earlier than the Start date.");
             }
             DueDate = dueDate;
         }
