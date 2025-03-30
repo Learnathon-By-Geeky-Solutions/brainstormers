@@ -23,11 +23,13 @@ namespace TaskForge.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserProfileService _userProfileService;
+
         public ProjectService(IUnitOfWork unitOfWork, IUserProfileService userProfileService)
         {
             _unitOfWork = unitOfWork;
             _userProfileService = userProfileService;
         }
+
 
         public async Task CreateProjectAsync(CreateProjectDto dto)
         {
@@ -99,6 +101,7 @@ namespace TaskForge.Application.Services
                 await _unitOfWork.SaveChangesAsync();
         }
 
+
         public Task<IEnumerable<SelectListItem>> GetProjectStatusOptions()
         {
             return Task.FromResult(Enum.GetValues(typeof(ProjectStatus))
@@ -110,6 +113,7 @@ namespace TaskForge.Application.Services
                    }));
         }
 
+
         public async Task<Project?> GetProjectByIdAsync(int projectId)
         {
             return (await _unitOfWork.Projects.FindByExpressionAsync(
@@ -118,7 +122,7 @@ namespace TaskForge.Application.Services
                         .Include(p => p.Members)
                             .ThenInclude(m => m.UserProfile)
                                 .ThenInclude(u => u.User)
-                        .Include(p => p.Tasks)
+                        .Include(p => p.TaskItems)
                         .Include(p => p.Invitations)
                             .ThenInclude(i => i.InvitedUserProfile)))
                 .FirstOrDefault();

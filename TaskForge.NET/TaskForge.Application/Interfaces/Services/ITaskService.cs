@@ -11,7 +11,7 @@ namespace TaskForge.Application.Interfaces.Services
 {
     public interface ITaskService
     {
-        Task<IEnumerable<TaskItem>> Get(int projectId);
+        Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId);
         Task CreateTaskAsync(TaskDto taskDto);
         Task<List<TaskDto>> GetUserTaskAsync(int? userProfileId);
     }

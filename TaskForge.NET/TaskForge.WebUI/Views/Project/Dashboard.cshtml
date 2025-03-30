@@ -9,44 +9,62 @@
     <!-- Project Overview -->
     <div class="row">
         <div class="col-md-8">
-            <h2 class="fw-bold"><i class="bi bi-kanban"></i> @Model.ProjectTitle</h2>
-            <p class="text-muted">
-                Project Status:
-                @if (Model.ProjectStatus == ProjectStatus.NotStarted)
-                {
-                    <span class="badge bg-secondary">@Model.ProjectStatus.GetDisplayName()</span>
-                }
-                else if (Model.ProjectStatus == ProjectStatus.InProgress)
-                {
-                    <span class="badge bg-info">@Model.ProjectStatus.GetDisplayName()</span>
-                }
-                else if (Model.ProjectStatus == ProjectStatus.OnHold)
-                {
-                    <span class="badge bg-warning">@Model.ProjectStatus.GetDisplayName()</span>
-                }
-                else if (Model.ProjectStatus == ProjectStatus.Completed)
-                {
-                    <span class="badge bg-success">@Model.ProjectStatus.GetDisplayName()</span>
-                }
-                else if (Model.ProjectStatus == ProjectStatus.Cancelled)
-                {
-                    <span class="badge bg-danger">@Model.ProjectStatus.GetDisplayName()</span>
-                }
-                else
-                {
-                    <span class="badge bg-dark">@Model.ProjectStatus.GetDisplayName()</span>
-                }
-            </p>
+            <h3 class="fw-bold mb-3"><i class="bi bi-kanban"></i> @Model.ProjectTitle</h3>
+			<h6 class="text-muted fw-normal fst-italic mb-3">
+				@Model.ProjectDescription
+			</h6>
+			
+			<div class="d-flex align-items-center gap-3 mb-3">
+				<div class="fw-normal">
+					<strong>Project Status: </strong>
+					@if (Model.ProjectStatus == ProjectStatus.NotStarted)
+					{
+						<span class="badge bg-secondary">@Model.ProjectStatus.GetDisplayName()</span>
+					}
+					else if (Model.ProjectStatus == ProjectStatus.InProgress)
+					{
+						<span class="badge bg-info">@Model.ProjectStatus.GetDisplayName()</span>
+					}
+					else if (Model.ProjectStatus == ProjectStatus.OnHold)
+					{
+						<span class="badge bg-warning">@Model.ProjectStatus.GetDisplayName()</span>
+					}
+					else if (Model.ProjectStatus == ProjectStatus.Completed)
+					{
+						<span class="badge bg-success">@Model.ProjectStatus.GetDisplayName()</span>
+					}
+					else if (Model.ProjectStatus == ProjectStatus.Cancelled)
+					{
+						<span class="badge bg-danger">@Model.ProjectStatus.GetDisplayName()</span>
+					}
+					else
+					{
+						<span class="badge bg-dark">@Model.ProjectStatus.GetDisplayName()</span>
+					}
+				</div>
+
+				<div>
+					<strong><i class="bi bi-calendar-event"></i> Start Date:</strong>
+					<span class="badge bg-primary">@Model.StartDate.ToString("MMM dd, yyyy")</span>
+				</div>
+				<div>
+					<strong><i class="bi bi-calendar-check"></i> End Date:</strong>
+					<span class="badge @(Model.EndDate.HasValue ? "bg-danger" : "bg-secondary")">
+						@(Model.EndDate.HasValue ? Model.EndDate.Value.ToString("MMM dd, yyyy") : "Not Set")
+					</span>
+				</div>
+			</div>
+
         </div>
 
         <!-- Button to trigger the Edit Modal -->
-         @if (Model.UserRoleInThisProject == ProjectRole.Admin){
+		@if (Model.UserRoleInThisProject == ProjectRole.Admin){
 	         <div class="col-md-4 text-end">
 		         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProjectModal">
 			         <i class="bi bi-pencil-square"></i> Edit Project
 		         </button>
 
-		         <a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="btn btn-warning">
+		         <a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="btn btn-warning" target="_blank">
 			         <i class="bi bi-people"></i> Manage Members
 		         </a>
 	         </div>
@@ -72,7 +90,7 @@
 			         </div>
 		         </div>
 	         </div>
-         }
+		}
     </div>
 </div>
 	
@@ -116,9 +134,9 @@
 	                <div class="card shadow-sm border-info">
 		                <div class="card-body text-center">
 			                <h5 class="card-title"><i class="bi bi-people text-info"></i> Team Members</h5>
-                            <p class="mb-1"><strong>Admin:</strong> @Model.TeamMembers.Where(m => m.Role == ProjectRole.Admin).ToList().Count</p>
-                            <p class="mb-1"><strong>Contributor:</strong> @Model.TeamMembers.Where(m => m.Role == ProjectRole.Contributor).ToList().Count</p>
-                            <p class="mb-1"><strong>Viewer:</strong> @Model.TeamMembers.Where(m => m.Role == ProjectRole.Viewer).ToList().Count</p>
+                            <p class="mb-1"><strong>Admin:</strong> @Model.Members.Where(m => m.Role == ProjectRole.Admin).ToList().Count</p>
+							<p class="mb-1"><strong>Contributor:</strong> @Model.Members.Where(m => m.Role == ProjectRole.Contributor).ToList().Count</p>
+							<p class="mb-1"><strong>Viewer:</strong> @Model.Members.Where(m => m.Role == ProjectRole.Viewer).ToList().Count</p>
 			                <p class="mb-1"><strong>Pending Invitations:</strong> @Model.Invitations.Count</p>
 			                @* <p class="mb-1"><a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="text-info">View Members</a></p> *@
 		                </div>
@@ -136,21 +154,45 @@
 	                </div>
                 </div>
             </div>
-            <!-- Recent Activity -->
-            @* <div class="row mt-4">
-		        <div class="col-md-12">
-		            <h4><i class="bi bi-clock-history"></i> Recent Activity</h4>
-		            <ul class="list-group">
-		                @foreach (var activity in Model.RecentActivities)
-		                {
-		                    <li class="list-group-item">
-		                        <i class="bi bi-arrow-right-circle text-primary"></i>
-		                        @activity.Action by @activity.UserName on @activity.Date.ToString("yyyy-MM-dd HH:mm")
-		                    </li>
-		                }
-		            </ul>
-		        </div>
-		    </div> *@
+
+			<!-- Team Members -->
+			<div class="row mt-4">
+				<div class="col-md-12">
+					<h4 class="mb-3"><i class="bi bi-people text-info"></i> Team Members</h4>
+					<table class="table table-bordered table-hover">
+						<thead class="table-dark">
+							<tr class="text-center">
+								<th>#</th>
+								<th>Name</th>
+								<th>Email</th>
+								<th>Role</th>
+							</tr>
+						</thead>
+						<tbody>
+							@if (Model.Members != null && Model.Members.Any())
+							{
+								var serial = 1;
+								foreach (var member in Model.Members)
+								{
+									<tr class="text-center">
+										<td>@(serial++)</td>
+										<td>@member.Name</td>
+										<td>@member.Email</td>
+										<td>@member.Role</td>
+									</tr>
+								}
+							}
+							else
+							{
+								<tr>
+									<td colspan="5" class="text-center">No members found.</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+
         </div>
 
         <!-- Tasks Content -->

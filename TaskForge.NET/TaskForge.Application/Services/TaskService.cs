@@ -27,7 +27,7 @@ namespace TaskForge.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IEnumerable<TaskItem>> Get(int projectId)
+        public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
         {
             return await _unitOfWork.Tasks.FindByExpressionAsync(
                 t => t.ProjectId == projectId,  // Filtering by ProjectId

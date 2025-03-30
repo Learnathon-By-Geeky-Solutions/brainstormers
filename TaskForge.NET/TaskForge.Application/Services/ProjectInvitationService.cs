@@ -31,9 +31,10 @@ namespace TaskForge.Application.Services
             return (await _unitOfWork.ProjectInvitations.FindByExpressionAsync(
                 predicate: pi => pi.ProjectId == projectId, 
                 includes: query => query
-                    .Include(pi => pi.InvitedUserProfile) // Include UserProfile
-                        .ThenInclude(pi => pi.User)  // Include User inside UserProfile
-               )).ToList();
+                    .Include(pi => pi.InvitedUserProfile)
+                        .ThenInclude(pi => pi.User),
+                orderBy: pi => pi.OrderByDescending(pi => pi.InvitationSentDate)
+                )).ToList();
         }
 
         public async Task<ServiceResult> AddAsync(int projectId, string invitedUserEmail, ProjectRole assignedRole)
@@ -131,7 +132,8 @@ namespace TaskForge.Application.Services
             return (await _unitOfWork.ProjectInvitations.FindByExpressionAsync(
                 predicate: pi => pi.InvitedUserProfileId == userProfileId,
                 includes: query => query
-                    .Include(pi => pi.Project)
+                    .Include(pi => pi.Project),
+                orderBy: pi => pi.OrderByDescending(pi => pi.InvitationSentDate)
                )).ToList();
         }
     }

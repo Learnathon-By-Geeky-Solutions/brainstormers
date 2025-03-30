@@ -55,10 +55,11 @@ namespace TaskForge.Application.Services
         public async Task<List<ProjectMemberDto>> GetProjectMembersAsync(int projectId)
         {
             var projectMembers = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
-                pm => pm.ProjectId == projectId,
+                predicate: pm => pm.ProjectId == projectId,
                 includes: query => query
                     .Include(pm => pm.UserProfile)
-                        .ThenInclude(pm => pm.User)
+                        .ThenInclude(pm => pm.User),
+                orderBy: query => query.OrderBy(pm => pm.Role)
                 );
 
             return projectMembers.Select(pm => new ProjectMemberDto

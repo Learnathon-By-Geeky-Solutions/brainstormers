@@ -5,7 +5,8 @@ namespace TaskForge.WebUI.Models
     public class ProjectDashboardViewModel
     {
         public int ProjectId { get; set; }
-        public string ProjectTitle { get; set; }
+        public string ProjectTitle { get; set; } = string.Empty;
+        public string ProjectDescription { get; set; } = string.Empty;
         public ProjectStatus ProjectStatus { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
@@ -22,7 +23,7 @@ namespace TaskForge.WebUI.Models
         public List<TaskItemViewModel> TaskItems { get; set; } = new();
 
         // Team Members
-        public List<ProjectMemberViewModel> TeamMembers { get; set; } = new();
+        public List<ProjectMemberViewModel> Members { get; set; } = new();
         public List<InviteViewModel> Invitations { get; set; } = new();
 
     }

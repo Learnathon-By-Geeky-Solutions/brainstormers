@@ -123,25 +123,28 @@
                         @* <a asp-action="Details" class="btn btn-info" asp-route-id="@projectMember.ProjectId">Details</a>
                         <a asp-action="ManageMembers" class="btn btn-warning" asp-route-id="@projectMember.ProjectId">Members</a> *@
                         <div class="dropdown d-flex justify-content-center">
-	                        <button class="btn btn-primary dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-		                        <i class="fas fa-cogs me-1"></i> Actions
-	                        </button>
-	                        <ul class="dropdown-menu">
-		                        <li>
-			                        <a class="dropdown-item d-flex align-items-center" asp-action="Dashboard" asp-route-id="@projectMember.ProjectId">
-				                        <i class="fas fa-chart-line text-primary me-2"></i> Dashboard
-			                        </a>
-		                        </li>
-		                        <li>
-			                        <a class="dropdown-item d-flex align-items-center" asp-action="Details" asp-route-id="@projectMember.ProjectId">
-				                        <i class="fas fa-info-circle text-info me-2"></i> Details
-			                        </a>
-		                        </li>
-		                        <li>
-			                        <a class="dropdown-item d-flex align-items-center" asp-action="ManageMembers" asp-route-id="@projectMember.ProjectId">
-				                        <i class="fas fa-users text-warning me-2"></i> Members
-			                        </a>
-		                        </li>
+                            <button class="btn btn-primary dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cogs me-1"></i> Actions
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center" asp-action="Dashboard" asp-route-id="@projectMember.ProjectId">
+                                        <i class="fas fa-chart-line text-primary me-2"></i> Dashboard
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center" asp-action="Details" asp-route-id="@projectMember.ProjectId">
+                                        <i class="fas fa-info-circle text-info me-2"></i> Details
+                                    </a>
+                                </li>
+                                @if(projectMember.UserRoleInThisProject == ProjectRole.Admin)
+                                {
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center" asp-action="ManageMembers" asp-route-id="@projectMember.ProjectId">
+                                            <i class="fas fa-users text-warning me-2"></i> Members
+                                        </a>
+                                    </li>
+                                }
 	                        </ul>
                         </div>
                     </td>

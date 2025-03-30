@@ -6,7 +6,7 @@
 	<div class="card border mb-3">
 		<div class="card-body">
 			<h6 class="card-title text-primary"><i class="bi bi-clipboard-check"></i> @Model.Title</h6>
-			<p class="text-muted">@Model.Description?.Substring(0, Math.Min(Model.Description.Length, 100))...</p>
+			<p class="text-muted">@Model.Description?.Substring(0, Math.Min(Model.Description.Length, 60))...</p>
 
 			<!-- Task Info -->
 			<div class="d-flex justify-content-between">

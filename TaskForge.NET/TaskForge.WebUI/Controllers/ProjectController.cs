@@ -195,7 +195,7 @@ namespace TaskForge.WebUI.Controllers
 
             // return project.tasks = the tasks of this project
 
-            project.Tasks = (await _taskService.Get(id)).ToList();
+            project.TaskItems = (await _taskService.GetTaskListAsync(id)).ToList();
 
             var viewModel = new ProjectDetailsViewModel
             {
@@ -216,44 +216,46 @@ namespace TaskForge.WebUI.Controllers
             var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, id);
             if (member == null)
             {
-                return Forbid(); // User is not an Admin, access denied
+                return Forbid();
             }
 
             var project = await _projectService.GetProjectByIdAsync(id);
-
             if (project == null)
             {
                 return NotFound();
             }
 
+            var taskList = (await _taskService.GetTaskListAsync(project.Id)).ToList();
+
             var model = new ProjectDashboardViewModel
             {
                 ProjectId = project.Id,
                 ProjectTitle = project.Title,
+                ProjectDescription = project.Description ?? "",
                 ProjectStatus = project.Status,
                 StartDate = project.StartDate,
                 EndDate = project.EndDate,
                 UserRoleInThisProject = member.Role,
-                TotalTasks = project.Tasks.Count,
-                PendingTasks = project.Tasks.Count(t => t.Status == TaskWorkflowStatus.ToDo),
-                CompletedTasks = project.Tasks.Count(t => t.Status == TaskWorkflowStatus.Done),
-                TeamMembers = project.Members.Select(m => new ProjectMemberViewModel
+                TotalTasks = taskList.Count(),
+                PendingTasks = taskList.Count(t => t.Status == TaskWorkflowStatus.ToDo),
+                CompletedTasks = taskList.Count(t => t.Status == TaskWorkflowStatus.Done),
+                Members = (await _projectMemberService.GetProjectMembersAsync(project.Id)).Select(m => new ProjectMemberViewModel
                 {
                     Id = m.Id,
-                    Name = m.UserProfile.FullName,
-                    Email = m.UserProfile.User.UserName,
+                    Name = m.Name ?? "",
+                    Email = m.Email ?? "",
                     Role = m.Role
                 }).ToList(),
-                Invitations = project.Invitations.Select(m => new InviteViewModel
+                Invitations = (await _invitationService.GetInvitationListAsync(project.Id)).Select(m => new InviteViewModel
                 {
                     Id = m.Id,
                     ProjectId = m.ProjectId,
-                    InvitedUserEmail = m.InvitedUserProfile?.User?.UserName ?? "No User", // Safe null handling
+                    InvitedUserEmail = m.InvitedUserProfile?.User?.UserName ?? "No User",
                     Status = m.Status,
                     InvitationSentDate = m.InvitationSentDate,
                     AssignedRole = m.AssignedRole
                 }).ToList(),
-                TaskItems = project.Tasks.Select(t => new TaskItemViewModel
+                TaskItems = taskList.Select(t => new TaskItemViewModel
                 {
                     Id = t.Id,
                     Title = t.Title,
