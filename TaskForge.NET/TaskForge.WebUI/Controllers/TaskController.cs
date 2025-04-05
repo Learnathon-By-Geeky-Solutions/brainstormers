@@ -1,16 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using TaskForge.Domain.Entities;
-using TaskForge.WebUI.Models;
-using System;
-using System.Linq;
-using TaskForge.Domain.Enums;
-using TaskForge.Infrastructure.Data;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
+using TaskForge.WebUI.Models;
 
 namespace TaskForge.WebUI.Controllers
 {
+    [Authorize(Roles = "Admin, User, Operator")]
     public class TaskController : Controller
     {
         private readonly ITaskService _taskService;
@@ -27,13 +24,7 @@ namespace TaskForge.WebUI.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return RedirectToAction("Dashboard", "Project", new { Id = model.ProjectId });
-            }
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return Unauthorized();
+                return BadRequest(ModelState);
             }
 
             var taskDto = new TaskDto
@@ -48,9 +39,8 @@ namespace TaskForge.WebUI.Controllers
             };
             await _taskService.CreateTaskAsync(taskDto);
 
-            return RedirectToAction("Dashboard", "Project", new { Id = model.ProjectId });
+            return Ok(new { success = true });
         }
-
     }
 }
 

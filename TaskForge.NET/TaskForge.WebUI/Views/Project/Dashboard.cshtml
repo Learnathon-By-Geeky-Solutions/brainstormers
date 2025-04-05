@@ -329,3 +329,34 @@
     </div>
 
 </div>
+
+
+@section Scripts {
+
+	<script>
+		$(document).ready(function () {
+			$('#taskForm').on('submit', function (e) {
+				e.preventDefault();
+
+				var formData = $(this).serialize();
+
+				console.log(formData);
+
+				$.ajax({
+					type: 'POST',
+					url: $(this).attr('action') || '/Task/Create',
+					data: formData,
+					success: function (response) {
+						$('#addTaskModal').modal('hide');
+						$('#taskForm')[0].reset();
+
+
+					},
+					error: function (xhr, status, error) {
+						alert('Something went wrong: ' + error);
+					}
+				});
+			});
+		});
+	</script>
+}
