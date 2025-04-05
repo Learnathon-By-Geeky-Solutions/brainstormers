@@ -100,7 +100,7 @@
     <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
 	    <!-- Summary Tab -->
 	    <li class="nav-item" role="presentation">
-		    <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">
+		    <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">
 			    <i class="bi bi-bar-chart-fill"></i> Summary
 		    </button>
 	    </li>
@@ -115,7 +115,7 @@
     <!-- Tab Content -->
     <div class="tab-content mt-3" id="dashboardTabsContent">
         <!-- Summary Content -->
-        <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+        <div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
             <div class="row">
                 <!-- Task Summary -->
                 <div class="col-md-4">
@@ -228,7 +228,7 @@
 	                            <!-- Nav Tabs -->
 	                            <ul class="nav nav-pills" id="taskTabs">
 		                            <li class="nav-item me-1">
-			                            <a class="nav-link active" id="todo-tab" data-bs-toggle="pill" href="#todo">
+			                            <a class="nav-link " id="todo-tab" data-bs-toggle="pill" href="#todo">
 				                            <i class="bi bi-check-circle"></i> To Do
 			                            </a>
 		                            </li>
@@ -280,7 +280,7 @@
                             <!-- Tab Content -->
                             <div class="tab-content">
                                 <!-- To Do Tab -->
-                                <div class="tab-pane fade show active" id="todo">
+                                <div class="tab-pane fade" id="todo">
                                     <div class="row">
                                         @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.ToDo))
                                         {
@@ -334,6 +334,23 @@
 @section Scripts {
 
 	<script>
+		const projectId = "@Model.ProjectId";
+		const mainTabKey = `activeMainTab_project_${projectId}`;
+		const subTabKey = `activeSubTab_project_${projectId}`;
+		const lastVisitedId = localStorage.getItem("lastVisitedProjectId");
+		// localStorage.removeItem("activeMainTab");
+		// localStorage.removeItem("activeTaskSubTab");
+		// console.log(lastVisitedId);
+		if (lastVisitedId && lastVisitedId !== projectId) {
+			// Project changed — clear tabs
+			localStorage.removeItem(`activeMainTab_project_${lastVisitedId}`);
+			localStorage.removeItem(`activeSubTab_project_${lastVisitedId}`);
+		}
+		// else if (lastVisitedId && lastVisitedId == projectId) {
+		// 	alert(`You were in this tab of this project (ProjectId=${projectId})!!`);
+		// }
+
+
 		$(document).ready(function () {
 			$('#taskForm').on('submit', function (e) {
 				e.preventDefault();
@@ -357,6 +374,56 @@
 					}
 				});
 			});
+
+
+			// Preserve Dashboard Tab Selection on Page Reload 
+			// (*** May need to clear on logout to avoid stale data when switching users ***)
+
+
+			// Load main tab and sub-tab from localStorage
+			const mainTab = localStorage.getItem(mainTabKey);
+			const taskSubTab = localStorage.getItem(subTabKey);
+
+			// if (mainTab) {
+			// 	// Activate saved main tab
+			// 	const mainTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="${mainTab}"]`);
+			// 	if (mainTabButton) new bootstrap.Tab(mainTabButton).show();
+			// 	else {
+			// 		// Fallback to default tab
+			// 		const defaultTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="#summary"]`);
+			// 		if (defaultTabButton) new bootstrap.Tab(defaultTabButton).show();
+			// 	}
+			// }
+
+			if (mainTab) {
+				const mainTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="${mainTab}"]`);
+				if (mainTabButton) {
+					new bootstrap.Tab(mainTabButton).show();
+				}
+			} else {
+				// Nothing saved — fallback to Summary
+				const defaultTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="#summary"]`);
+				if (defaultTabButton) new bootstrap.Tab(defaultTabButton).show();
+			}
+
+			// If we're on the Tasks tab, activate its sub-tab
+			if (mainTab === "#tasks" && taskSubTab) {
+				const subTabLink = document.querySelector(`#taskTabs a[href="${taskSubTab}"]`);
+				if (subTabLink) new bootstrap.Tab(subTabLink).show();
+			}
+
+			// Save main tab on click
+			$('#dashboardTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+				localStorage.setItem(mainTabKey, $(e.target).data("bs-target"));
+			});
+
+			// Save sub-tab in Tasks
+			$('#taskTabs a[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
+				localStorage.setItem(subTabKey, $(e.target).attr("href"));
+			});
 		});
+
+		// Save current project ID for next time
+		localStorage.setItem("lastVisitedProjectId", projectId);
 	</script>
 }
