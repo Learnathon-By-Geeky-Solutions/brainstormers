@@ -12,8 +12,8 @@ namespace TaskForge.WebUI.Models
         public TaskWorkflowStatus Status { get; set; }
         public TaskPriority Priority { get; set; }
 
-
-    }
+		public List<IFormFile> Attachments { get; set; } = new();
+	}
 
     public class TaskItemUpdateViewModel
     {
@@ -33,5 +33,5 @@ namespace TaskForge.WebUI.Models
         public DateTime? DueDate { get; set; }
         public TaskWorkflowStatus Status { get; set; }
         public TaskPriority Priority { get; set; }
-    }
+	}
 }

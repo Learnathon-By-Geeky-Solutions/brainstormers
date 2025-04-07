@@ -32,7 +32,7 @@ namespace TaskForge.Application.Services
             return await _unitOfWork.Tasks.FindByExpressionAsync(
                 t => t.ProjectId == projectId,  // Filtering by ProjectId
                 orderBy: q => q.OrderBy(t => t.DueDate) // Example sorting
-            );
+			);
         }
 
         public async Task CreateTaskAsync(TaskDto taskDto)
@@ -48,7 +48,35 @@ namespace TaskForge.Application.Services
             };
             if (taskDto.DueDate != null) taskItem.SetDueDate(taskDto.DueDate);
 
-            await _unitOfWork.Tasks.AddAsync(taskItem);
+			// Save attachments if any
+			if (taskDto.Attachments != null && taskDto.Attachments.Any())
+			{
+				foreach (var file in taskDto.Attachments)
+				{
+					if (file.Length > 0)
+					{
+						var uploadsFolder = Path.Combine("wwwroot", "uploads", "tasks");
+						Directory.CreateDirectory(uploadsFolder);
+
+						var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+						var filePath = Path.Combine(uploadsFolder, fileName);
+
+						using (var stream = new FileStream(filePath, FileMode.Create))
+						{
+							await file.CopyToAsync(stream);
+						}
+
+						taskItem.Attachments.Add(new TaskAttachment
+						{
+							FileName = file.FileName,
+							FilePath = Path.Combine("uploads", "tasks", fileName).Replace("\\", "/"),
+							ContentType = file.ContentType
+						});
+					}
+				}
+			}
+
+			await _unitOfWork.Tasks.AddAsync(taskItem);
             await _unitOfWork.SaveChangesAsync();
         }
 

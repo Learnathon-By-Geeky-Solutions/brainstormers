@@ -355,7 +355,10 @@
 			$('#taskForm').on('submit', function (e) {
 				e.preventDefault();
 
-				var formData = $(this).serialize();
+				// var formData = $(this).serialize();
+
+				var formData = new FormData(this);  // Using FormData to handle file uploads
+
 
 				console.log(formData);
 
@@ -363,6 +366,8 @@
 					type: 'POST',
 					url: $(this).attr('action') || '/Task/Create',
 					data: formData,
+					processData: false,  // Don't process the data
+					contentType: false,  // Don't set content type header
 					success: function (response) {
 						$('#addTaskModal').modal('hide');
 						$('#taskForm')[0].reset();

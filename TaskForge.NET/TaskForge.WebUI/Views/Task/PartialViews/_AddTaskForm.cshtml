@@ -2,7 +2,7 @@
 @model TaskItemViewModel
 
 <!-- Task Form -->
-<form id="taskForm" asp-controller="Task" asp-action="Create" method="post">
+<form id="taskForm" asp-controller="Task" asp-action="Create" method="post" enctype="multipart/form-data">
     <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
 
     <!-- Task Title -->
@@ -39,6 +39,11 @@
     <div class="mb-3">
         <label for="taskStatus" class="form-label">Status</label>
         <select class="form-select" id="taskStatus" asp-for="Status" asp-items="Html.GetEnumSelectList<TaskWorkflowStatus>()"></select>
+    </div>
+
+    <div class="mb-3">
+        <label for="attachments" class="form-label">Attachments</label>
+        <input type="file" class="form-control" id="attachments" name="Attachments" multiple />
     </div>
 
     <!-- Buttons -->

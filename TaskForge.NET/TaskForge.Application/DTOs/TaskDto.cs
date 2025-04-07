@@ -1,4 +1,5 @@
-﻿using TaskForge.Domain.Enums;
+﻿using Microsoft.AspNetCore.Http;
+using TaskForge.Domain.Enums;
 
 namespace TaskForge.Application.DTOs
 {
@@ -12,5 +13,6 @@ namespace TaskForge.Application.DTOs
         public DateTime? DueDate { get; set; }
         public TaskWorkflowStatus Status { get; set; }
         public TaskPriority Priority { get; set; }
-    }
+		public List<IFormFile> Attachments { get; set; } = new();
+	}
 }

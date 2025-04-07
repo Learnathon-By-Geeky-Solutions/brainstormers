@@ -20,14 +20,16 @@ namespace TaskForge.WebUI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(TaskItemCreateViewModel model)
+        public async Task<IActionResult> Create([FromForm] TaskItemCreateViewModel model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var taskDto = new TaskDto
+			var attachments = Request.Form.Files?.ToList();
+
+			var taskDto = new TaskDto
             {
                 ProjectId = model.ProjectId,
                 Title = model.Title,
@@ -35,8 +37,9 @@ namespace TaskForge.WebUI.Controllers
                 StartDate = model.StartDate,
                 DueDate = model.DueDate,
                 Status = model.Status,
-                Priority = model.Priority
-            };
+                Priority = model.Priority,
+				Attachments = model.Attachments
+			};
             await _taskService.CreateTaskAsync(taskDto);
 
             return Ok(new { success = true });
