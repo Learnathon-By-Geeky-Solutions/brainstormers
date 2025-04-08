@@ -1,4 +1,4 @@
-﻿@model List<ProjectInvitationViewModel>
+﻿@model ProjectInvitationListViewModel
 @{
 	ViewData["Title"] = "Index";
 	Layout = "~/Views/Shared/_Layout.cshtml";
@@ -21,21 +21,21 @@
 			</tr>
 		</thead>
 		<tbody>
-		@if (Model != null && Model.Any())
+		@if (Model.Invitations != null && Model.Invitations.Any())
 		{
-			var serial = 1;
+			var serial = (Model.PageIndex - 1) * Model.PageSize + 1;
 
-			@foreach (var invitation in Model)
+			@foreach (var invitation in Model.Invitations)
 			{
-				<tr>
-					<td class="text-center">@(serial++)</td>
+				<tr class="text-center">
+					<td>@(serial++)</td>
 					<td>@invitation.ProjectTitle</td>
 					<td>
 						<span class="badge 
-                                @(invitation.Status == "Pending" ? "bg-warning text-dark" :
-                                invitation.Status == "Accepted" ? "bg-success" :
-                                invitation.Status == "Declined" ? "bg-danger" : "bg-secondary")">
-                                @invitation.Status
+								@(invitation.Status == "Pending" ? "bg-warning text-dark" :
+								invitation.Status == "Accepted" ? "bg-success" :
+								invitation.Status == "Declined" ? "bg-danger" : "bg-secondary")">
+								@invitation.Status
 						</span>
 					</td>
 					<td>@invitation.Role</td>
@@ -69,6 +69,64 @@
 		}
 		</tbody>
 	</table>
+	<!-- Pagination Controls -->
+	<nav aria-label="Page navigation">
+		<ul class="pagination justify-content-center align-items-center">
+
+			<!-- Page Size Selection -->
+			<li class="page-item d-flex align-items-center me-2">
+				<span class="page-link bg-light border-0 text-dark">Page Size:</span>
+			</li>
+			<li class="page-item me-3">
+				<select id="pageSize" name="pageSize" class="form-select form-select-sm"
+						onchange="changePageSize(this.value)">
+					<option value="5" selected="@(Model.PageSize == 5)">5</option>
+					<option value="10" selected="@(Model.PageSize == 10)">10</option>
+					<option value="20" selected="@(Model.PageSize == 20)">20</option>
+				</select>
+			</li>
+
+			<!-- Previous Button -->
+			<li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
+				<a class="page-link" href="javascript:void(0)" onclick="changePage(@(Model.PageIndex - 1))">
+					<i class="fas fa-chevron-left"></i> Previous
+				</a>
+			</li>
+
+			<!-- Page Info -->
+			<li class="page-item disabled">
+				<span class="page-link bg-primary text-white">
+					Page @Model.PageIndex of @Model.TotalPages
+				</span>
+			</li>
+
+			<!-- Next Button -->
+			<li class="page-item @(Model.PageIndex == Model.TotalPages ? "disabled" : "")">
+				<a class="page-link" href="javascript:void(0)" onclick="changePage(@(Model.PageIndex + 1))">
+					Next <i class="fas fa-chevron-right"></i>
+				</a>
+			</li>
+		</ul>
+	</nav>
+
+	<!-- JavaScript for Pagination -->
+	<script>
+		function changePageSize(size) {
+			const url = new URL(window.location.href);
+			url.searchParams.set('pageSize', size);
+			url.searchParams.set('pageIndex', 1); // Reset to first page when changing page size
+			window.location.href = url.toString();
+		}
+
+		function changePage(pageIndex) {
+			const url = new URL(window.location.href);
+			url.searchParams.set('pageIndex', pageIndex);
+			window.location.href = url.toString();
+		}
+	</script>
+
+	<!-- Add FontAwesome for Icons -->
+	<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </div>
 
 							

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
 using TaskForge.Domain.Entities;
 
@@ -13,6 +14,6 @@ namespace TaskForge.Application.Interfaces.Services
     {
         Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId);
         Task CreateTaskAsync(TaskDto taskDto);
-        Task<List<TaskDto>> GetUserTaskAsync(int? userProfileId);
-    }
+		Task<PaginatedList<TaskDto>> GetUserTaskAsync(int? userProfileId, int pageIndex, int pageSize);
+	}
 }

@@ -2,6 +2,7 @@
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
 using System.Collections.Generic;
+using TaskForge.Application.Common.Model;
 
 namespace TaskForge.WebUI.Models
 {
@@ -11,7 +12,7 @@ namespace TaskForge.WebUI.Models
         public string ProjectTitle { get; set; }
         public string ProjectDescription { get; set; }
         public List<ProjectMemberViewModel> ProjectMembers { get; set; } = new();
-        public List<InviteViewModel> ProjectInvitations { get; set; } = new();
+        public PaginatedList<InviteViewModel> ProjectInvitations { get; set; } = new PaginatedList<InviteViewModel>(new List<InviteViewModel>(), 0, 1, 10);
 
         [Required]
         [EmailAddress]
@@ -22,7 +23,7 @@ namespace TaskForge.WebUI.Models
     }
 
 
-    public class InviteViewModel
+    public class InviteViewModel : PaginationViewModel
     {
         public int Id { get; set; }
         public int ProjectId { get; set; }
