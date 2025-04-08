@@ -93,7 +93,6 @@ namespace TaskForge.WebUI
             builder.Services.AddScoped<IProjectMemberService, ProjectMemberService>();
             builder.Services.AddScoped<IProjectInvitationService, ProjectInvitationService>();
             builder.Services.AddScoped<IUserProfileService, UserProfileService>();
-            builder.Services.AddScoped<ITaskAttachmentService, TaskAttachmentService>();
 
 
             var app = builder.Build();

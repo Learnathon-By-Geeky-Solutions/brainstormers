@@ -1,17 +1,16 @@
-﻿using System.Threading.Tasks;
-using TaskForge.Domain.Entities.Common;
+﻿using TaskForge.Domain.Entities.Common;
 
 namespace TaskForge.Domain.Entities
 {
-    public class TaskAttachment : BaseEntity
-    {
-        public string FileName { get; set; } = string.Empty;
-        public string FilePath { get; set; } = string.Empty; // Path where the file is stored
-        public string ContentType { get; set; } = string.Empty; // MIME type (e.g., image/png, application/pdf)
+	public class TaskAttachment : BaseEntity
+	{
+		public string FileName { get; set; } = string.Empty;
+		public string FilePath { get; set; } = string.Empty; // Path where the file is stored
+		public string ContentType { get; set; } = string.Empty; // MIME type (e.g., image/png, application/pdf)
 
-        public int TaskId { get; set; }
-        public TaskItem Task { get; set; } = null!; 
+		public int TaskId { get; set; }
+		public TaskItem Task { get; set; } = null!;
 
-        public string? Description { get; set; } 
-    }
+		public string? Description { get; set; }
+	}
 }
