@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using SQLitePCL;
 using System.Data;
+using System.Drawing.Printing;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Application.Services;
 using TaskForge.Domain.Entities;
@@ -35,8 +36,10 @@ namespace TaskForge.WebUI.Controllers
         }
 
         // Action method to display the current user's invitations
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int pageIndex = 1, int pageSize = 10)
         {
+            if (!ModelState.IsValid) return RedirectToAction("Index");
+
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
@@ -53,27 +56,31 @@ namespace TaskForge.WebUI.Controllers
                 return RedirectToAction("Index", "Home"); // Redirect to home or another appropriate page
             }
 
-            var invitations = await _invitationService.GetInvitationsForUserAsync(userProfileId);
-
-            if (invitations == null || !invitations.Any())
+            var paginatedInvitations = await _invitationService.GetInvitationsForUserAsync(userProfileId, pageIndex, pageSize);
+            if (!paginatedInvitations.Items.Any())
             {
                 ViewData["NoInvitationsMessage"] = "You have no pending invitations.";
-                return View(new List<ProjectInvitationViewModel>());
             }
-
-            var invitationViewModels = invitations.Select(invitation => new ProjectInvitationViewModel
+            var projectInvitationViewModel = new ProjectInvitationListViewModel
             {
-                Id = invitation.Id,
-                ProjectTitle = invitation.Project.Title,
-                Status = invitation.Status.ToString(),
-                Role = invitation.AssignedRole.ToString(),
-                InvitationSentDate = invitation.InvitationSentDate,
-                AcceptedDate = invitation.AcceptedDate,
-                DeclinedDate = invitation.DeclinedDate
-            }).ToList();
-
-            return View(invitationViewModels);
-        }
+                Invitations = paginatedInvitations.Items.Select(invitation => new ProjectInvitationViewModel
+                {
+                    Id = invitation.Id,
+                    ProjectTitle = invitation.Project.Title,
+                    Status = invitation.Status.ToString(),
+                    Role = invitation.AssignedRole.ToString(),
+                    InvitationSentDate = invitation.InvitationSentDate,
+                    AcceptedDate = invitation.AcceptedDate,
+                    DeclinedDate = invitation.DeclinedDate
+                }).ToList(),
+                PageIndex = paginatedInvitations.PageIndex,
+                PageSize = paginatedInvitations.PageSize,
+                TotalItems = paginatedInvitations.TotalCount,
+                TotalPages = paginatedInvitations.TotalPages
+             };
+ 
+             return View(projectInvitationViewModel);
+    }
 
 
         [HttpPost]

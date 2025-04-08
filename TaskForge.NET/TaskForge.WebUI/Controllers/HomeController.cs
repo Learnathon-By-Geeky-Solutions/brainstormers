@@ -30,30 +30,37 @@ namespace TaskForge.WebUI.Controllers
             _userManager = userManager;
         }
 
-        public async Task<IActionResult> Index()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login", "Account");
+		public async Task<IActionResult> Index(int pageIndex = 1, int pageSize = 10)
+		{
+			if (!ModelState.IsValid)
+			{
+				return RedirectToAction("Index");
+			}
 
-            string userId = user.Id;
+			var user = await _userManager.GetUserAsync(User);
+			if (user == null) return RedirectToAction("Login", "Account");
 
-            var userProfileId = await _userProfileService.GetByUserIdAsync(userId);
-            if(userProfileId == null) return NotFound();
+			string userId = user.Id;
+
+			var userProfileId = await _userProfileService.GetByUserIdAsync(userId);
+			if (userProfileId == null) return NotFound();
 
             var totalProjects = await _projectMemberService.GetUserProjectCountAsync(userProfileId);
-            var userTasks = await _taskService.GetUserTaskAsync(userProfileId);
+			var userTaskList = await _taskService.GetUserTaskAsync(userProfileId, pageIndex, pageSize);
 
-            var completedTasks = userTasks.Count(task => task.Status == Domain.Enums.TaskWorkflowStatus.Done);
+			var taskList = new HomeViewModel
+			{
+				TotalTasks = userTaskList.TotalCount,
+				CompletedTasks = userTaskList.Items.Count(task => task.Status == Domain.Enums.TaskWorkflowStatus.Done),
 
-            var model = new HomeViewModel
-            {
-                TotalProjects = totalProjects,
-                TotalTasks = userTasks.Count,
-                CompletedTasks = completedTasks,
-                UserTasks = userTasks
-            };
+				UserTasks = userTaskList.Items,
+				PageIndex = pageIndex,
+				PageSize = pageSize,
+				TotalItems = userTaskList.TotalCount,
+				TotalPages = userTaskList.TotalPages
+			};
 
-            return View(model);
+            return View(taskList);
         }
     }
 }

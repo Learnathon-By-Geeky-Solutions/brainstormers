@@ -1,4 +1,6 @@
-﻿namespace TaskForge.WebUI.Models
+﻿using TaskForge.Application.Common.Model;
+
+namespace TaskForge.WebUI.Models
 {
     public class ProjectInvitationViewModel
     {
@@ -10,5 +12,8 @@
         public DateTime? AcceptedDate { get; set; }
         public DateTime? DeclinedDate { get; set; }
     }
-
+    public class ProjectInvitationListViewModel : PaginationViewModel
+    {
+        public List<ProjectInvitationViewModel> Invitations { get; set; } = new();
+    }
 }

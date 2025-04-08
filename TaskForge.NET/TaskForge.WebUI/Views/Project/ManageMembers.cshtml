@@ -3,6 +3,8 @@
 
 @{
     ViewData["Title"] = "Project Members - " + Model.ProjectTitle;
+    var activeTab = Context.Request.Query["activeTab"];
+    var isInvitationsActive = activeTab == "invitations";
 }
 
 <div class="w-100 card border-0 p-4">
@@ -58,16 +60,24 @@
         <!-- Project Members & Invitations -->
         <ul class="nav nav-tabs" id="projectTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="members-tab" data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab">Current Members</button>
+                <button class="nav-link @(isInvitationsActive ? "" : "active")" id="members-tab"
+                        data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab"
+                        onclick="setActiveTab('members')">
+                    Current Members
+                </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="invitations-tab" data-bs-toggle="tab" data-bs-target="#invitations" type="button" role="tab">Invitations</button>
+                <button class="nav-link @(isInvitationsActive ? "active" : "")" id="invitations-tab"
+                        data-bs-toggle="tab" data-bs-target="#invitations" type="button" role="tab"
+                        onclick="setActiveTab('invitations')">
+                    Invitations
+                </button>
             </li>
         </ul>
 
         <div class="tab-content mt-3" id="projectTabsContent">
             <!-- Current Members Section -->
-            <div class="tab-pane fade show active" id="members" role="tabpanel">
+            <div class="tab-pane fade @(isInvitationsActive ? "" : "show active")" id="members" role="tabpanel">
                 <h4 class="mb-3">Current Members</h4>
                 <table class="table table-bordered table-hover">
                     <thead class="table-dark">
@@ -117,7 +127,7 @@
             </div>
 
             <!-- Project Invitations Section -->
-            <div class="tab-pane fade" id="invitations" role="tabpanel">
+            <div class="tab-pane fade @(isInvitationsActive ? "show active" : "")" id="invitations" role="tabpanel">
                 <h4 class="mb-3">Pending Invitations</h4>
                 <table class="table table-bordered table-hover">
                     <thead class="table-dark">
@@ -131,10 +141,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model.ProjectInvitations != null && Model.ProjectInvitations.Any())
+                        @if (Model.ProjectInvitations != null && Model.ProjectInvitations.Items.Any())
                         {
-                            var serial = 1;
-                            foreach (var invitation in Model.ProjectInvitations)
+                            var serial = (Model.ProjectInvitations.PageIndex - 1) * Model.ProjectInvitations.PageSize + 1;
+                            foreach (var invitation in Model.ProjectInvitations.Items)
                             {
                                 <tr class="text-center">
                                     <td>@(serial++)</td>
@@ -187,11 +197,79 @@
                         else
                         {
                             <tr>
-                                <td colspan="105" class="text-center">No invitations found.</td>
+                                <td colspan="6" class="text-center">No invitations found.</td>
                             </tr>
                         }
                     </tbody>
                 </table>
+
+                <!-- Pagination Controls -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center align-items-center">
+
+                        <!-- Page Size Selection -->
+                        <li class="page-item d-flex align-items-center me-2">
+                            <span class="page-link bg-light border-0 text-dark">Page Size:</span>
+                        </li>
+                        <li class="page-item me-3">
+                            <select id="pageSize" name="pageSize" class="form-select form-select-sm"
+                                    onchange="changePageSize(this.value)">
+                                <option value="5" selected="@(Model.ProjectInvitations.PageSize == 5)">5</option>
+                                <option value="10" selected="@(Model.ProjectInvitations.PageSize == 10)">10</option>
+                                <option value="20" selected="@(Model.ProjectInvitations.PageSize == 20)">20</option>
+                            </select>
+                        </li>
+
+                        <!-- Previous Button -->
+                        <li class="page-item @(Model.ProjectInvitations.PageIndex == 1 ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="changePage(@(Model.ProjectInvitations.PageIndex - 1))">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                        </li>
+
+                        <!-- Page Info -->
+                        <li class="page-item disabled">
+                            <span class="page-link bg-primary text-white">
+                                Page @Model.ProjectInvitations.PageIndex of @Model.ProjectInvitations.TotalPages
+                            </span>
+                        </li>
+
+                        <!-- Next Button -->
+                        <li class="page-item @(Model.ProjectInvitations.PageIndex == Model.ProjectInvitations.TotalPages ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="changePage(@(Model.ProjectInvitations.PageIndex + 1))">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+
+                <!-- JavaScript for Pagination -->
+                <script>
+                    function changePageSize(size) {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('pageSize', size);
+                        url.searchParams.set('pageIndex', 1); // Reset to first page when changing page size
+                        url.searchParams.set('activeTab', getActiveTab()); // Preserve active tab
+                        window.location.href = url.toString();
+                    }
+
+                    function changePage(pageIndex) {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('pageIndex', pageIndex);
+                        url.searchParams.set('activeTab', getActiveTab()); // Preserve active tab
+                        window.location.href = url.toString();
+                    }
+
+                    function getActiveTab() {
+                        return document.querySelector('.nav-link.active').getAttribute('data-bs-target').substring(1);
+                    }
+
+                    function setActiveTab(tab) {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('activeTab', tab); // Update the activeTab in URL
+                        window.history.pushState({}, '', url); // Update the URL without reloading the page
+                    }
+                </script>
             </div>
         </div>
     </div>
@@ -238,11 +316,4 @@
 
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
-
-    <script type="text/javascript">
-        function confirmAction(action) {
-            var message = `Are you sure you want to ${action}?`;
-            return confirm(message);
-        }
-    </script>
 }
