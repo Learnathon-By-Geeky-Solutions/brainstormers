@@ -264,7 +264,7 @@ namespace TaskForge.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Projects", (string)null);
+                    b.ToTable("Projects");
                 });
 
             modelBuilder.Entity("TaskForge.Domain.Entities.ProjectInvitation", b =>
@@ -318,7 +318,7 @@ namespace TaskForge.Infrastructure.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.ToTable("ProjectInvitations", (string)null);
+                    b.ToTable("ProjectInvitations");
                 });
 
             modelBuilder.Entity("TaskForge.Domain.Entities.ProjectMember", b =>
@@ -360,7 +360,7 @@ namespace TaskForge.Infrastructure.Migrations
 
                     b.HasIndex("UserProfileId");
 
-                    b.ToTable("ProjectMembers", (string)null);
+                    b.ToTable("ProjectMembers");
                 });
 
             modelBuilder.Entity("TaskForge.Domain.Entities.TaskAssignment", b =>
@@ -399,7 +399,56 @@ namespace TaskForge.Infrastructure.Migrations
 
                     b.HasIndex("UserProfileId");
 
-                    b.ToTable("TaskAssignments", (string)null);
+                    b.ToTable("TaskAssignments");
+                });
+
+            modelBuilder.Entity("TaskForge.Domain.Entities.TaskAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("TaskId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId");
+
+                    b.ToTable("TaskAttachment");
                 });
 
             modelBuilder.Entity("TaskForge.Domain.Entities.TaskItem", b =>
@@ -454,7 +503,7 @@ namespace TaskForge.Infrastructure.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.ToTable("TaskItems", (string)null);
+                    b.ToTable("TaskItems");
                 });
 
             modelBuilder.Entity("TaskForge.Domain.Entities.UserProfile", b =>
@@ -526,7 +575,7 @@ namespace TaskForge.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserProfiles", (string)null);
+                    b.ToTable("UserProfiles");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -637,10 +686,21 @@ namespace TaskForge.Infrastructure.Migrations
                     b.Navigation("UserProfile");
                 });
 
+            modelBuilder.Entity("TaskForge.Domain.Entities.TaskAttachment", b =>
+                {
+                    b.HasOne("TaskForge.Domain.Entities.TaskItem", "Task")
+                        .WithMany("Attachments")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+                });
+
             modelBuilder.Entity("TaskForge.Domain.Entities.TaskItem", b =>
                 {
                     b.HasOne("TaskForge.Domain.Entities.Project", "Project")
-                        .WithMany()
+                        .WithMany("Tasks")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -662,11 +722,15 @@ namespace TaskForge.Infrastructure.Migrations
             modelBuilder.Entity("TaskForge.Domain.Entities.Project", b =>
                 {
                     b.Navigation("Members");
+
+                    b.Navigation("Tasks");
                 });
 
             modelBuilder.Entity("TaskForge.Domain.Entities.TaskItem", b =>
                 {
                     b.Navigation("AssignedUsers");
+
+                    b.Navigation("Attachments");
                 });
 
             modelBuilder.Entity("TaskForge.Domain.Entities.UserProfile", b =>

@@ -1,0 +1,434 @@
+﻿@using TaskForge.Domain.Enums
+@model ProjectDashboardViewModel
+
+@{
+    ViewData["Title"] = "Project Dashboard - " + Model.ProjectTitle;
+}
+
+<div class="container mt-4">
+    <!-- Project Overview -->
+    <div class="row">
+        <div class="col-md-8">
+            <h3 class="fw-bold mb-3"><i class="bi bi-kanban"></i> @Model.ProjectTitle</h3>
+			<h6 class="text-muted fw-normal fst-italic mb-3">
+				@Model.ProjectDescription
+			</h6>
+			
+			<div class="d-flex align-items-center gap-3 mb-3">
+				<div class="fw-normal">
+					<strong>Project Status: </strong>
+					@if (Model.ProjectStatus == ProjectStatus.NotStarted)
+					{
+						<span class="badge bg-secondary">@Model.ProjectStatus.GetDisplayName()</span>
+					}
+					else if (Model.ProjectStatus == ProjectStatus.InProgress)
+					{
+						<span class="badge bg-info">@Model.ProjectStatus.GetDisplayName()</span>
+					}
+					else if (Model.ProjectStatus == ProjectStatus.OnHold)
+					{
+						<span class="badge bg-warning">@Model.ProjectStatus.GetDisplayName()</span>
+					}
+					else if (Model.ProjectStatus == ProjectStatus.Completed)
+					{
+						<span class="badge bg-success">@Model.ProjectStatus.GetDisplayName()</span>
+					}
+					else if (Model.ProjectStatus == ProjectStatus.Cancelled)
+					{
+						<span class="badge bg-danger">@Model.ProjectStatus.GetDisplayName()</span>
+					}
+					else
+					{
+						<span class="badge bg-dark">@Model.ProjectStatus.GetDisplayName()</span>
+					}
+				</div>
+
+				<div>
+					<strong><i class="bi bi-calendar-event"></i> Start Date:</strong>
+					<span class="badge bg-primary">@Model.StartDate.ToString("MMM dd, yyyy")</span>
+				</div>
+				<div>
+					<strong><i class="bi bi-calendar-check"></i> End Date:</strong>
+					<span class="badge @(Model.EndDate.HasValue ? "bg-danger" : "bg-secondary")">
+						@(Model.EndDate.HasValue ? Model.EndDate.Value.ToString("MMM dd, yyyy") : "Not Set")
+					</span>
+				</div>
+			</div>
+
+        </div>
+
+        <!-- Button to trigger the Edit Modal -->
+		@if (Model.UserRoleInThisProject == ProjectRole.Admin){
+	         <div class="col-md-4 text-end">
+		         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProjectModal">
+			         <i class="bi bi-pencil-square"></i> Edit Project
+		         </button>
+
+		         <a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="btn btn-warning" target="_blank">
+			         <i class="bi bi-people"></i> Manage Members
+		         </a>
+	         </div>
+             
+	         <!-- Modal for Editing Project -->
+	         <div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
+		         <div class="modal-dialog">
+			         <div class="modal-content">
+				         <div class="modal-header">
+					         <h5 class="modal-title" id="editProjectModalLabel">Edit Project</h5>
+					         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				         </div>
+				         <div class="modal-body">
+					         @if (Model.UpdateViewModel != null)
+					         {
+						         @await Html.PartialAsync("~/Views/Project/PartialViews/_EditProjectForm.cshtml", Model.UpdateViewModel)
+					         }
+					         else
+					         {
+						         <p class="text-danger">Error loading project details.</p>
+					         }
+				         </div>
+			         </div>
+		         </div>
+	         </div>
+		}
+    </div>
+</div>
+	
+<!-- Main Section -->
+<div class="">
+	<!-- Bootstrap Tabs -->
+    <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+	    <!-- Summary Tab -->
+	    <li class="nav-item" role="presentation">
+		    <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">
+			    <i class="bi bi-bar-chart-fill"></i> Summary
+		    </button>
+	    </li>
+	    <!-- Tasks Tab -->
+	    <li class="nav-item" role="presentation">
+		    <button class="nav-link" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab" aria-controls="tasks" aria-selected="false">
+			    <i class="bi bi-list-task"></i> Tasks
+		    </button>
+	    </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content mt-3" id="dashboardTabsContent">
+        <!-- Summary Content -->
+        <div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+            <div class="row">
+                <!-- Task Summary -->
+                <div class="col-md-4">
+	                <div class="card shadow-sm border-primary">
+		                <div class="card-body text-center">
+			                <h5 class="card-title"><i class="bi bi-list-task text-primary"></i> Task Summary</h5>
+			                <p class="mb-1"><strong>Total Tasks:</strong> @Model.TotalTasks</p>
+			                <p class="mb-1 text-warning"><strong>Pending:</strong> @Model.PendingTasks</p>
+			                <p class="mb-1 text-success"><strong>Completed:</strong> @Model.CompletedTasks</p>
+		                </div>
+	                </div>
+                </div>
+
+                <!-- Team Members -->
+                <div class="col-md-4">
+	                <div class="card shadow-sm border-info">
+		                <div class="card-body text-center">
+			                <h5 class="card-title"><i class="bi bi-people text-info"></i> Team Members</h5>
+                            <p class="mb-1"><strong>Admin:</strong> @Model.Members.Where(m => m.Role == ProjectRole.Admin).ToList().Count</p>
+							<p class="mb-1"><strong>Contributor:</strong> @Model.Members.Where(m => m.Role == ProjectRole.Contributor).ToList().Count</p>
+							<p class="mb-1"><strong>Viewer:</strong> @Model.Members.Where(m => m.Role == ProjectRole.Viewer).ToList().Count</p>
+			                <p class="mb-1"><strong>Pending Invitations:</strong> @Model.Invitations.Count</p>
+			                @* <p class="mb-1"><a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="text-info">View Members</a></p> *@
+		                </div>
+	                </div>
+                </div>
+
+                <!-- Project Dates -->
+                <div class="col-md-4">
+	                <div class="card shadow-sm border-secondary">
+		                <div class="card-body text-center">
+			                <h5 class="card-title"><i class="bi bi-calendar-check text-secondary"></i> Project Timeline</h5>
+			                <p class="mb-1"><strong>Start Date:</strong> @Model.StartDate.ToString("yyyy-MM-dd")</p>
+			                <p class="mb-1"><strong>End Date:</strong> @Model.EndDate?.ToString("yyyy-MM-dd")</p>
+		                </div>
+	                </div>
+                </div>
+            </div>
+
+			<!-- Team Members -->
+			<div class="row mt-4">
+				<div class="col-md-12">
+					<h4 class="mb-3"><i class="bi bi-people text-info"></i> Team Members</h4>
+					<table class="table table-bordered table-hover">
+						<thead class="table-dark">
+							<tr class="text-center">
+								<th>#</th>
+								<th>Name</th>
+								<th>Email</th>
+								<th>Role</th>
+							</tr>
+						</thead>
+						<tbody>
+							@if (Model.Members != null && Model.Members.Any())
+							{
+								var serial = 1;
+								foreach (var member in Model.Members)
+								{
+									<tr class="text-center">
+										<td>@(serial++)</td>
+										<td>@member.Name</td>
+										<td>@member.Email</td>
+										<td>@member.Role</td>
+									</tr>
+								}
+							}
+							else
+							{
+								<tr>
+									<td colspan="5" class="text-center">No members found.</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+        </div>
+
+        <!-- Tasks Content -->
+        <div class="tab-pane fade" id="tasks" role="tabpanel" aria-labelledby="tasks-tab">
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow-sm border">
+                        <div class="card-body">
+                            @* <h5 class="card-title"><i class="bi bi-clipboard-check text-primary"></i> Project Tasks</h5> *@
+
+							<div class="d-flex justify-content-between bg-light p-2 mb-3">
+	                            <!-- Custom Styles for Nav Pills -->
+	                            <style>
+									.nav-pills .nav-link {
+										transition: background-color 0.3s, color 0.3s;
+									}
+
+									.nav-pills .nav-link.active {
+										background-color: #007bff;
+										color: #fff;
+									}
+
+									.nav-pills .nav-link:hover {
+										background-color: rgba(0, 123, 255, 0.1);
+										color: #0056b3;
+									}
+
+									.nav-pills .nav-link[data-bs-toggle="pill"]:focus {
+										box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5);
+									}
+								</style>
+	                            
+	                            <!-- Nav Tabs -->
+	                            <ul class="nav nav-pills" id="taskTabs">
+		                            <li class="nav-item me-1">
+			                            <a class="nav-link " id="todo-tab" data-bs-toggle="pill" href="#todo">
+				                            <i class="bi bi-check-circle"></i> To Do
+			                            </a>
+		                            </li>
+		                            <li class="nav-item me-1">
+			                            <a class="nav-link" id="inprogress-tab" data-bs-toggle="pill" href="#inprogress">
+				                            <i class="bi bi-hourglass-split"></i> In Progress
+			                            </a>
+		                            </li>
+		                            <li class="nav-item me-1">
+			                            <a class="nav-link" id="completed-tab" data-bs-toggle="pill" href="#completed">
+				                            <i class="bi bi-check2-circle"></i> Completed
+			                            </a>
+		                            </li>
+		                            <li class="nav-item me-1">
+			                            <a class="nav-link" id="blocked-tab" data-bs-toggle="pill" href="#blocked">
+				                            <i class="bi bi-slash-circle"></i> Blocked
+			                            </a>
+		                            </li>
+	                            </ul>
+                                
+	                            @if (Model.UserRoleInThisProject == ProjectRole.Admin || Model.UserRoleInThisProject == ProjectRole.Contributor)
+	                            {
+		                            <!-- Add Task Button -->
+		                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+			                            <i class="bi bi-plus-circle"></i> Add New Task
+		                            </button>
+
+		                            <!-- Modal for Adding Task -->
+		                            <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+			                            <div class="modal-dialog modal-lg">
+				                            <div class="modal-content">
+					                            <div class="modal-header">
+						                            <h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
+						                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					                            </div>
+					                            <div class="modal-body">
+						                            <!-- Render the Partial View for Task Form -->
+						                            @await Html.PartialAsync("~/Views/Task/PartialViews/_AddTaskForm.cshtml", new TaskItemViewModel
+						                            {
+							                            ProjectId = Model.ProjectId
+						                            })
+					                            </div>
+				                            </div>
+			                            </div>
+		                            </div>
+	                            }
+                            </div>
+
+                            <!-- Tab Content -->
+                            <div class="tab-content">
+                                <!-- To Do Tab -->
+                                <div class="tab-pane fade" id="todo">
+                                    <div class="row">
+                                        @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.ToDo))
+                                        {
+                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- In Progress Tab -->
+                                <div class="tab-pane fade" id="inprogress">
+                                    <div class="row">
+                                        @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.InProgress))
+                                        {
+	                                        @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- Completed Tab -->
+                                <div class="tab-pane fade" id="completed">
+	                                <div class="row">
+		                                @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Done))
+		                                {
+			                                @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+		                                }
+	                                </div>
+                                </div>
+
+                                <!-- Blocked Tab -->
+                                <div class="tab-pane fade" id="blocked">
+	                                <div class="row">
+		                                @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Blocked))
+		                                {
+			                                @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+		                                }
+	                                </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+	<script>
+		const projectId = "@Model.ProjectId";
+		const mainTabKey = `activeMainTab_project_${projectId}`;
+		const subTabKey = `activeSubTab_project_${projectId}`;
+		const lastVisitedId = localStorage.getItem("lastVisitedProjectId");
+		// localStorage.removeItem("activeMainTab");
+		// localStorage.removeItem("activeTaskSubTab");
+		// console.log(lastVisitedId);
+		if (lastVisitedId && lastVisitedId !== projectId) {
+			// Project changed — clear tabs
+			localStorage.removeItem(`activeMainTab_project_${lastVisitedId}`);
+			localStorage.removeItem(`activeSubTab_project_${lastVisitedId}`);
+		}
+		// else if (lastVisitedId && lastVisitedId == projectId) {
+		// 	alert(`You were in this tab of this project (ProjectId=${projectId})!!`);
+		// }
+
+
+		$(document).ready(function () {
+			$('#taskForm').on('submit', function (e) {
+				e.preventDefault();
+
+				// var formData = $(this).serialize();
+
+				var formData = new FormData(this);  // Using FormData to handle file uploads
+
+
+				console.log(formData);
+
+				$.ajax({
+					type: 'POST',
+					url: $(this).attr('action') || '/Task/Create',
+					data: formData,
+					processData: false,  // Don't process the data
+					contentType: false,  // Don't set content type header
+					success: function (response) {
+						$('#addTaskModal').modal('hide');
+						$('#taskForm')[0].reset();
+
+
+					},
+					error: function (xhr, status, error) {
+						alert('Something went wrong: ' + error);
+					}
+				});
+			});
+
+
+			// Preserve Dashboard Tab Selection on Page Reload 
+			// (*** May need to clear on logout to avoid stale data when switching users ***)
+
+
+			// Load main tab and sub-tab from localStorage
+			const mainTab = localStorage.getItem(mainTabKey);
+			const taskSubTab = localStorage.getItem(subTabKey);
+
+			// if (mainTab) {
+			// 	// Activate saved main tab
+			// 	const mainTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="${mainTab}"]`);
+			// 	if (mainTabButton) new bootstrap.Tab(mainTabButton).show();
+			// 	else {
+			// 		// Fallback to default tab
+			// 		const defaultTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="#summary"]`);
+			// 		if (defaultTabButton) new bootstrap.Tab(defaultTabButton).show();
+			// 	}
+			// }
+
+			if (mainTab) {
+				const mainTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="${mainTab}"]`);
+				if (mainTabButton) {
+					new bootstrap.Tab(mainTabButton).show();
+				}
+			} else {
+				// Nothing saved — fallback to Summary
+				const defaultTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="#summary"]`);
+				if (defaultTabButton) new bootstrap.Tab(defaultTabButton).show();
+			}
+
+			// If we're on the Tasks tab, activate its sub-tab
+			if (mainTab === "#tasks" && taskSubTab) {
+				const subTabLink = document.querySelector(`#taskTabs a[href="${taskSubTab}"]`);
+				if (subTabLink) new bootstrap.Tab(subTabLink).show();
+			}
+
+			// Save main tab on click
+			$('#dashboardTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+				localStorage.setItem(mainTabKey, $(e.target).data("bs-target"));
+			});
+
+			// Save sub-tab in Tasks
+			$('#taskTabs a[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
+				localStorage.setItem(subTabKey, $(e.target).attr("href"));
+			});
+		});
+
+		// Save current project ID for next time
+		localStorage.setItem("lastVisitedProjectId", projectId);
+	</script>
+}

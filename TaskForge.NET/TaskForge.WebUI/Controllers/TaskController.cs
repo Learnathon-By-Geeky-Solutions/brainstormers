@@ -1,16 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using TaskForge.Domain.Entities;
-using TaskForge.WebUI.Models;
-using System;
-using System.Linq;
-using TaskForge.Domain.Enums;
-using TaskForge.Infrastructure.Data;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
+using TaskForge.WebUI.Models;
 
 namespace TaskForge.WebUI.Controllers
 {
+    [Authorize(Roles = "Admin, User, Operator")]
     public class TaskController : Controller
     {
         private readonly ITaskService _taskService;
@@ -22,44 +19,29 @@ namespace TaskForge.WebUI.Controllers
             _userManager = userManager;
         }
 
-        [HttpGet]
-        public IActionResult Create(int projectId)
-        {
-            var model = new TaskItemViewModel { ProjectId = projectId };
-            return View(model);
-        }
-
-
         [HttpPost]
-        public async Task<IActionResult> Create(TaskItemViewModel model)
+        public async Task<IActionResult> Create([FromForm] TaskItemCreateViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                return View(model); // Return the form with validation errors
+                return BadRequest(ModelState);
             }
 
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
+	    var taskDto = new TaskDto
             {
-                return Unauthorized();
-            }
-
-            var taskDto = new TaskDto
-            {
+                ProjectId = model.ProjectId,
                 Title = model.Title,
                 Description = model.Description,
-                ProjectId = model.ProjectId,
-                CreatedBy = user.Id,
-                Status = TaskWorkflowStatus.ToDo,
-                Priority = TaskPriority.Medium,
-                StartDate = DateTime.UtcNow,
-                DueDate = model.DueDate
-            };
+                StartDate = model.StartDate,
+                DueDate = model.DueDate,
+                Status = model.Status,
+                Priority = model.Priority,
+				Attachments = model.Attachments
+			};
             await _taskService.CreateTaskAsync(taskDto);
 
-            return RedirectToAction("Details", "Project", new { Id = model.ProjectId });
+            return Ok(new { success = true });
         }
-
     }
 }
 

@@ -5,10 +5,10 @@ namespace TaskForge.Application.DTOs
     public class ProjectWithRoleDto
     {
         public int ProjectId { get; set; }
-        public string? Title { get; set; }
-        public ProjectStatus? Status { get; set; }
+        public string? ProjectTitle { get; set; }
+        public ProjectStatus? ProjectStatus { get; set; }
         public ProjectRole? UserRoleInThisProject { get; set; }
-        public DateTime? StartDate { get; set; }
-        public DateTime? EndDate { get; set; }
+        public DateTime? ProjectStartDate { get; set; }
+        public DateTime? ProjectEndDate { get; set; }
     }
 }

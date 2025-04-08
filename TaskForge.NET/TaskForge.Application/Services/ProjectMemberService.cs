@@ -34,11 +34,10 @@ namespace TaskForge.Application.Services
         {
             var projectMember = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
                 pm => pm.UserProfile.UserId == userId && pm.ProjectId == projectId,
-                includes: new Expression<Func<ProjectMember, object>>[]
-                {
-                    pm => pm.UserProfile,
-                    pm => pm.UserProfile.User
-                });
+                includes: query => query
+                    .Include(pm => pm.UserProfile)
+                        .ThenInclude(pm => pm.User)
+                );
 
             var member = projectMember.FirstOrDefault();
             if (member == null)
@@ -56,12 +55,12 @@ namespace TaskForge.Application.Services
         public async Task<List<ProjectMemberDto>> GetProjectMembersAsync(int projectId)
         {
             var projectMembers = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
-                pm => pm.ProjectId == projectId,
-                includes: new Expression<Func<ProjectMember, object>>[]
-                {
-                    pm => pm.UserProfile,
-                    pm => pm.UserProfile.User
-                });
+                predicate: pm => pm.ProjectId == projectId,
+                includes: query => query
+                    .Include(pm => pm.UserProfile)
+                        .ThenInclude(pm => pm.User),
+                orderBy: query => query.OrderBy(pm => pm.Role)
+                );
 
             return projectMembers.Select(pm => new ProjectMemberDto
             {
@@ -77,5 +76,15 @@ namespace TaskForge.Application.Services
             await _unitOfWork.ProjectMembers.DeleteByIdAsync(memberId);
             await _unitOfWork.SaveChangesAsync();
         }
+
+        public async Task<int> GetUserProjectCountAsync(int? userProfileId)
+        {
+            var projectMembers = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
+                predicate: pm => pm.UserProfileId == userProfileId
+            );
+
+            return projectMembers.Select(pm => pm.ProjectId).Distinct().Count();
+        }
+
     }
 }

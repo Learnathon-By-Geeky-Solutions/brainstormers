@@ -12,10 +12,16 @@ namespace TaskForge.Application.Interfaces.Repositories.Common
         Task<IEnumerable<T>> FindByExpressionAsync(
            Expression<Func<T, bool>> predicate,
            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
-           Expression<Func<T, object>>[]? includes = null,
+           Func<IQueryable<T>, IQueryable<T>>? includes = null,
            int? take = null,
            int? skip = null);
-        Task<T?> GetByIdAsync(int id);
+		Task<(IEnumerable<T> Items, int TotalCount)> GetPaginatedListAsync(
+			 Expression<Func<T, bool>> predicate,
+			 Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+			 Func<IQueryable<T>, IQueryable<T>>? includes = null,
+			 int? take = null,
+			 int? skip = null);
+		Task<T?> GetByIdAsync(int id);
         Task AddAsync(T entity);
         Task UpdateAsync(T entity);
         Task DeleteByIdAsync(int id);

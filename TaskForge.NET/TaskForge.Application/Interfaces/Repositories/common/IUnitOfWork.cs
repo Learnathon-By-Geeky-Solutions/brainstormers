@@ -13,6 +13,7 @@ namespace TaskForge.Application.Interfaces.Repositories.Common
         IProjectMemberRepository ProjectMembers { get; }
         IProjectInvitationRepository ProjectInvitations { get; }
         IUserProfileRepository UserProfiles { get; }
+        ITaskAttachmentRepository TaskAttachments { get; }
         Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted);
 
         Task<int> SaveChangesAsync();

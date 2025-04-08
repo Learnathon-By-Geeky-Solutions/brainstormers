@@ -29,7 +29,7 @@
 <!-- Task List -->
 <h3>Tasks</h3>
 
-@if (Model.Project.Tasks != null && Model.Project.Tasks.Any())
+@if (Model.Project.TaskItems != null && Model.Project.TaskItems.Any())
 {
     <table class="table table-bordered table-hover align-middle">
         <thead class="table-light">
@@ -40,7 +40,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var task in Model.Project.Tasks)
+            @foreach (var task in Model.Project.TaskItems)
             {
                 <tr class="text-center">
                     <td>@task.Title</td>

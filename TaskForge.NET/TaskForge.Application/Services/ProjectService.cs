@@ -7,6 +7,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Query;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Repositories.Common;
@@ -15,6 +16,7 @@ using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using TaskForge.Application.Common.Model;
 
 namespace TaskForge.Application.Services
 {
@@ -22,11 +24,13 @@ namespace TaskForge.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserProfileService _userProfileService;
+
         public ProjectService(IUnitOfWork unitOfWork, IUserProfileService userProfileService)
         {
             _unitOfWork = unitOfWork;
             _userProfileService = userProfileService;
         }
+
 
         public async Task CreateProjectAsync(CreateProjectDto dto)
         {
@@ -79,6 +83,26 @@ namespace TaskForge.Application.Services
             }
         }
 
+
+        public async Task UpdateProjectAsync(Project dto)
+        {
+                var project = new Project
+                {
+                    Title = dto.Title,
+                    Description = dto.Description,
+                    Status = dto.Status,
+                    StartDate = dto.StartDate,
+                    UpdatedBy = dto.UpdatedBy,
+                    UpdatedDate = dto.UpdatedDate,
+                };
+
+                if (dto.EndDate != null) project.SetEndDate(dto.EndDate);
+
+                await _unitOfWork.Projects.UpdateAsync(project);
+                await _unitOfWork.SaveChangesAsync();
+        }
+
+
         public Task<IEnumerable<SelectListItem>> GetProjectStatusOptions()
         {
             return Task.FromResult(Enum.GetValues(typeof(ProjectStatus))
@@ -90,23 +114,30 @@ namespace TaskForge.Application.Services
                    }));
         }
 
+
         public async Task<Project?> GetProjectByIdAsync(int projectId)
         {
-            return await _unitOfWork.Projects.GetByIdAsync(projectId);
+            return (await _unitOfWork.Projects.FindByExpressionAsync(
+                    predicate: p => p.Id == projectId,
+                    includes: query => query
+                        .Include(p => p.Members)
+                            .ThenInclude(m => m.UserProfile)
+                                .ThenInclude(u => u.User)
+                        .Include(p => p.TaskItems)
+                        .Include(p => p.Invitations)
+                            .ThenInclude(i => i.InvitedUserProfile)))
+                .FirstOrDefault();
         }
 
 
-        public async Task<IEnumerable<ProjectWithRoleDto>> GetFilteredProjectsAsync(ProjectFilterDto filter)
-        {
-            if (filter.UserId == null)
-            {
-                return Enumerable.Empty<ProjectWithRoleDto>(); // Handle the case when UserId is null, returning an empty collection
-            }
+		public async Task<PaginatedList<ProjectWithRoleDto>> GetFilteredProjectsAsync(ProjectFilterDto filter, int pageIndex, int pageSize)
+		{
+			if (filter.UserId == null) return new PaginatedList<ProjectWithRoleDto>(new List<ProjectWithRoleDto>(), 0, pageIndex, pageSize);
 
-            var userProfileId = await _userProfileService.GetByUserIdAsync(filter.UserId); // Safe access to non-nullable UserId
-            if (userProfileId == 0) return Enumerable.Empty<ProjectWithRoleDto>(); // Return empty if user profile is not found
+			var userProfileId = await _userProfileService.GetByUserIdAsync(filter.UserId);
+			if (userProfileId == 0) return new PaginatedList<ProjectWithRoleDto>(new List<ProjectWithRoleDto>(), 0, pageIndex, pageSize);
 
-            Expression<Func<ProjectMember, bool>> _predicate = pm => 
+			Expression<Func<ProjectMember, bool>> _predicate = pm => 
                     pm.UserProfileId == userProfileId &&
                     (string.IsNullOrWhiteSpace(filter.Title) || pm.Project.Title.Contains(filter.Title)) &&
                     (!filter.Status.HasValue || pm.Project.Status == filter.Status.Value) &&
@@ -132,25 +163,27 @@ namespace TaskForge.Application.Services
                 };
             };
 
-            var filteredProject = await _unitOfWork.ProjectMembers.FindByExpressionAsync(
-                predicate: _predicate,
-                orderBy: (Func<IQueryable<ProjectMember>, IOrderedQueryable<ProjectMember>>?)_orderBy,
-                includes: new Expression<Func<ProjectMember, object>>[] { pm => pm.Project },
-                take: null,
-                skip: null
-            );
+			var (filteredProjectList, totalCount) = await _unitOfWork.ProjectMembers.GetPaginatedListAsync(
+				predicate: _predicate,
+                orderBy: _orderBy,
+                includes: query => query
+                    .Include(pm => pm.Project),
+				skip: (pageIndex - 1) * pageSize,
+				take: pageSize
+			);
 
 
-            var projectWithRoleDtos = filteredProject.Select(pm => new ProjectWithRoleDto
-            {
+			var projectList = filteredProjectList.Select(pm => new ProjectWithRoleDto
+			{
                 ProjectId = pm.Project.Id,
-                Title = pm.Project.Title,
-                Status = pm.Project.Status,
-                StartDate = pm.Project.StartDate,
-                EndDate = pm.Project.EndDate,
+                ProjectTitle = pm.Project.Title,
+                ProjectStatus = pm.Project.Status,
+                ProjectStartDate = pm.Project.StartDate,
+                ProjectEndDate = pm.Project.EndDate,
                 UserRoleInThisProject = pm.Role
             });
-            return projectWithRoleDtos;
-        }
+			return new PaginatedList<ProjectWithRoleDto>(projectList, totalCount, pageIndex, pageSize);
+		}
+
     }
 }

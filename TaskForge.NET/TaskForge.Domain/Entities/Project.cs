@@ -24,7 +24,8 @@ namespace TaskForge.Domain.Entities
         public ProjectStatus Status { get; set; } = ProjectStatus.NotStarted; // Enum for status
 
         public virtual ICollection<ProjectMember> Members { get; set; } = new List<ProjectMember>();
-        public virtual ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>(); 
+        public virtual ICollection<ProjectInvitation> Invitations { get; set; } = new List<ProjectInvitation>(); 
+        public virtual ICollection<TaskItem> TaskItems { get; set; } = new List<TaskItem>();
 
 
 

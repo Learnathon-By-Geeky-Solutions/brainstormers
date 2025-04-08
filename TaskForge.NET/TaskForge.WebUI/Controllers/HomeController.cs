@@ -1,33 +1,66 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
+using Microsoft.AspNetCore.Identity;
+using TaskForge.Application.Interfaces;
+using System.Threading.Tasks;
 using TaskForge.WebUI.Models;
+using TaskForge.Application.Interfaces.Services;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace TaskForge.WebUI.Controllers
 {
+    [Authorize] // Ensure only authenticated users can access
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly IProjectMemberService _projectMemberService;
+        private readonly IUserProfileService _userProfileService;
+        private readonly ITaskService _taskService;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(
+            IProjectMemberService projectMemberService,
+            IUserProfileService userProfileService,
+            ITaskService taskService,
+            UserManager<IdentityUser> userManager)
         {
-            _logger = logger;
+            _projectMemberService = projectMemberService;
+            _userProfileService = userProfileService;
+            _taskService = taskService;
+            _userManager = userManager;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
+		public async Task<IActionResult> Index(int pageIndex = 1, int pageSize = 10)
+		{
+			if (!ModelState.IsValid)
+			{
+				return RedirectToAction("Index");
+			}
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+			var user = await _userManager.GetUserAsync(User);
+			if (user == null) return RedirectToAction("Login", "Account");
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+			string userId = user.Id;
+
+			var userProfileId = await _userProfileService.GetByUserIdAsync(userId);
+			if (userProfileId == null) return NotFound();
+
+            var totalProjects = await _projectMemberService.GetUserProjectCountAsync(userProfileId);
+			var userTaskList = await _taskService.GetUserTaskAsync(userProfileId, pageIndex, pageSize);
+
+			var taskList = new HomeViewModel
+			{
+				TotalTasks = userTaskList.TotalCount,
+				CompletedTasks = userTaskList.Items.Count(task => task.Status == Domain.Enums.TaskWorkflowStatus.Done),
+
+				UserTasks = userTaskList.Items,
+				PageIndex = pageIndex,
+				PageSize = pageSize,
+				TotalItems = userTaskList.TotalCount,
+				TotalPages = userTaskList.TotalPages
+			};
+
+            return View(taskList);
         }
     }
 }
