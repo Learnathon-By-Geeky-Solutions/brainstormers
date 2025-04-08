@@ -27,9 +27,7 @@ namespace TaskForge.WebUI.Controllers
                 return BadRequest(ModelState);
             }
 
-			var attachments = Request.Form.Files?.ToList();
-
-			var taskDto = new TaskDto
+	    var taskDto = new TaskDto
             {
                 ProjectId = model.ProjectId,
                 Title = model.Title,
