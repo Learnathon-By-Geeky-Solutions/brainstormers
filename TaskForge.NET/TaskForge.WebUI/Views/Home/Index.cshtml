@@ -45,7 +45,7 @@
                 <th>Status</th>
                 <th>Priority</th>
                 <th>Due Date</th>
-                <th>Project</th>
+                <th>Project Title</th>
             </tr>
         </thead>
         <tbody>
@@ -61,7 +61,7 @@
                         <td>@task.Status</td>
                         <td>@task.Priority</td>
                         <td>@(task.DueDate?.ToString("yyyy-MM-dd") ?? "----")</td>
-                        <td>@task.ProjectId</td>
+                        <td>@task.ProjectTitle</td>
                     </tr>
                 }
             }

@@ -95,7 +95,7 @@ namespace TaskForge.Application.Services
 			var (taskList, totalCount) = await _unitOfWork.Tasks.GetPaginatedListAsync(
 				predicate: _predicate,
                 orderBy: _orderBy,
-                includes: null,
+                includes: query => query.Include(t => t.Project),
 				skip: (pageIndex - 1) * pageSize,
 				take: pageSize
 			 );
@@ -106,6 +106,7 @@ namespace TaskForge.Application.Services
                 Id = t.Id,
                 Title = t.Title,
                 ProjectId = t.ProjectId,
+				ProjectTitle = t.Project.Title,
                 DueDate = t.DueDate,
                 Status = t.Status,
                 Priority = t.Priority
