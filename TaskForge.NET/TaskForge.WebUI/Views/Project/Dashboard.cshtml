@@ -277,6 +277,25 @@
 	                            }
                             </div>
 
+
+							<div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel" aria-hidden="true">
+								<div class="modal-dialog modal-xl">
+									<div class="modal-content">
+										<div class="modal-header">
+											<h5 class="modal-title" id="taskDetailsModalLabel">Task Details</h5>
+											<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+										</div>
+										<div class="modal-body">
+											<!-- Content loaded via AJAX -->
+											<div id="taskDetailsContent" class="row">
+												<div class="text-center text-muted">Loading...</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+
                             <!-- Tab Content -->
                             <div class="tab-content">
                                 <!-- To Do Tab -->
@@ -430,5 +449,57 @@
 
 		// Save current project ID for next time
 		localStorage.setItem("lastVisitedProjectId", projectId);
+
+
+
+
+
+
+
+
+		$('#taskDetailsModal').on('show.bs.modal', function (event) {
+			const button = $(event.relatedTarget);
+			const taskId = button.data('task-id');
+			const $modalContent = $('#taskDetailsContent');
+
+			$modalContent.html('<div class="text-center text-muted">Loading...</div>');
+
+			if (!taskId) {
+				$modalContent.html('<div class="text-danger">Task ID not found.</div>');
+				return;
+			}
+
+			$.ajax({
+				url: `/Tasks/GetTaskById/${taskId}`, // Adjust to your actual route
+				method: 'GET',
+				success: function (task) {
+					const html = `
+							<div class="row">
+								<div class="col-md-6">
+									<h5>${task.title}</h5>
+									<p class="text-muted">${task.description ?? "No description provided"}</p>
+
+									<p><strong>Status:</strong> ${task.status}</p>
+									<p><strong>Priority:</strong> ${task.priority}</p>
+								</div>
+								<div class="col-md-6">
+									<p><strong>Start Date:</strong> ${task.startDate ?? "-"}</p>
+									<p><strong>Due Date:</strong> ${task.dueDate ?? "-"}</p>
+
+									<p><strong>Assigned Members:</strong></p>
+									<ul>${task.assignedUsers.map(u => `<li>${u.fullName}</li>`).join('')}</ul>
+
+									<p><strong>Attachments:</strong></p>
+									<ul>${task.attachments.map(a => `<li><a href="/uploads/${a.filePath}" target="_blank">${a.fileName}</a></li>`).join('')}</ul>
+								</div>
+							</div>`;
+
+					$modalContent.html(html);
+				},
+				error: function () {
+					$modalContent.html('<div class="text-danger text-center">Failed to load task details.</div>');
+				}
+			});
+		});
 	</script>
 }

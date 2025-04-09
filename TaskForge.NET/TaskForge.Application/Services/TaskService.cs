@@ -31,12 +31,26 @@ namespace TaskForge.Application.Services
         public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
         {
             return await _unitOfWork.Tasks.FindByExpressionAsync(
-                t => t.ProjectId == projectId,  // Filtering by ProjectId
-                orderBy: q => q.OrderBy(t => t.DueDate) // Example sorting
+                t => t.ProjectId == projectId, 
+                orderBy: q => q.OrderBy(t => t.DueDate)
 			);
         }
 
-        public async Task CreateTaskAsync(TaskDto taskDto)
+		public async Task<TaskItem?> GetTaskByIdAsync(int taskId)
+		{
+			Expression<Func<TaskItem, bool>> predicate = t => t.Id == taskId;
+
+			Func<IQueryable<TaskItem>, IQueryable<TaskItem>> includes = query =>
+				query.Include(t => t.Attachments)
+					 .Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile)
+					 .Include(t => t.Project);
+
+			var result = await _unitOfWork.Tasks.FindByExpressionAsync(predicate, includes: includes);
+
+			return result.FirstOrDefault();
+		}
+
+		public async Task CreateTaskAsync(TaskDto taskDto)
         {
             var taskItem = new TaskItem
             {

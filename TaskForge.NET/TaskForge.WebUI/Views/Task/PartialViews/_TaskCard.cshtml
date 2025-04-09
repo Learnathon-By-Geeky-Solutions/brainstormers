@@ -37,9 +37,14 @@
 
 			<!-- Action Buttons -->
 			<div class="mt-3 d-flex justify-content-between">
-				<a @* asp-action="EditTask" asp-route-id="@Model.Id"  *@class="btn btn-sm btn-outline-primary">
-					<i class="bi bi-pencil"></i> Edit
+				<a href="#"
+				class="btn btn-sm btn-outline-primary open-task-btn"
+				data-task-id="@Model.Id"
+				data-bs-toggle="modal"
+				data-bs-target="#taskDetailsModal">
+				<i class="bi bi-pencil"></i> Open
 				</a>
+
 				<a @* asp-action="DeleteTask" asp-route-id="@Model.Id" *@ class="btn btn-sm btn-outline-danger">
 					<i class="bi bi-trash"></i> Delete
 				</a>

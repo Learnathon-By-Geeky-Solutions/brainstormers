@@ -12,8 +12,9 @@ namespace TaskForge.Application.Interfaces.Services
 {
     public interface ITaskService
     {
-        Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId);
-        Task CreateTaskAsync(TaskDto taskDto);
+		Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId);
+		Task<TaskItem?> GetTaskByIdAsync(int id);
+		Task CreateTaskAsync(TaskDto taskDto);
 		Task<PaginatedList<TaskDto>> GetUserTaskAsync(int? userProfileId, int pageIndex, int pageSize);
 	}
 }
