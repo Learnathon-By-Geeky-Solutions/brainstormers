@@ -128,5 +128,77 @@ namespace TaskForge.Application.Services
 
 			return new PaginatedList<TaskDto>(taskListDto, totalCount, pageIndex, pageSize);
 		}
-    }
+
+		public async Task UpdateTaskAsync(TaskUpdateDto dto)
+		{
+			// Step 1: Retrieve the task with its related data (e.g., AssignedUsers, Attachments, etc.)
+			var taskList = await _unitOfWork.Tasks.FindByExpressionAsync(
+				t => t.Id == dto.Id && !t.IsDeleted,
+				includes: query => query
+					.Include(t => t.Attachments)  // Include Attachments
+					.Include(t => t.AssignedUsers) // Include AssignedUsers
+					.ThenInclude(au => au.UserProfile) // Include user profile for Assigned Users
+			);
+			var task = taskList.FirstOrDefault();
+
+			if (task == null)
+				throw new Exception("Task not found.");
+
+			// Step 2: Update task fields from the provided DTO
+			task.Title = dto.Title;
+			task.Description = dto.Description;
+			task.Status = (TaskWorkflowStatus)dto.Status;
+			task.Priority = (TaskPriority)dto.Priority;
+			task.StartDate = dto.StartDate;
+			task.SetDueDate(dto.DueDate);
+
+			// Step 3: Update assigned members if any
+			task.AssignedUsers.Clear();  // Clear existing assigned users
+			if (dto.AssignedUserIds != null && dto.AssignedUserIds.Any())
+			{
+				var users = await _unitOfWork.UserProfiles.FindByExpressionAsync(u => dto.AssignedUserIds.Contains(u.Id));
+				foreach (var user in users)
+				{
+					task.AssignedUsers.Add(new TaskAssignment { UserProfile = user });
+				}
+			}
+
+
+			// Step 4: Handle attachments (if any)
+			if (dto.Attachments != null && dto.Attachments.Any())
+			{
+				foreach (var file in dto.Attachments)
+				{
+					if (file.Length > 0)
+					{
+						var uploadsFolder = Path.Combine("wwwroot", "uploads", "tasks");
+						Directory.CreateDirectory(uploadsFolder);
+
+						var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+						var filePath = Path.Combine(uploadsFolder, fileName);
+
+						using (var stream = new FileStream(filePath, FileMode.Create))
+						{
+							await file.CopyToAsync(stream);
+						}
+
+						task.Attachments.Add(new TaskAttachment
+						{
+							FileName = file.FileName,
+							FilePath = Path.Combine("uploads", "tasks", fileName).Replace("\\", "/"),
+							ContentType = file.ContentType
+						});
+					}
+				}
+			}
+
+			// Step 5: Update the task in the repository
+			await _unitOfWork.Tasks.UpdateAsync(task);
+
+			// Step 6: Commit changes
+			await _unitOfWork.SaveChangesAsync();
+		}
+
+
+	}
 }

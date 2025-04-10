@@ -16,5 +16,7 @@ namespace TaskForge.Application.Interfaces.Services
 		Task<TaskItem?> GetTaskByIdAsync(int id);
 		Task CreateTaskAsync(TaskDto taskDto);
 		Task<PaginatedList<TaskDto>> GetUserTaskAsync(int? userProfileId, int pageIndex, int pageSize);
+
+		Task UpdateTaskAsync(TaskUpdateDto dto);
 	}
 }

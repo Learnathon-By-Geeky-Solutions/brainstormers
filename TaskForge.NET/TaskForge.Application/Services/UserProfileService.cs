@@ -37,5 +37,5 @@ namespace TaskForge.Application.Services
 
             return userProfile.Select(up => up.Id).FirstOrDefault();
         }
-    }
+	}
 }

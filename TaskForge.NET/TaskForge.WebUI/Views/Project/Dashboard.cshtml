@@ -278,7 +278,7 @@
                             </div>
 
 
-							<div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel" aria-hidden="true">
+							@* <div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel" aria-hidden="true">
 								<div class="modal-dialog modal-xl">
 									<div class="modal-content">
 										<div class="modal-header">
@@ -293,7 +293,95 @@
 										</div>
 									</div>
 								</div>
+							</div> *@
+
+
+
+
+
+							<!-- Task Details Modal -->
+							<div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel" aria-hidden="true">
+							  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+								<div class="modal-content">
+								  <div class="modal-header">
+									<h5 class="modal-title" id="taskDetailsModalLabel">Edit Task</h5>
+									<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+								  </div>
+								  <div class="modal-body">
+									<form id="taskEditForm" enctype="multipart/form-data">
+									  <input type="hidden" name="Id" id="task-id" />
+
+									  <div class="row g-3">
+										<!-- Left Column -->
+										<div class="col-md-6">
+										  <div class="mb-3">
+											<label for="task-title" class="form-label">Title</label>
+											<input type="text" class="form-control" id="task-title" name="Title" />
+										  </div>
+
+										  <div class="mb-3">
+											<label for="task-description" class="form-label">Description</label>
+											<textarea class="form-control" id="task-description" name="Description" rows="6"></textarea>
+										  </div>
+
+										  <div class="mb-3">
+											<label for="task-status" class="form-label">Status</label>
+											<select class="form-select" id="task-status" name="Status">
+											  <option value="0">To Do</option>
+											  <option value="1">In Progress</option>
+																<option value="3">Done</option>
+																<option value="2">Blocked</option>
+											</select>
+										  </div>
+
+										  <div class="mb-3">
+											<label for="task-priority" class="form-label">Priority</label>
+											<select class="form-select" id="task-priority" name="Priority">
+											  <option value="0">Low</option>
+											  <option value="1">Medium</option>
+											  <option value="2">High</option>
+											  <option value="3">Critical</option>
+											</select>
+										  </div>
+										</div>
+
+										<!-- Right Column -->
+										<div class="col-md-6">
+										  <div class="mb-3">
+											<label class="form-label">Start Date</label>
+											<input type="datetime-local" class="form-control" id="task-startdate" name="StartDate" />
+										  </div>
+
+										  <div class="mb-3">
+											<label class="form-label">Due Date</label>
+											<input type="datetime-local" class="form-control" id="task-duedate" name="DueDate" />
+										  </div>
+
+										  <div class="mb-3">
+											<label class="form-label">Assigned Members</label>
+											<select class="form-select" id="task-members" name="AssignedUserIds" multiple></select>
+										  </div>
+
+										  <div class="mb-3">
+											<label class="form-label">Attachments</label>
+											<input type="file" class="form-control" name="Attachments" multiple />
+											<ul class="list-group mt-2" id="task-attachment-list"></ul>
+										  </div>
+										</div>
+									  </div>
+									</form>
+								  </div>
+
+								  <div class="modal-footer">
+									<button type="submit" class="btn btn-primary" form="taskEditForm">Save Changes</button>
+								  </div>
+								</div>
+							  </div>
 							</div>
+
+
+
+
 
 
                             <!-- Tab Content -->
@@ -351,47 +439,32 @@
 
 
 @section Scripts {
-
 	<script>
 		const projectId = "@Model.ProjectId";
 		const mainTabKey = `activeMainTab_project_${projectId}`;
 		const subTabKey = `activeSubTab_project_${projectId}`;
 		const lastVisitedId = localStorage.getItem("lastVisitedProjectId");
-		// localStorage.removeItem("activeMainTab");
-		// localStorage.removeItem("activeTaskSubTab");
-		// console.log(lastVisitedId);
+
 		if (lastVisitedId && lastVisitedId !== projectId) {
-			// Project changed — clear tabs
 			localStorage.removeItem(`activeMainTab_project_${lastVisitedId}`);
 			localStorage.removeItem(`activeSubTab_project_${lastVisitedId}`);
 		}
-		// else if (lastVisitedId && lastVisitedId == projectId) {
-		// 	alert(`You were in this tab of this project (ProjectId=${projectId})!!`);
-		// }
-
 
 		$(document).ready(function () {
+			// Task Create Form
 			$('#taskForm').on('submit', function (e) {
 				e.preventDefault();
-
-				// var formData = $(this).serialize();
-
-				var formData = new FormData(this);  // Using FormData to handle file uploads
-
-
-				console.log(formData);
+				const formData = new FormData(this);
 
 				$.ajax({
 					type: 'POST',
 					url: $(this).attr('action') || '/Task/Create',
 					data: formData,
-					processData: false,  // Don't process the data
-					contentType: false,  // Don't set content type header
-					success: function (response) {
+					processData: false,
+					contentType: false,
+					success: function () {
 						$('#addTaskModal').modal('hide');
 						$('#taskForm')[0].reset();
-
-
 					},
 					error: function (xhr, status, error) {
 						alert('Something went wrong: ' + error);
@@ -399,105 +472,110 @@
 				});
 			});
 
-
-			// Preserve Dashboard Tab Selection on Page Reload 
-			// (*** May need to clear on logout to avoid stale data when switching users ***)
-
-
-			// Load main tab and sub-tab from localStorage
+			// Tab persistence
 			const mainTab = localStorage.getItem(mainTabKey);
 			const taskSubTab = localStorage.getItem(subTabKey);
 
-			// if (mainTab) {
-			// 	// Activate saved main tab
-			// 	const mainTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="${mainTab}"]`);
-			// 	if (mainTabButton) new bootstrap.Tab(mainTabButton).show();
-			// 	else {
-			// 		// Fallback to default tab
-			// 		const defaultTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="#summary"]`);
-			// 		if (defaultTabButton) new bootstrap.Tab(defaultTabButton).show();
-			// 	}
-			// }
-
 			if (mainTab) {
 				const mainTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="${mainTab}"]`);
-				if (mainTabButton) {
-					new bootstrap.Tab(mainTabButton).show();
-				}
+				if (mainTabButton) new bootstrap.Tab(mainTabButton).show();
 			} else {
-				// Nothing saved — fallback to Summary
 				const defaultTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="#summary"]`);
 				if (defaultTabButton) new bootstrap.Tab(defaultTabButton).show();
 			}
 
-			// If we're on the Tasks tab, activate its sub-tab
 			if (mainTab === "#tasks" && taskSubTab) {
 				const subTabLink = document.querySelector(`#taskTabs a[href="${taskSubTab}"]`);
 				if (subTabLink) new bootstrap.Tab(subTabLink).show();
 			}
 
-			// Save main tab on click
+			// Save tab selections
 			$('#dashboardTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
 				localStorage.setItem(mainTabKey, $(e.target).data("bs-target"));
 			});
-
-			// Save sub-tab in Tasks
 			$('#taskTabs a[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
 				localStorage.setItem(subTabKey, $(e.target).attr("href"));
 			});
+
+			// 🆕 When task modal is opened, fetch task details
+			$('#taskDetailsModal').on('show.bs.modal', function (event) {
+				const button = $(event.relatedTarget); // Button that triggered the modal
+				const taskId = button.data('task-id');
+
+				if (!taskId) {
+					console.error("No taskId found on button");
+					return;
+				}
+
+				GetTaskDetails(taskId);
+			});
 		});
 
-		// Save current project ID for next time
+		// Save current project ID
 		localStorage.setItem("lastVisitedProjectId", projectId);
 
-
-
-
-
-
-
-
-		$('#taskDetailsModal').on('show.bs.modal', function (event) {
-			const button = $(event.relatedTarget);
-			const taskId = button.data('task-id');
-			const $modalContent = $('#taskDetailsContent');
-
-			$modalContent.html('<div class="text-center text-muted">Loading...</div>');
-
-			if (!taskId) {
-				$modalContent.html('<div class="text-danger">Task ID not found.</div>');
-				return;
-			}
+		// 🧠 Get task and populate modal
+		function GetTaskDetails(taskId) {
 
 			$.ajax({
-				url: `/Tasks/GetTaskById/${taskId}`, // Adjust to your actual route
+				url: `/Task/GetTask/${taskId}`,
 				method: 'GET',
-				success: function (task) {
-					const html = `
-							<div class="row">
-								<div class="col-md-6">
-									<h5>${task.title}</h5>
-									<p class="text-muted">${task.description ?? "No description provided"}</p>
+				success: function (data) {
+					console.log("Fetched Task Data:", data);
 
-									<p><strong>Status:</strong> ${task.status}</p>
-									<p><strong>Priority:</strong> ${task.priority}</p>
-								</div>
-								<div class="col-md-6">
-									<p><strong>Start Date:</strong> ${task.startDate ?? "-"}</p>
-									<p><strong>Due Date:</strong> ${task.dueDate ?? "-"}</p>
+					$('#task-id').val(data.id);
+					$('#task-title').val(data.title);
+					$('#task-description').val(data.description);
+					$('#task-status').val(data.status);
+					$('#task-priority').val(data.priority);
+					$('#task-startdate').val(data.startDate);
+					$('#task-duedate').val(data.dueDate);
 
-									<p><strong>Assigned Members:</strong></p>
-									<ul>${task.assignedUsers.map(u => `<li>${u.fullName}</li>`).join('')}</ul>
+					// Members
+					$('#task-members').empty();
+					data.allUsers.forEach(user => {
+						const selected = data.assignedUserIds.includes(user.id) ? 'selected' : '';
+						$('#task-members').append(`<option value="${user.id}" ${selected}>${user.name}</option>`);
+					});
 
-									<p><strong>Attachments:</strong></p>
-									<ul>${task.attachments.map(a => `<li><a href="/uploads/${a.filePath}" target="_blank">${a.fileName}</a></li>`).join('')}</ul>
-								</div>
-							</div>`;
-
-					$modalContent.html(html);
+					// Attachments
+					$('#task-attachment-list').empty();
+					data.attachments.forEach(att => {
+						$('#task-attachment-list').append(`
+									<li class="list-group-item d-flex justify-content-between align-items-center">
+										<a href="${att.downloadUrl}" target="_blank">${att.fileName}</a>
+										<button type="button" class="btn btn-sm btn-danger" onclick="RemoveAttachment(${att.id})">
+											<i class="bi bi-trash"></i>
+										</button>
+									</li>
+								`);
+					});
 				},
-				error: function () {
-					$modalContent.html('<div class="text-danger text-center">Failed to load task details.</div>');
+				error: function (xhr) {
+					console.error("Failed to fetch task", xhr.responseText);
+					alert("Failed to load task.");
+				}
+			});
+		}
+
+		// Task Edit Form Submission
+		$('#taskEditForm').on('submit', function (e) {
+			e.preventDefault();
+			const formData = new FormData(this);
+
+			$.ajax({
+				url: '/Task/UpdateTask',
+				type: 'POST',
+				data: formData,
+				processData: false,
+				contentType: false,
+				success: () => {
+					$('#taskDetailsModal').modal('hide');
+					location.reload(); // Reload or update UI dynamically
+				},
+				error: function (xhr) {
+					alert("Failed to update task. Check console for details.");
+					console.error(xhr.responseText);
 				}
 			});
 		});
