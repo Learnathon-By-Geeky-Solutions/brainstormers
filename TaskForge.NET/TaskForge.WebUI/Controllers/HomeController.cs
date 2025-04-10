@@ -30,23 +30,29 @@ namespace TaskForge.WebUI.Controllers
             _userManager = userManager;
         }
 
-		public async Task<IActionResult> Index(int pageIndex = 1, int pageSize = 10)
-		{
-			if (!ModelState.IsValid)
-			{
-				return RedirectToAction("Index");
-			}
+        [AllowAnonymous]
+        public async Task<IActionResult> Index(int pageIndex = 1, int pageSize = 10)
+        {
+            if (!User.Identity.IsAuthenticated)
+            {
+                return View("Welcome");
+            }
 
-			var user = await _userManager.GetUserAsync(User);
-			if (user == null) return RedirectToAction("Login", "Account");
+            if (!ModelState.IsValid)
+            {
+                return RedirectToAction("Index");
+            }
 
-			string userId = user.Id;
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Account");
 
-			var userProfileId = await _userProfileService.GetByUserIdAsync(userId);
-			if (userProfileId == null) return NotFound();
+            string userId = user.Id;
+
+            var userProfileId = await _userProfileService.GetByUserIdAsync(userId);
+            if (userProfileId == null) return NotFound();
 
             var totalProjects = await _projectMemberService.GetUserProjectCountAsync(userProfileId);
-			var userTaskList = await _taskService.GetUserTaskAsync(userProfileId, pageIndex, pageSize);
+            var userTaskList = await _taskService.GetUserTaskAsync(userProfileId, pageIndex, pageSize);
 
 			var taskList = new HomeViewModel
 			{
@@ -54,14 +60,14 @@ namespace TaskForge.WebUI.Controllers
                 TotalTasks = userTaskList.TotalCount,
 				CompletedTasks = userTaskList.Items.Count(task => task.Status == Domain.Enums.TaskWorkflowStatus.Done),
 
-				UserTasks = userTaskList.Items,
-				PageIndex = pageIndex,
-				PageSize = pageSize,
-				TotalItems = userTaskList.TotalCount,
-				TotalPages = userTaskList.TotalPages
-			};
+                UserTasks = userTaskList.Items,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalItems = userTaskList.TotalCount,
+                TotalPages = userTaskList.TotalPages
+            };
 
-            return View(taskList);
+            return View("Index", taskList);
         }
     }
 }
