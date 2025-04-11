@@ -528,12 +528,12 @@
 					$('#task-description').val(data.description);
 					$('#task-status').val(data.status);
 					$('#task-priority').val(data.priority);
-					if (data.startDate) {
+					if (data.startDate && data.startDate.includes('T')) {
 						$('#task-startdate').val(data.startDate.split('T')[0]);
 					} else {
 						$('#task-startdate').val('');
 					}
-					if (data.dueDate) {
+					if (data.dueDate && data.dueDate.includes('T')) {
 						$('#task-duedate').val(data.dueDate.split('T')[0]);
 					} else {
 						$('#task-duedate').val('');
