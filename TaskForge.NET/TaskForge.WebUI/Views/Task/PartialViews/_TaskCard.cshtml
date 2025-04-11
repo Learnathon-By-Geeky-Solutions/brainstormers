@@ -39,21 +39,22 @@
 				                   : Model.Status == TaskWorkflowStatus.InProgress ? "bg-warning text-dark" 
 				                   : Model.Status == TaskWorkflowStatus.Blocked ? "bg-danger text-light" 
 				                   : "bg-light text-dark")">
-					@if (Model.Status == TaskWorkflowStatus.Done)
+					@if (Model.Status == TaskWorkflowStatus.ToDo)
 					{
-						<i class="bi bi-check-circle"></i>
+						<i class="bi bi-slash-circle"></i>
 					}
 					else if (Model.Status == TaskWorkflowStatus.InProgress)
 					{
-						<i class="bi bi-arrow-repeat"></i>
+						<i class="bi bi-hourglass-split"></i>
 					}
-					else if (Model.Status == TaskWorkflowStatus.Blocked)
+					else if (Model.Status == TaskWorkflowStatus.Done)
 					{
-						<i class="bi bi-exclamation-triangle"></i>
+
+						<i class="bi bi-check2-circle"></i>
 					}
 					else
 					{
-						<i class="bi bi-circle"></i>
+						<i class="bi bi-exclamation-circle"></i>
 					}
 					Status: @Model.Status.GetDisplayName()
 				</span>

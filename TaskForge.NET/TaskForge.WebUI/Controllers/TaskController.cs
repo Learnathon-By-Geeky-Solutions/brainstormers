@@ -22,6 +22,7 @@ namespace TaskForge.WebUI.Controllers
 			_userManager = userManager;
         }
 
+
         [HttpPost]
         public async Task<IActionResult> Create([FromForm] TaskItemCreateViewModel model)
         {
@@ -30,7 +31,7 @@ namespace TaskForge.WebUI.Controllers
                 return BadRequest(ModelState);
             }
 
-	    var taskDto = new TaskDto
+			var taskDto = new TaskDto
             {
                 ProjectId = model.ProjectId,
                 Title = model.Title,
@@ -45,7 +46,6 @@ namespace TaskForge.WebUI.Controllers
 
             return Ok(new { success = true });
         }
-
 
 
 		[HttpGet("Tasks/GetTaskById/{id}")]
@@ -67,9 +67,6 @@ namespace TaskForge.WebUI.Controllers
 				Attachments = task.Attachments.Select(a => new { a.FileName, a.FilePath })
 			});
 		}
-
-
-
 
 
 		[HttpGet]

@@ -227,7 +227,7 @@
 								<ul class="nav nav-pills" id="taskTabs">
 									<li class="nav-item me-1">
 										<a class="nav-link " id="todo-tab" data-bs-toggle="pill" href="#todo">
-											<i class="bi bi-check-circle"></i> To Do
+											<i class="bi bi-slash-circle"></i> To Do
 										</a>
 									</li>
 									<li class="nav-item me-1">
@@ -242,7 +242,7 @@
 									</li>
 									<li class="nav-item me-1">
 										<a class="nav-link" id="blocked-tab" data-bs-toggle="pill" href="#blocked">
-											<i class="bi bi-slash-circle"></i> Blocked
+											<i class="bi bi-exclamation-circle"></i> Blocked
 										</a>
 									</li>
 								</ul>
@@ -604,7 +604,6 @@
 			const description = $('#task-description').val().trim();
 			const startDate = $('#task-startdate').val();
 			const dueDate = $('#task-duedate').val();
-			// const attachments = $('input[name="Attachments"]')[0].files;
 			const attachments = $('#task-attachments')[0].files;
 
 			// Reset previous errors
