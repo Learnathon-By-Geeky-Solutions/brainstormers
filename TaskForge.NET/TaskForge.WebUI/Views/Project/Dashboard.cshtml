@@ -97,15 +97,15 @@
 <!-- Main Section -->
 <div class="">
 	<!-- Bootstrap Tabs -->
-    <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+    <ul class="nav nav-tabs" id="dashboardTabs">
 	    <!-- Summary Tab -->
-	    <li class="nav-item" role="presentation">
+	    <li class="nav-item">
 		    <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">
 			    <i class="bi bi-bar-chart-fill"></i> Summary
 		    </button>
 	    </li>
 	    <!-- Tasks Tab -->
-	    <li class="nav-item" role="presentation">
+	    <li class="nav-item">
 		    <button class="nav-link" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab" aria-controls="tasks" aria-selected="false">
 			    <i class="bi bi-list-task"></i> Tasks
 		    </button>
@@ -441,8 +441,28 @@
 					processData: false,
 					contentType: false,
 					success: function () {
+						const selectedStatus = $('#taskForm select[name="Status"]').val();
+
 						$('#addTaskModal').modal('hide');
 						$('#taskForm')[0].reset();
+
+						// Map status values to tab IDs
+						const statusToTab = {
+							0: '#todo',
+							1: '#inprogress',
+							2: '#completed', 
+							3: '#blocked'
+						};
+
+						// Save active main and sub tab so it opens where the task was added
+						localStorage.setItem(mainTabKey, "#tasks");
+
+						if (statusToTab[selectedStatus]) {
+							localStorage.setItem(subTabKey, statusToTab[selectedStatus]);
+						}
+
+						// Reload to reflect the new task under the correct tab
+						location.reload();
 					},
 					error: function (xhr, status, error) {
 						alert('Something went wrong: ' + error);
