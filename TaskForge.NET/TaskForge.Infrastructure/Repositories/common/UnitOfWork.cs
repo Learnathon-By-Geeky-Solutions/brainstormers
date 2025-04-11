@@ -21,8 +21,9 @@ namespace TaskForge.Infrastructure.Repositories.Common
         public IProjectInvitationRepository ProjectInvitations { get; }
         public IUserProfileRepository UserProfiles { get; }
         public ITaskAttachmentRepository TaskAttachments { get; }
+		public ITaskAssignmentRepository TaskAssignments { get; }
 
-        public UnitOfWork(ApplicationDbContext context, IUserContextService userContextService)
+		public UnitOfWork(ApplicationDbContext context, IUserContextService userContextService)
         {
             _context = context;
 
@@ -32,7 +33,8 @@ namespace TaskForge.Infrastructure.Repositories.Common
             ProjectInvitations = new ProjectInvitationRepository(context, userContextService);
             UserProfiles = new UserProfileRepository(context, userContextService);
             TaskAttachments = new TaskAttachmentRepository(context, userContextService);
-        }
+			TaskAssignments = new TaskAssignmentRepository(context, userContextService);
+		}
 
         public async Task<int> SaveChangesAsync()
         {

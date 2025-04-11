@@ -6,6 +6,11 @@
 }
 
 <div class="container mt-4">
+	<!-- Hidden form to inject AntiForgeryToken -->
+	<form id="antiForgeryForm" style="display: none;">
+		@Html.AntiForgeryToken()
+	</form>
+
     <!-- Project Overview -->
     <div class="row">
         <div class="col-md-8">
@@ -192,7 +197,6 @@
 					</table>
 				</div>
 			</div>
-
         </div>
 
         <!-- Tasks Content -->
@@ -404,15 +408,12 @@
 	                                </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
-
 </div>
 
 
@@ -665,4 +666,39 @@
 			});
 		});
 	</script>
+
+	<script>
+		$(document).ready(function () {
+			const token = $('#antiForgeryForm input[name="__RequestVerificationToken"]').val();
+
+			$(".delete-task-btn").click(function () {
+				const taskId = $(this).data("id");
+				const card = $(this).closest(".task-card");
+
+				if (confirm("Are you sure you want to delete this task?")) {
+					$.ajax({
+						url: '@Url.Action("DeleteTask", "Project")',
+						type: 'POST',
+						data: {
+							id: taskId,
+							__RequestVerificationToken: token
+						},
+						success: function (response) {
+							if (response.success) {
+								card.fadeOut(300, function () {
+									$(this).remove(); // Fully remove from DOM
+								});
+							} else {
+								alert(response.message || "Error deleting task.");
+							}
+						},
+						error: function () {
+							alert("Something went wrong. Please try again.");
+						}
+					});
+				}
+			});
+		});
+	</script>
 }
+

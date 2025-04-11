@@ -211,9 +211,23 @@ namespace TaskForge.WebUI.Controllers
             return View(viewModel);
         }
 
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> DeleteTask(int id)
+		{
+			try
+			{
+				await _taskService.RemoveTaskAsync(id);
+				return Json(new { success = true, message = "Task deleted successfully." });
+			}
+			catch (Exception ex)
+			{
+				return Json(new { success = false, message = ex.Message });
+			}
+		}
 
-        // GET: Project/Dashboard/5
-        public async Task<IActionResult> Dashboard(int id)
+		// GET: Project/Dashboard/5
+		public async Task<IActionResult> Dashboard(int id)
         {
             // Restrict project access to assigned users only
             var user = await _userManager.GetUserAsync(User);
@@ -242,7 +256,7 @@ namespace TaskForge.WebUI.Controllers
                 StartDate = project.StartDate,
                 EndDate = project.EndDate,
                 UserRoleInThisProject = member.Role,
-                TotalTasks = taskList.Count(),
+                TotalTasks = taskList.Count,
                 PendingTasks = taskList.Count(t => t.Status == TaskWorkflowStatus.ToDo),
                 CompletedTasks = taskList.Count(t => t.Status == TaskWorkflowStatus.Done),
                 Members = (await _projectMemberService.GetProjectMembersAsync(project.Id)).Select(m => new ProjectMemberViewModel
