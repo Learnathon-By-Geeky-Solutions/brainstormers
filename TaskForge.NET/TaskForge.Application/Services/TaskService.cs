@@ -114,5 +114,33 @@ namespace TaskForge.Application.Services
 
 			return new PaginatedList<TaskDto>(taskListDto, totalCount, pageIndex, pageSize);
 		}
-    }
+
+		public async Task RemoveTaskAsync(int id)
+		{
+			// Get the task with related data
+			var task = await _unitOfWork.Tasks.FindByExpressionAsync(
+				t => t.Id == id,
+				includes: query => query
+					.Include(t => t.Attachments)
+					.Include(t => t.AssignedUsers)
+			);
+
+			var taskItem = task.FirstOrDefault();
+			if (taskItem == null)
+				throw new Exception("Task not found");
+
+			// Soft delete the main task
+			await _unitOfWork.Tasks.DeleteByIdAsync(id);
+
+			// Soft delete attachments
+			var attachmentIds = taskItem.Attachments.Select(a => a.Id);
+			await _unitOfWork.TaskAttachments.DeleteByIdsAsync(attachmentIds);
+
+			// Soft delete assignments
+			var assignmentIds = taskItem.AssignedUsers.Select(a => a.Id);
+			await _unitOfWork.TaskAssignments.DeleteByIdsAsync(assignmentIds);
+
+			await _unitOfWork.SaveChangesAsync();
+		}
+	}
 }

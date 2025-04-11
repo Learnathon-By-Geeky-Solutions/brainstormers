@@ -2,7 +2,7 @@
 @using TaskForge.Domain.Enums
 @model TaskItemViewModel
 
-<div class="col-md-4">
+<div class="col-md-4 task-card" data-id="@Model.Id">
 	<div class="card border mb-3">
 		<div class="card-body">
 			<h6 class="card-title text-primary"><i class="bi bi-clipboard-check"></i> @Model.Title</h6>
@@ -40,9 +40,9 @@
 				<a @* asp-action="EditTask" asp-route-id="@Model.Id"  *@class="btn btn-sm btn-outline-primary">
 					<i class="bi bi-pencil"></i> Edit
 				</a>
-				<a @* asp-action="DeleteTask" asp-route-id="@Model.Id" *@ class="btn btn-sm btn-outline-danger">
+				<button type="button" class="btn btn-sm btn-outline-danger delete-task-btn" data-id="@Model.Id">
 					<i class="bi bi-trash"></i> Delete
-				</a>
+				</button>
 			</div>
 		</div>
 	</div>
