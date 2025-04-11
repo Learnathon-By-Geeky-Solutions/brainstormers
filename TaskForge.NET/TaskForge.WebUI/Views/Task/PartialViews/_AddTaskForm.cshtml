@@ -3,52 +3,53 @@
 
 <!-- Task Form -->
 <form id="taskForm" asp-controller="Task" asp-action="Create" method="post" enctype="multipart/form-data">
-    <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
+	<input type="hidden" name="ProjectId" value="@Model.ProjectId" />
 
-    <!-- Task Title -->
-    <div class="mb-3">
-        <label for="taskTitle" class="form-label">Task Title</label>
-        <input type="text" class="form-control" id="taskTitle" name="Title" required />
-    </div>
+	<!-- Task Title -->
+	<div class="mb-3">
+		<label for="taskTitle" class="form-label">Task Title</label>
+		<input type="text" class="form-control" id="taskTitle" name="Title" required />
+	</div>
 
-    <!-- Task Description -->
-    <div class="mb-3">
-        <label for="taskDescription" class="form-label">Task Description</label>
-        <textarea class="form-control" id="taskDescription" name="Description"></textarea>
-    </div>
-    
-    <!-- Task Start Date -->
-    <div class="mb-3">
-	    <label for="taskStartDate" class="form-label">Start Date</label>
-	    <input type="date" class="form-control" id="taskStartDate" name="StartDate" />
-    </div>
+	<!-- Task Description -->
+	<div class="mb-3">
+		<label for="taskDescription" class="form-label">Task Description</label>
+		<textarea class="form-control" id="taskDescription" name="Description"></textarea>
+	</div>
 
-    <!-- Task Due Date -->
-    <div class="mb-3">
-        <label for="taskDueDate" class="form-label">Due Date</label>
-        <input type="date" class="form-control" id="taskDueDate" name="DueDate" />
-    </div>
+	<!-- Task Start Date -->
+	<div class="mb-3">
+		<label for="taskStartDate" class="form-label">Start Date</label>
+		<input type="date" class="form-control" id="taskStartDate" name="StartDate" />
+	</div>
 
-    <!-- Task Priority -->
-    <div class="mb-3">
-        <label for="taskPriority" class="form-label">Priority</label>
-        <select class="form-select" id="taskPriority" asp-for="Priority" asp-items="Html.GetEnumSelectList<TaskPriority>()"></select>
-    </div>
+	<!-- Task Due Date -->
+	<div class="mb-3">
+		<label for="taskDueDate" class="form-label">Due Date</label>
+		<input type="date" class="form-control" id="taskDueDate" name="DueDate" />
+	</div>
 
-    <!-- Task Status -->
-    <div class="mb-3">
-        <label for="taskStatus" class="form-label">Status</label>
-        <select class="form-select" id="taskStatus" asp-for="Status" asp-items="Html.GetEnumSelectList<TaskWorkflowStatus>()"></select>
-    </div>
+	<!-- Task Priority -->
+	<div class="mb-3">
+		<label for="taskPriority" class="form-label">Priority</label>
+		<select class="form-select" id="taskPriority" asp-for="Priority" asp-items="Html.GetEnumSelectList<TaskPriority>()"></select>
+	</div>
 
-    <div class="mb-3">
-        <label for="attachments" class="form-label">Attachments</label>
-        <input type="file" class="form-control" id="attachments" name="Attachments" multiple />
-    </div>
+	<!-- Task Status -->
+	<div class="mb-3">
+		<label for="taskStatus" class="form-label">Status</label>
+		<select class="form-select" id="taskStatus" asp-for="Status" asp-items="Html.GetEnumSelectList<TaskWorkflowStatus>()"></select>
+	</div>
 
-    <!-- Buttons -->
-    <div class="text-end">
-        <button type="submit" class="btn btn-primary">Save Task</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-    </div>
+	<div class="mb-3">
+		<label for="taskAttachments" class="form-label">Attachments</label>
+		<input type="file" class="form-control" id="taskAttachments" name="Attachments" multiple />
+		<div class="invalid-feedback d-block attachments-error" style="display: none;"></div>
+	</div>
+
+	<!-- Buttons -->
+	<div class="text-end">
+		<button type="submit" class="btn btn-primary">Save Task</button>
+		<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+	</div>
 </form>

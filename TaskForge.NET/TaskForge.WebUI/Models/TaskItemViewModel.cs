@@ -1,4 +1,5 @@
-﻿using TaskForge.Domain.Enums;
+﻿using System.ComponentModel.DataAnnotations;
+using TaskForge.Domain.Enums;
 
 namespace TaskForge.WebUI.Models
 {
@@ -27,7 +28,12 @@ namespace TaskForge.WebUI.Models
     {
         public int Id { get; set; }
         public int ProjectId { get; set; }
+
+        [Required]
+        [StringLength(200, ErrorMessage = "Title cannot be longer than 200 characters.")]
         public string Title { get; set; } = string.Empty;
+
+        [StringLength(1000, ErrorMessage = "Description cannot be longer than 1000 characters.")]
         public string? Description { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? DueDate { get; set; }

@@ -53,6 +53,9 @@ namespace TaskForge.Application.Services
 
 		public async Task CreateTaskAsync(TaskDto taskDto)
         {
+			if(taskDto.Attachments != null && taskDto.Attachments.Count > 10)
+                throw new Exception("You can only attach up to 10 files.");
+
             var taskItem = new TaskItem
             {
                 ProjectId = taskDto.ProjectId,
@@ -164,25 +167,31 @@ namespace TaskForge.Application.Services
 			var taskList = await _unitOfWork.Tasks.FindByExpressionAsync(
 				t => t.Id == dto.Id && !t.IsDeleted,
 				includes: query => query
-					.Include(t => t.Attachments)  // Include Attachments
-					.Include(t => t.AssignedUsers) // Include AssignedUsers
-					.ThenInclude(au => au.UserProfile) // Include user profile for Assigned Users
+					.Include(t => t.Attachments) 
+					.Include(t => t.AssignedUsers)
+					.ThenInclude(au => au.UserProfile)
 			);
+
 			var task = taskList.FirstOrDefault();
 
 			if (task == null)
 				throw new Exception("Task not found.");
 
-			// Step 2: Update task fields from the provided DTO
-			task.Title = dto.Title;
+			if(task.Attachments.Count + dto.Attachments?.Count > 10)
+                throw new Exception("You can only attach up to 10 files.");
+
+
+            // Step 2: Update task fields from the provided DTO
+            task.Title = dto.Title;
 			task.Description = dto.Description;
 			task.Status = (TaskWorkflowStatus)dto.Status;
 			task.Priority = (TaskPriority)dto.Priority;
 			task.StartDate = dto.StartDate;
 			task.SetDueDate(dto.DueDate);
 
+
 			// Step 3: Update assigned members if any
-			task.AssignedUsers.Clear();  // Clear existing assigned users
+			task.AssignedUsers.Clear(); 
 			if (dto.AssignedUserIds != null && dto.AssignedUserIds.Any())
 			{
 				var users = await _unitOfWork.UserProfiles.FindByExpressionAsync(u => dto.AssignedUserIds.Contains(u.Id));

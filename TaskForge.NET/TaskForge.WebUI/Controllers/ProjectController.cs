@@ -211,21 +211,7 @@ namespace TaskForge.WebUI.Controllers
             return View(viewModel);
         }
 
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> DeleteTask(int id)
-		{
-			try
-			{
-				await _taskService.RemoveTaskAsync(id);
-				return Json(new { success = true, message = "Task deleted successfully." });
-			}
-			catch (Exception ex)
-			{
-				return Json(new { success = false, message = ex.Message });
-			}
-		}
-
+		
 		// GET: Project/Dashboard/5
 		public async Task<IActionResult> Dashboard(int id)
         {
