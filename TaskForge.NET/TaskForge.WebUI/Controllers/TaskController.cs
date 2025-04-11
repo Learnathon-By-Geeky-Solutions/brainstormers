@@ -95,7 +95,7 @@ namespace TaskForge.WebUI.Controllers
 					downloadUrl = Url.Action("Download", "Attachment", new { id = a.Id })
 				}),
 				assignedUserIds = task.AssignedUsers.Select(u => u.UserProfileId),
-				allUsers = allUsers.Select(u => new { id = u.Id, name = u.Name })
+				allUsers = allUsers.Select(u => new { id = u.UserProfileId, name = u.Name })
 			});
 		}
 
