@@ -88,3 +88,6 @@ packages/
 *.pubxml
 *.pubxml.user
 
+# Ignore media files 
+**/uploads
+

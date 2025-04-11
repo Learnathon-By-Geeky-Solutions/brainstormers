@@ -12,8 +12,8 @@ namespace TaskForge.WebUI.Models
         public TaskWorkflowStatus Status { get; set; }
         public TaskPriority Priority { get; set; }
 
-		public List<IFormFile> Attachments { get; set; } = new();
-	}
+        public List<IFormFile> Attachments { get; set; } = new();
+    }
 
     public class TaskItemUpdateViewModel
     {
@@ -33,5 +33,20 @@ namespace TaskForge.WebUI.Models
         public DateTime? DueDate { get; set; }
         public TaskWorkflowStatus Status { get; set; }
         public TaskPriority Priority { get; set; }
-	}
+
+        public List<TaskAssignmentViewModel> AssignedUsers { get; set; } = new List<TaskAssignmentViewModel>();
+
+    }
+
+    public class TaskAssignmentViewModel
+    {
+        public int UserProfileId { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? AvatarUrl { get; set; }
+
+    }
+
+
 }

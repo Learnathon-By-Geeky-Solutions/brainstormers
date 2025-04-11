@@ -102,15 +102,15 @@
 <!-- Main Section -->
 <div class="">
 	<!-- Bootstrap Tabs -->
-    <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+    <ul class="nav nav-tabs" id="dashboardTabs">
 	    <!-- Summary Tab -->
-	    <li class="nav-item" role="presentation">
+	    <li class="nav-item">
 		    <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">
 			    <i class="bi bi-bar-chart-fill"></i> Summary
 		    </button>
 	    </li>
 	    <!-- Tasks Tab -->
-	    <li class="nav-item" role="presentation">
+	    <li class="nav-item">
 		    <button class="nav-link" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab" aria-controls="tasks" aria-selected="false">
 			    <i class="bi bi-list-task"></i> Tasks
 		    </button>
@@ -205,11 +205,9 @@
                 <div class="col-12">
                     <div class="card shadow-sm border">
                         <div class="card-body">
-                            @* <h5 class="card-title"><i class="bi bi-clipboard-check text-primary"></i> Project Tasks</h5> *@
-
 							<div class="d-flex justify-content-between bg-light p-2 mb-3">
 	                            <!-- Custom Styles for Nav Pills -->
-	                            <style>
+								<style>
 									.nav-pills .nav-link {
 										transition: background-color 0.3s, color 0.3s;
 									}
@@ -229,57 +227,144 @@
 									}
 								</style>
 	                            
-	                            <!-- Nav Tabs -->
-	                            <ul class="nav nav-pills" id="taskTabs">
-		                            <li class="nav-item me-1">
-			                            <a class="nav-link " id="todo-tab" data-bs-toggle="pill" href="#todo">
-				                            <i class="bi bi-check-circle"></i> To Do
-			                            </a>
-		                            </li>
-		                            <li class="nav-item me-1">
-			                            <a class="nav-link" id="inprogress-tab" data-bs-toggle="pill" href="#inprogress">
-				                            <i class="bi bi-hourglass-split"></i> In Progress
-			                            </a>
-		                            </li>
-		                            <li class="nav-item me-1">
-			                            <a class="nav-link" id="completed-tab" data-bs-toggle="pill" href="#completed">
-				                            <i class="bi bi-check2-circle"></i> Completed
-			                            </a>
-		                            </li>
-		                            <li class="nav-item me-1">
-			                            <a class="nav-link" id="blocked-tab" data-bs-toggle="pill" href="#blocked">
-				                            <i class="bi bi-slash-circle"></i> Blocked
-			                            </a>
-		                            </li>
-	                            </ul>
+								<!-- Nav Tabs -->
+								<ul class="nav nav-pills" id="taskTabs">
+									<li class="nav-item me-1">
+										<a class="nav-link " id="todo-tab" data-bs-toggle="pill" href="#todo">
+											<i class="bi bi-slash-circle"></i> To Do
+										</a>
+									</li>
+									<li class="nav-item me-1">
+										<a class="nav-link" id="inprogress-tab" data-bs-toggle="pill" href="#inprogress">
+											<i class="bi bi-hourglass-split"></i> In Progress
+										</a>
+									</li>
+									<li class="nav-item me-1">
+										<a class="nav-link" id="completed-tab" data-bs-toggle="pill" href="#completed">
+											<i class="bi bi-check2-circle"></i> Completed
+										</a>
+									</li>
+									<li class="nav-item me-1">
+										<a class="nav-link" id="blocked-tab" data-bs-toggle="pill" href="#blocked">
+											<i class="bi bi-exclamation-circle"></i> Blocked
+										</a>
+									</li>
+								</ul>
                                 
-	                            @if (Model.UserRoleInThisProject == ProjectRole.Admin || Model.UserRoleInThisProject == ProjectRole.Contributor)
-	                            {
-		                            <!-- Add Task Button -->
-		                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTaskModal">
-			                            <i class="bi bi-plus-circle"></i> Add New Task
-		                            </button>
+								@if (Model.UserRoleInThisProject == ProjectRole.Admin || Model.UserRoleInThisProject == ProjectRole.Contributor)
+								{
+									<!-- Add Task Button -->
+									<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+										<i class="bi bi-plus-circle"></i> Add New Task
+									</button>
 
-		                            <!-- Modal for Adding Task -->
-		                            <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
-			                            <div class="modal-dialog modal-lg">
-				                            <div class="modal-content">
-					                            <div class="modal-header">
-						                            <h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
-						                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-					                            </div>
-					                            <div class="modal-body">
-						                            <!-- Render the Partial View for Task Form -->
-						                            @await Html.PartialAsync("~/Views/Task/PartialViews/_AddTaskForm.cshtml", new TaskItemViewModel
-						                            {
-							                            ProjectId = Model.ProjectId
-						                            })
-					                            </div>
-				                            </div>
-			                            </div>
-		                            </div>
-	                            }
+									<!-- Modal for Adding Task -->
+									<div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+										<div class="modal-dialog modal-lg">
+											<div class="modal-content">
+												<div class="modal-header">
+													<h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
+													<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+												</div>
+												<div class="modal-body">
+													<!-- Render the Partial View for Task Form -->
+													@await Html.PartialAsync("~/Views/Task/PartialViews/_AddTaskForm.cshtml", new TaskItemViewModel
+													{
+														ProjectId = Model.ProjectId
+													})
+												</div>
+											</div>
+										</div>
+									</div>
+								}
                             </div>
+
+
+							<!-- Task Details Modal -->
+							<div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel" aria-hidden="true">
+							  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+								<div class="modal-content">
+								  <div class="modal-header">
+									<h5 class="modal-title" id="taskDetailsModalLabel">Edit Task</h5>
+									<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+								  </div>
+								  <div class="modal-body">
+									<form id="taskEditForm" enctype="multipart/form-data">
+									  <input type="hidden" name="Id" id="task-id" />
+
+									  <div class="row g-3">
+										<!-- Left Column -->
+										<div class="col-md-6">
+										  <div class="mb-3">
+											<label for="task-title" class="form-label">Title</label>
+											<input type="text" class="form-control" id="task-title" name="Title" />
+											<div class="invalid-feedback" id="title-error">Title is required and must be under 200 characters.</div>
+
+										  </div>
+
+										  <div class="mb-3">
+											<label for="task-description" class="form-label">Description</label>
+											<textarea class="form-control" id="task-description" name="Description" rows="6"></textarea>
+											<div class="invalid-feedback" id="description-error">Description must be under 1000 characters.</div>
+										  </div>
+
+										  <div class="mb-3">
+											<label for="task-status" class="form-label">Status</label>
+											<select class="form-select" id="task-status" name="Status">
+											  <option value="0">To Do</option>
+											  <option value="1">In Progress</option>
+																<option value="2">Done</option>
+																<option value="3">Blocked</option>
+											</select>
+										  </div>
+
+										  <div class="mb-3">
+											<label for="task-priority" class="form-label">Priority</label>
+											<select class="form-select" id="task-priority" name="Priority">
+											  <option value="0">Low</option>
+											  <option value="1">Medium</option>
+											  <option value="2">High</option>
+											  <option value="3">Critical</option>
+											</select>
+										  </div>
+										</div>
+
+										<!-- Right Column -->
+										<div class="col-md-6">
+										  <div class="mb-3">
+											<label class="form-label">Start Date</label>
+											<input type="date" class="form-control" id="task-startdate" name="StartDate" />
+										  </div>
+
+										  <div class="mb-3">
+											<label class="form-label">Due Date</label>
+											<input type="date" class="form-control" id="task-duedate" name="DueDate" />
+											<div class="invalid-feedback" id="duedate-error">Due Date cannot be earlier than Start Date.</div>
+										  </div>
+
+										  <div class="mb-3">
+											<label class="form-label">Assigned Members</label>
+											<select class="form-select" id="task-members" name="AssignedUserIds" multiple></select>
+										  </div>
+
+										  <div class="mb-3">
+											<label class="form-label">Attachments</label>
+											<input type="file" class="form-control" id="task-attachments" name="Attachments" multiple />
+											<div class="invalid-feedback d-block" id="attachments-error" style="display: none;"></div>
+											<ul class="list-group mt-2" id="task-attachment-list"></ul>
+										  </div>
+										</div>
+									  </div>
+									</form>
+								  </div>
+
+								  <div class="modal-footer">
+									<button type="submit" class="btn btn-primary" form="taskEditForm">Save Changes</button>
+								  </div>
+								</div>
+							  </div>
+							</div>
+
 
                             <!-- Tab Content -->
                             <div class="tab-content">
@@ -333,47 +418,52 @@
 
 
 @section Scripts {
-
 	<script>
 		const projectId = "@Model.ProjectId";
 		const mainTabKey = `activeMainTab_project_${projectId}`;
 		const subTabKey = `activeSubTab_project_${projectId}`;
 		const lastVisitedId = localStorage.getItem("lastVisitedProjectId");
-		// localStorage.removeItem("activeMainTab");
-		// localStorage.removeItem("activeTaskSubTab");
-		// console.log(lastVisitedId);
+
 		if (lastVisitedId && lastVisitedId !== projectId) {
-			// Project changed — clear tabs
 			localStorage.removeItem(`activeMainTab_project_${lastVisitedId}`);
 			localStorage.removeItem(`activeSubTab_project_${lastVisitedId}`);
 		}
-		// else if (lastVisitedId && lastVisitedId == projectId) {
-		// 	alert(`You were in this tab of this project (ProjectId=${projectId})!!`);
-		// }
-
 
 		$(document).ready(function () {
+			// Task Create Form
 			$('#taskForm').on('submit', function (e) {
 				e.preventDefault();
-
-				// var formData = $(this).serialize();
-
-				var formData = new FormData(this);  // Using FormData to handle file uploads
-
-
-				console.log(formData);
+				const formData = new FormData(this);
 
 				$.ajax({
 					type: 'POST',
 					url: $(this).attr('action') || '/Task/Create',
 					data: formData,
-					processData: false,  // Don't process the data
-					contentType: false,  // Don't set content type header
-					success: function (response) {
+					processData: false,
+					contentType: false,
+					success: function () {
+						const selectedStatus = $('#taskForm select[name="Status"]').val();
+
 						$('#addTaskModal').modal('hide');
 						$('#taskForm')[0].reset();
 
+						// Map status values to tab IDs
+						const statusToTab = {
+							0: '#todo',
+							1: '#inprogress',
+							2: '#completed', 
+							3: '#blocked'
+						};
 
+						// Save active main and sub tab so it opens where the task was added
+						localStorage.setItem(mainTabKey, "#tasks");
+
+						if (statusToTab[selectedStatus]) {
+							localStorage.setItem(subTabKey, statusToTab[selectedStatus]);
+						}
+
+						// Reload to reflect the new task under the correct tab
+						location.reload();
 					},
 					error: function (xhr, status, error) {
 						alert('Something went wrong: ' + error);
@@ -381,56 +471,200 @@
 				});
 			});
 
-
-			// Preserve Dashboard Tab Selection on Page Reload 
-			// (*** May need to clear on logout to avoid stale data when switching users ***)
-
-
-			// Load main tab and sub-tab from localStorage
+			// Tab persistence
 			const mainTab = localStorage.getItem(mainTabKey);
 			const taskSubTab = localStorage.getItem(subTabKey);
 
-			// if (mainTab) {
-			// 	// Activate saved main tab
-			// 	const mainTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="${mainTab}"]`);
-			// 	if (mainTabButton) new bootstrap.Tab(mainTabButton).show();
-			// 	else {
-			// 		// Fallback to default tab
-			// 		const defaultTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="#summary"]`);
-			// 		if (defaultTabButton) new bootstrap.Tab(defaultTabButton).show();
-			// 	}
-			// }
-
 			if (mainTab) {
 				const mainTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="${mainTab}"]`);
-				if (mainTabButton) {
-					new bootstrap.Tab(mainTabButton).show();
-				}
+				if (mainTabButton) new bootstrap.Tab(mainTabButton).show();
 			} else {
-				// Nothing saved — fallback to Summary
 				const defaultTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="#summary"]`);
 				if (defaultTabButton) new bootstrap.Tab(defaultTabButton).show();
 			}
 
-			// If we're on the Tasks tab, activate its sub-tab
 			if (mainTab === "#tasks" && taskSubTab) {
 				const subTabLink = document.querySelector(`#taskTabs a[href="${taskSubTab}"]`);
 				if (subTabLink) new bootstrap.Tab(subTabLink).show();
 			}
 
-			// Save main tab on click
+			// Save tab selections
 			$('#dashboardTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
 				localStorage.setItem(mainTabKey, $(e.target).data("bs-target"));
 			});
-
-			// Save sub-tab in Tasks
 			$('#taskTabs a[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
 				localStorage.setItem(subTabKey, $(e.target).attr("href"));
 			});
+
+			// 🆕 When task modal is opened, fetch task details
+			$('#taskDetailsModal').on('show.bs.modal', function (event) {
+				const button = $(event.relatedTarget); // Button that triggered the modal
+				const taskId = button.data('task-id');
+
+				if (!taskId) {
+					console.error("No taskId found on button");
+					return;
+				}
+
+				GetTaskDetails(taskId);
+			});
 		});
 
-		// Save current project ID for next time
+
+		// Save current project ID
 		localStorage.setItem("lastVisitedProjectId", projectId);
+
+
+		// Get task and populate modal
+		function GetTaskDetails(taskId) {
+
+			$.ajax({
+				url: `/Task/GetTask/${taskId}`,
+				method: 'GET',
+				success: function (data) {
+					console.log("Fetched Task Data:", data);
+
+					$('#task-id').val(data.id);
+					$('#task-title').val(data.title);
+					$('#task-description').val(data.description);
+					$('#task-status').val(data.status);
+					$('#task-priority').val(data.priority);
+					if (data.startDate && data.startDate.includes('T')) {
+						$('#task-startdate').val(data.startDate.split('T')[0]);
+					} else {
+						$('#task-startdate').val('');
+					}
+					if (data.dueDate && data.dueDate.includes('T')) {
+						$('#task-duedate').val(data.dueDate.split('T')[0]);
+					} else {
+						$('#task-duedate').val('');
+					}
+
+					// Members
+					$('#task-members').empty();
+					data.allUsers.forEach(user => {
+						const selected = data.assignedUserIds.includes(user.id) ? 'selected' : '';
+						$('#task-members').append(`<option value="${user.id}" ${selected}>${user.name}</option>`);
+					});
+
+					// Attachments
+					$('#task-attachment-list').empty();
+					data.attachments.forEach(att => {
+						$('#task-attachment-list').append(`
+							<li class="list-group-item d-flex justify-content-between align-items-center">
+								<a href="${att.downloadUrl}" target="_blank">${att.fileName}</a>
+								<button type="button" class="btn btn-sm btn-danger" onclick="RemoveAttachment(${att.id})">
+									<i class="bi bi-trash"></i>
+								</button>
+							</li>
+						`);
+					});
+				},
+				error: function (xhr) {
+					console.error("Failed to fetch task", xhr.responseText);
+					alert("Failed to load task.");
+				}
+			});
+		}
+
+
+		$('input[name="Attachments"]').on('change', function () {
+			const files = this.files;
+			let error = '';
+
+			if (files.length > 10) {
+				error = "You can't upload more than 10 files.";
+			} else {
+				for (let file of files) {
+					if (file.size > 10 * 1024 * 1024) {
+						error = `${file.name} is larger than 10MB.`;
+						break;
+					}
+				}
+			}
+
+			if (error) {
+				$('#attachments-error').text(error).show();
+				$(this).addClass('is-invalid');
+			} else {
+				$('#attachments-error').text('').hide();
+				$(this).removeClass('is-invalid');
+			}
+		});
+
+
+		// Task Edit Form Submission
+		$('#taskEditForm').on('submit', function (e) {
+			$(this).find('button[type="submit"]').prop('disabled', true); // prevents double submit
+
+			e.preventDefault();
+			const formData = new FormData(this);
+
+
+			const title = $('#task-title').val().trim();
+			const description = $('#task-description').val().trim();
+			const startDate = $('#task-startdate').val();
+			const dueDate = $('#task-duedate').val();
+			const attachments = $('#task-attachments')[0].files;
+
+			// Reset previous errors
+			$('.is-invalid').removeClass('is-invalid');
+
+			let hasError = false;
+
+			// Title length
+			if (title.length === 0 || title.length > 200) {
+				$('#task-title').addClass('is-invalid');
+				hasError = true;
+			}
+
+			// Description length
+			if (description.length > 1000) {
+				$('#task-description').addClass('is-invalid');
+				hasError = true;
+			}
+
+			// DueDate >= StartDate
+			if (startDate && dueDate && new Date(dueDate) < new Date(startDate)) {
+				$('#task-duedate').addClass('is-invalid');
+				hasError = true;
+			}
+			if (attachments.length > 10) {
+				$('#attachments-error').text("You can't upload more than 10 files.").show();
+				$('input[name="Attachments"]').addClass('is-invalid');
+				hasError = true;
+			} else {
+				for (let file of attachments) {
+					if (file.size > 10 * 1024 * 1024) {
+						$('#attachments-error').text(`${file.name} is larger than 10MB.`).show();
+						$('input[name="Attachments"]').addClass('is-invalid');
+						hasError = true;
+						break;
+					}
+				}
+			}
+
+			if (hasError) {
+				$(this).find('button[type="submit"]').prop('disabled', false); // Re-enable button
+				return;
+			}
+
+			$.ajax({
+				url: '/Task/UpdateTask',
+				type: 'POST',
+				data: formData,
+				processData: false,
+				contentType: false,
+				success: () => {
+					$('#taskDetailsModal').modal('hide');
+					location.reload();
+				},
+				error: function (xhr) {
+					alert("Failed to update task. Check console for details.");
+					console.error(xhr.responseText);
+				}
+			});
+		});
 	</script>
 
 	<script>
@@ -467,3 +701,4 @@
 		});
 	</script>
 }
+

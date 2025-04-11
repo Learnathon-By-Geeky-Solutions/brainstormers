@@ -283,7 +283,15 @@ namespace TaskForge.WebUI.Controllers
                     Status = t.Status,
                     Priority = t.Priority,
                     StartDate = t.StartDate,
-                    DueDate = t.DueDate
+                    DueDate = t.DueDate,
+                    AssignedUsers = t.AssignedUsers.Select(a => new TaskAssignmentViewModel
+                    {
+                        UserProfileId = a.UserProfileId,
+                        FullName = a.UserProfile.FullName ?? "",
+                        UserName = a.UserProfile.User.UserName ?? "",
+                        Email = a.UserProfile.User.Email ?? "",
+                        AvatarUrl = a.UserProfile.AvatarUrl
+                    }).ToList()
                 }).ToList(),
                 UpdateViewModel = new ProjectUpdateViewModel
                 {

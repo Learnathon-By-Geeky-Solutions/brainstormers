@@ -29,16 +29,16 @@ namespace TaskForge.Domain.Entities
 
         public virtual ICollection<TaskAssignment> AssignedUsers { get; set; } = new List<TaskAssignment>();
 
-        public void SetDueDate(DateTime? dueDate)
-        {
-            if (dueDate.HasValue && StartDate.HasValue && dueDate < StartDate)
-            {
-                throw new ArgumentException("Due date cannot be earlier than the Start date.");
-            }
-            DueDate = dueDate;
-        }
+		public void SetDueDate(DateTime? dueDate)
+		{
+			if (dueDate.HasValue && StartDate.HasValue && dueDate < StartDate)
+				throw new ValidationException("Due date cannot be earlier than Start date.");
 
-        public void SetStatus(TaskWorkflowStatus newStatus)
+			DueDate = dueDate;
+		}
+
+
+		public void SetStatus(TaskWorkflowStatus newStatus)
         {
             if (newStatus == TaskWorkflowStatus.InProgress && StartDate == null)
             {
