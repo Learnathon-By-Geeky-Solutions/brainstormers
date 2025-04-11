@@ -10,27 +10,58 @@
 
 			<!-- Task Info -->
 			<div class="d-flex justify-content-between">
-				<span class="badge bg-secondary">
-					<i class="bi bi-calendar"></i> @Model.StartDate?.ToShortDateString() @Model.StartDate?.ToShortTimeString()
-				</span>
-				<span class="badge bg-danger">
-					<i class="bi bi-clock"></i> @Model.DueDate?.ToShortDateString() @Model.DueDate?.ToShortTimeString()
-				</span>
+				<div class="">
+					@foreach(var item in Model.AssignedUsers)
+					{
+						<span class="badge bg-light text-dark">
+							<i class="bi bi-person"></i> @item.FullName
+						</span>
+					}
+				</div>
+				<div class="d-flex flex-column ">
+					@if(Model.StartDate != null){
+						<div class="badge bg-secondary mb-1 text-start">
+							<i class="bi bi-calendar"></i> Start: @Model.StartDate?.ToString("dd/MM/yyyy")
+						</div>
+					}
+					@if (Model.DueDate != null)
+					{
+						<div class="badge bg-danger text-start">
+							<i class="bi bi-calendar"></i> End: @Model.DueDate?.ToString("dd/MM/yyyy")
+						</div>
+					}
+				</div>
 			</div>
 
 			<!-- Status & Priority -->
-			<div class="mt-2">
+			<div class="d-flex justify-content-between mt-2">
 				<span class="badge @(Model.Status == TaskWorkflowStatus.Done ? "bg-success" 
 				                   : Model.Status == TaskWorkflowStatus.InProgress ? "bg-warning text-dark" 
 				                   : Model.Status == TaskWorkflowStatus.Blocked ? "bg-danger text-light" 
 				                   : "bg-light text-dark")">
-					@Model.Status.GetDisplayName()
+					@if (Model.Status == TaskWorkflowStatus.Done)
+					{
+						<i class="bi bi-check-circle"></i>
+					}
+					else if (Model.Status == TaskWorkflowStatus.InProgress)
+					{
+						<i class="bi bi-arrow-repeat"></i>
+					}
+					else if (Model.Status == TaskWorkflowStatus.Blocked)
+					{
+						<i class="bi bi-exclamation-triangle"></i>
+					}
+					else
+					{
+						<i class="bi bi-circle"></i>
+					}
+					Status: @Model.Status.GetDisplayName()
 				</span>
 
 				<span class="badge @(Model.Priority == TaskPriority.Critical ? "bg-danger" :
 				                   Model.Priority == TaskPriority.High ? "bg-danger" :
 				                   Model.Priority == TaskPriority.Medium ? "bg-warning text-dark" : "bg-secondary")">
-					<i class="bi bi-exclamation-circle"></i> @Model.Priority
+					<i class="bi bi-exclamation-circle"></i> Priority: @Model.Priority
 				</span>
 
 			</div>

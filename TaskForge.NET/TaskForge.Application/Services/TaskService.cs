@@ -31,7 +31,8 @@ namespace TaskForge.Application.Services
         public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
         {
             return await _unitOfWork.Tasks.FindByExpressionAsync(
-                t => t.ProjectId == projectId, 
+                predicate: t => t.ProjectId == projectId, 
+				includes: t => t.Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile),
                 orderBy: q => q.OrderBy(t => t.DueDate)
 			);
         }

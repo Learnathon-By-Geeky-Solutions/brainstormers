@@ -201,11 +201,9 @@
                 <div class="col-12">
                     <div class="card shadow-sm border">
                         <div class="card-body">
-                            @* <h5 class="card-title"><i class="bi bi-clipboard-check text-primary"></i> Project Tasks</h5> *@
-
 							<div class="d-flex justify-content-between bg-light p-2 mb-3">
 	                            <!-- Custom Styles for Nav Pills -->
-	                            <style>
+								<style>
 									.nav-pills .nav-link {
 										transition: background-color 0.3s, color 0.3s;
 									}
@@ -225,56 +223,56 @@
 									}
 								</style>
 	                            
-	                            <!-- Nav Tabs -->
-	                            <ul class="nav nav-pills" id="taskTabs">
-		                            <li class="nav-item me-1">
-			                            <a class="nav-link " id="todo-tab" data-bs-toggle="pill" href="#todo">
-				                            <i class="bi bi-check-circle"></i> To Do
-			                            </a>
-		                            </li>
-		                            <li class="nav-item me-1">
-			                            <a class="nav-link" id="inprogress-tab" data-bs-toggle="pill" href="#inprogress">
-				                            <i class="bi bi-hourglass-split"></i> In Progress
-			                            </a>
-		                            </li>
-		                            <li class="nav-item me-1">
-			                            <a class="nav-link" id="completed-tab" data-bs-toggle="pill" href="#completed">
-				                            <i class="bi bi-check2-circle"></i> Completed
-			                            </a>
-		                            </li>
-		                            <li class="nav-item me-1">
-			                            <a class="nav-link" id="blocked-tab" data-bs-toggle="pill" href="#blocked">
-				                            <i class="bi bi-slash-circle"></i> Blocked
-			                            </a>
-		                            </li>
-	                            </ul>
+								<!-- Nav Tabs -->
+								<ul class="nav nav-pills" id="taskTabs">
+									<li class="nav-item me-1">
+										<a class="nav-link " id="todo-tab" data-bs-toggle="pill" href="#todo">
+											<i class="bi bi-check-circle"></i> To Do
+										</a>
+									</li>
+									<li class="nav-item me-1">
+										<a class="nav-link" id="inprogress-tab" data-bs-toggle="pill" href="#inprogress">
+											<i class="bi bi-hourglass-split"></i> In Progress
+										</a>
+									</li>
+									<li class="nav-item me-1">
+										<a class="nav-link" id="completed-tab" data-bs-toggle="pill" href="#completed">
+											<i class="bi bi-check2-circle"></i> Completed
+										</a>
+									</li>
+									<li class="nav-item me-1">
+										<a class="nav-link" id="blocked-tab" data-bs-toggle="pill" href="#blocked">
+											<i class="bi bi-slash-circle"></i> Blocked
+										</a>
+									</li>
+								</ul>
                                 
-	                            @if (Model.UserRoleInThisProject == ProjectRole.Admin || Model.UserRoleInThisProject == ProjectRole.Contributor)
-	                            {
-		                            <!-- Add Task Button -->
-		                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTaskModal">
-			                            <i class="bi bi-plus-circle"></i> Add New Task
-		                            </button>
+								@if (Model.UserRoleInThisProject == ProjectRole.Admin || Model.UserRoleInThisProject == ProjectRole.Contributor)
+								{
+									<!-- Add Task Button -->
+									<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+										<i class="bi bi-plus-circle"></i> Add New Task
+									</button>
 
-		                            <!-- Modal for Adding Task -->
-		                            <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
-			                            <div class="modal-dialog modal-lg">
-				                            <div class="modal-content">
-					                            <div class="modal-header">
-						                            <h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
-						                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-					                            </div>
-					                            <div class="modal-body">
-						                            <!-- Render the Partial View for Task Form -->
-						                            @await Html.PartialAsync("~/Views/Task/PartialViews/_AddTaskForm.cshtml", new TaskItemViewModel
-						                            {
-							                            ProjectId = Model.ProjectId
-						                            })
-					                            </div>
-				                            </div>
-			                            </div>
-		                            </div>
-	                            }
+									<!-- Modal for Adding Task -->
+									<div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+										<div class="modal-dialog modal-lg">
+											<div class="modal-content">
+												<div class="modal-header">
+													<h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
+													<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+												</div>
+												<div class="modal-body">
+													<!-- Render the Partial View for Task Form -->
+													@await Html.PartialAsync("~/Views/Task/PartialViews/_AddTaskForm.cshtml", new TaskItemViewModel
+													{
+														ProjectId = Model.ProjectId
+													})
+												</div>
+											</div>
+										</div>
+									</div>
+								}
                             </div>
 
 
@@ -331,12 +329,12 @@
 										<div class="col-md-6">
 										  <div class="mb-3">
 											<label class="form-label">Start Date</label>
-											<input type="datetime-local" class="form-control" id="task-startdate" name="StartDate" />
+											<input type="date" class="form-control" id="task-startdate" name="StartDate" />
 										  </div>
 
 										  <div class="mb-3">
 											<label class="form-label">Due Date</label>
-											<input type="datetime-local" class="form-control" id="task-duedate" name="DueDate" />
+											<input type="date" class="form-control" id="task-duedate" name="DueDate" />
 											<div class="invalid-feedback" id="duedate-error">Due Date cannot be earlier than Start Date.</div>
 										  </div>
 
@@ -491,8 +489,10 @@
 			});
 		});
 
+
 		// Save current project ID
 		localStorage.setItem("lastVisitedProjectId", projectId);
+
 
 		// Get task and populate modal
 		function GetTaskDetails(taskId) {
@@ -508,8 +508,16 @@
 					$('#task-description').val(data.description);
 					$('#task-status').val(data.status);
 					$('#task-priority').val(data.priority);
-					$('#task-startdate').val(data.startDate);
-					$('#task-duedate').val(data.dueDate);
+					if (data.startDate) {
+						$('#task-startdate').val(data.startDate.split('T')[0]);
+					} else {
+						$('#task-startdate').val('');
+					}
+					if (data.dueDate) {
+						$('#task-duedate').val(data.dueDate.split('T')[0]);
+					} else {
+						$('#task-duedate').val('');
+					}
 
 					// Members
 					$('#task-members').empty();
@@ -522,13 +530,13 @@
 					$('#task-attachment-list').empty();
 					data.attachments.forEach(att => {
 						$('#task-attachment-list').append(`
-									<li class="list-group-item d-flex justify-content-between align-items-center">
-										<a href="${att.downloadUrl}" target="_blank">${att.fileName}</a>
-										<button type="button" class="btn btn-sm btn-danger" onclick="RemoveAttachment(${att.id})">
-											<i class="bi bi-trash"></i>
-										</button>
-									</li>
-								`);
+							<li class="list-group-item d-flex justify-content-between align-items-center">
+								<a href="${att.downloadUrl}" target="_blank">${att.fileName}</a>
+								<button type="button" class="btn btn-sm btn-danger" onclick="RemoveAttachment(${att.id})">
+									<i class="bi bi-trash"></i>
+								</button>
+							</li>
+						`);
 					});
 				},
 				error: function (xhr) {
@@ -537,6 +545,7 @@
 				}
 			});
 		}
+
 
 		$('input[name="Attachments"]').on('change', function () {
 			const files = this.files;
@@ -566,6 +575,7 @@
 		// Task Edit Form Submission
 		$('#taskEditForm').on('submit', function (e) {
 			$(this).find('button[type="submit"]').prop('disabled', true); // prevents double submit
+
 			e.preventDefault();
 			const formData = new FormData(this);
 
@@ -627,7 +637,7 @@
 				contentType: false,
 				success: () => {
 					$('#taskDetailsModal').modal('hide');
-					location.reload(); // Reload or update UI dynamically
+					location.reload();
 				},
 				error: function (xhr) {
 					alert("Failed to update task. Check console for details.");
