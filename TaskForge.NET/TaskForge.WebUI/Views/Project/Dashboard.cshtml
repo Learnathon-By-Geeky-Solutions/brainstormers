@@ -278,27 +278,6 @@
                             </div>
 
 
-							@* <div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel" aria-hidden="true">
-								<div class="modal-dialog modal-xl">
-									<div class="modal-content">
-										<div class="modal-header">
-											<h5 class="modal-title" id="taskDetailsModalLabel">Task Details</h5>
-											<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-										</div>
-										<div class="modal-body">
-											<!-- Content loaded via AJAX -->
-											<div id="taskDetailsContent" class="row">
-												<div class="text-center text-muted">Loading...</div>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div> *@
-
-
-
-
-
 							<!-- Task Details Modal -->
 							<div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel" aria-hidden="true">
 							  <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -317,11 +296,14 @@
 										  <div class="mb-3">
 											<label for="task-title" class="form-label">Title</label>
 											<input type="text" class="form-control" id="task-title" name="Title" />
+											<div class="invalid-feedback" id="title-error">Title is required and must be under 200 characters.</div>
+
 										  </div>
 
 										  <div class="mb-3">
 											<label for="task-description" class="form-label">Description</label>
 											<textarea class="form-control" id="task-description" name="Description" rows="6"></textarea>
+											<div class="invalid-feedback" id="description-error">Description must be under 1000 characters.</div>
 										  </div>
 
 										  <div class="mb-3">
@@ -329,8 +311,8 @@
 											<select class="form-select" id="task-status" name="Status">
 											  <option value="0">To Do</option>
 											  <option value="1">In Progress</option>
-																<option value="3">Done</option>
-																<option value="2">Blocked</option>
+																<option value="2">Done</option>
+																<option value="3">Blocked</option>
 											</select>
 										  </div>
 
@@ -355,6 +337,7 @@
 										  <div class="mb-3">
 											<label class="form-label">Due Date</label>
 											<input type="datetime-local" class="form-control" id="task-duedate" name="DueDate" />
+											<div class="invalid-feedback" id="duedate-error">Due Date cannot be earlier than Start Date.</div>
 										  </div>
 
 										  <div class="mb-3">
@@ -364,7 +347,8 @@
 
 										  <div class="mb-3">
 											<label class="form-label">Attachments</label>
-											<input type="file" class="form-control" name="Attachments" multiple />
+											<input type="file" class="form-control" id="task-attachments" name="Attachments" multiple />
+											<div class="invalid-feedback d-block" id="attachments-error" style="display: none;"></div>
 											<ul class="list-group mt-2" id="task-attachment-list"></ul>
 										  </div>
 										</div>
@@ -378,10 +362,6 @@
 								</div>
 							  </div>
 							</div>
-
-
-
-
 
 
                             <!-- Tab Content -->
@@ -514,7 +494,7 @@
 		// Save current project ID
 		localStorage.setItem("lastVisitedProjectId", projectId);
 
-		// 🧠 Get task and populate modal
+		// Get task and populate modal
 		function GetTaskDetails(taskId) {
 
 			$.ajax({
@@ -558,10 +538,86 @@
 			});
 		}
 
+		$('input[name="Attachments"]').on('change', function () {
+			const files = this.files;
+			let error = '';
+
+			if (files.length > 10) {
+				error = "You can't upload more than 10 files.";
+			} else {
+				for (let file of files) {
+					if (file.size > 10 * 1024 * 1024) {
+						error = `${file.name} is larger than 10MB.`;
+						break;
+					}
+				}
+			}
+
+			if (error) {
+				$('#attachments-error').text(error).show();
+				$(this).addClass('is-invalid');
+			} else {
+				$('#attachments-error').text('').hide();
+				$(this).removeClass('is-invalid');
+			}
+		});
+
+
 		// Task Edit Form Submission
 		$('#taskEditForm').on('submit', function (e) {
+			$(this).find('button[type="submit"]').prop('disabled', true); // prevents double submit
 			e.preventDefault();
 			const formData = new FormData(this);
+
+
+			const title = $('#task-title').val().trim();
+			const description = $('#task-description').val().trim();
+			const startDate = $('#task-startdate').val();
+			const dueDate = $('#task-duedate').val();
+			// const attachments = $('input[name="Attachments"]')[0].files;
+			const attachments = $('#task-attachments')[0].files;
+
+			// Reset previous errors
+			$('.is-invalid').removeClass('is-invalid');
+
+			let hasError = false;
+
+			// Title length
+			if (title.length === 0 || title.length > 200) {
+				$('#task-title').addClass('is-invalid');
+				hasError = true;
+			}
+
+			// Description length
+			if (description.length > 1000) {
+				$('#task-description').addClass('is-invalid');
+				hasError = true;
+			}
+
+			// DueDate >= StartDate
+			if (startDate && dueDate && new Date(dueDate) < new Date(startDate)) {
+				$('#task-duedate').addClass('is-invalid');
+				hasError = true;
+			}
+			if (attachments.length > 10) {
+				$('#attachments-error').text("You can't upload more than 10 files.").show();
+				$('input[name="Attachments"]').addClass('is-invalid');
+				hasError = true;
+			} else {
+				for (let file of attachments) {
+					if (file.size > 10 * 1024 * 1024) {
+						$('#attachments-error').text(`${file.name} is larger than 10MB.`).show();
+						$('input[name="Attachments"]').addClass('is-invalid');
+						hasError = true;
+						break;
+					}
+				}
+			}
+
+			if (hasError) {
+				$(this).find('button[type="submit"]').prop('disabled', false); // Re-enable button
+				return;
+			}
 
 			$.ajax({
 				url: '/Task/UpdateTask',
