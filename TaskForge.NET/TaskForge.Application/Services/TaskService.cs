@@ -138,8 +138,14 @@ namespace TaskForge.Application.Services
 			if (taskItem == null)
 				throw new Exception("Task not found");
 
-			// Soft delete the main task
-			await _unitOfWork.Tasks.DeleteByIdAsync(id);
+            // Delete media files associated with attachments
+            foreach (var attachment in taskItem.Attachments)
+            {
+                await _fileService.DeleteFileAsync(attachment.FilePath);
+            }
+
+            // Soft delete the main task
+            await _unitOfWork.Tasks.DeleteByIdAsync(id);
 
 			// Soft delete attachments
 			var attachmentIds = taskItem.Attachments.Select(a => a.Id);
