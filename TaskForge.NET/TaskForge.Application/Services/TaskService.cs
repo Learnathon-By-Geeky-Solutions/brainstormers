@@ -1,48 +1,39 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
+﻿using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
-using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TaskForge.Application.Services
 {
-    public class TaskService : ITaskService
-    {
-        private readonly IUnitOfWork _unitOfWork;
-        public TaskService(IUnitOfWork unitOfWork)
-        {
-            _unitOfWork = unitOfWork;
-        }
+	public class TaskService : ITaskService
+	{
+		private readonly IUnitOfWork _unitOfWork;
+		private readonly IFileService _fileService;
+        public TaskService(IUnitOfWork unitOfWork, IFileService fileService)
+		{
+			_unitOfWork = unitOfWork;
+			_fileService = fileService;
+		}
 
-        public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
-        {
-            return await _unitOfWork.Tasks.FindByExpressionAsync(
-                predicate: t => t.ProjectId == projectId, 
+		public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
+		{
+			return await _unitOfWork.Tasks.FindByExpressionAsync(
+				predicate: t => t.ProjectId == projectId,
 				includes: t => t.Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile),
-                orderBy: q => q.OrderBy(t => t.DueDate)
+				orderBy: q => q.OrderBy(t => t.DueDate)
 			);
-        }
+		}
 
 		public async Task<TaskItem?> GetTaskByIdAsync(int taskId)
 		{
 			Expression<Func<TaskItem, bool>> predicate = t => t.Id == taskId;
 
 			Func<IQueryable<TaskItem>, IQueryable<TaskItem>> includes = query =>
-				query.Include(t => t.Attachments)
+				query.Include(t => t.Attachments.Where(a => !a.IsDeleted))
 					 .Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile)
 					 .Include(t => t.Project);
 
@@ -52,20 +43,20 @@ namespace TaskForge.Application.Services
 		}
 
 		public async Task CreateTaskAsync(TaskDto taskDto)
-        {
-			if(taskDto.Attachments != null && taskDto.Attachments.Count > 10)
-                throw new Exception("You can only attach up to 10 files.");
+		{
+			if (taskDto.Attachments != null && taskDto.Attachments.Count > 10)
+				throw new Exception("You can only attach up to 10 files.");
 
-            var taskItem = new TaskItem
-            {
-                ProjectId = taskDto.ProjectId,
-                Title = taskDto.Title,
-                Description = taskDto.Description,
-                StartDate = taskDto.StartDate,
-                Status = taskDto.Status,
-                Priority = taskDto.Priority,
-            };
-            if (taskDto.DueDate != null) taskItem.SetDueDate(taskDto.DueDate);
+			var taskItem = new TaskItem
+			{
+				ProjectId = taskDto.ProjectId,
+				Title = taskDto.Title,
+				Description = taskDto.Description,
+				StartDate = taskDto.StartDate,
+				Status = taskDto.Status,
+				Priority = taskDto.Priority,
+			};
+			if (taskDto.DueDate != null) taskItem.SetDueDate(taskDto.DueDate);
 
 			// Save attachments if any
 			if (taskDto.Attachments != null && taskDto.Attachments.Any())
@@ -96,12 +87,12 @@ namespace TaskForge.Application.Services
 			}
 
 			await _unitOfWork.Tasks.AddAsync(taskItem);
-            await _unitOfWork.SaveChangesAsync();
-        }
+			await _unitOfWork.SaveChangesAsync();
+		}
 
 		public async Task<PaginatedList<TaskDto>> GetUserTaskAsync(int? userProfileId, int pageIndex, int pageSize)
 		{
-            if (userProfileId == null) return new PaginatedList<TaskDto>(new List<TaskDto>(), 0, pageIndex, pageSize);
+			if (userProfileId == null) return new PaginatedList<TaskDto>(new List<TaskDto>(), 0, pageIndex, pageSize);
 
 			var userProjectList = await _unitOfWork.ProjectMembers.FindByExpressionAsync(pm => pm.UserProfileId == userProfileId);
 			var userProjectIds = userProjectList.Select(pm => pm.ProjectId).ToList();
@@ -112,8 +103,8 @@ namespace TaskForge.Application.Services
 
 			var (taskList, totalCount) = await _unitOfWork.Tasks.GetPaginatedListAsync(
 				predicate: _predicate,
-                orderBy: _orderBy,
-                includes: query => query.Include(t => t.Project),
+				orderBy: _orderBy,
+				includes: query => query.Include(t => t.Project),
 				skip: (pageIndex - 1) * pageSize,
 				take: pageSize
 			 );
@@ -121,14 +112,14 @@ namespace TaskForge.Application.Services
 			// Convert tasks to DTOs
 			var taskListDto = taskList.Select(t => new TaskDto
 			{
-                Id = t.Id,
-                Title = t.Title,
-                ProjectId = t.ProjectId,
+				Id = t.Id,
+				Title = t.Title,
+				ProjectId = t.ProjectId,
 				ProjectTitle = t.Project.Title,
-                DueDate = t.DueDate,
-                Status = t.Status,
-                Priority = t.Priority
-            }).ToList();
+				DueDate = t.DueDate,
+				Status = t.Status,
+				Priority = t.Priority
+			}).ToList();
 
 			return new PaginatedList<TaskDto>(taskListDto, totalCount, pageIndex, pageSize);
 		}
@@ -160,14 +151,14 @@ namespace TaskForge.Application.Services
 
 			await _unitOfWork.SaveChangesAsync();
 		}
-    
+
 		public async Task UpdateTaskAsync(TaskUpdateDto dto)
 		{
 			// Step 1: Retrieve the task with its related data (e.g., AssignedUsers, Attachments, etc.)
 			var taskList = await _unitOfWork.Tasks.FindByExpressionAsync(
 				t => t.Id == dto.Id && !t.IsDeleted,
 				includes: query => query
-					.Include(t => t.Attachments) 
+					.Include(t => t.Attachments.Where(a => !a.IsDeleted))
 					.Include(t => t.AssignedUsers)
 					.ThenInclude(au => au.UserProfile)
 			);
@@ -177,12 +168,12 @@ namespace TaskForge.Application.Services
 			if (task == null)
 				throw new Exception("Task not found.");
 
-			if(task.Attachments.Count + dto.Attachments?.Count > 10)
-                throw new Exception("You can only attach up to 10 files.");
+			if (task.Attachments.Count + dto.Attachments?.Count > 10)
+				throw new Exception("You can only attach up to 10 files.");
 
 
-            // Step 2: Update task fields from the provided DTO
-            task.Title = dto.Title;
+			// Step 2: Update task fields from the provided DTO
+			task.Title = dto.Title;
 			task.Description = dto.Description;
 			task.Status = (TaskWorkflowStatus)dto.Status;
 			task.Priority = (TaskPriority)dto.Priority;
@@ -191,7 +182,7 @@ namespace TaskForge.Application.Services
 
 
 			// Step 3: Update assigned members if any
-			task.AssignedUsers.Clear(); 
+			task.AssignedUsers.Clear();
 			if (dto.AssignedUserIds != null && dto.AssignedUserIds.Any())
 			{
 				var users = await _unitOfWork.UserProfiles.FindByExpressionAsync(u => dto.AssignedUserIds.Contains(u.Id));
@@ -236,6 +227,18 @@ namespace TaskForge.Application.Services
 			// Step 6: Commit changes
 			await _unitOfWork.SaveChangesAsync();
 		}
-    
+
+		public async Task DeleteAttachmentAsync(int attachmentId)
+		{
+			var attachment = await _unitOfWork.TaskAttachments.GetByIdAsync(attachmentId);
+			if (attachment == null)
+				throw new KeyNotFoundException("Attachment not found");
+
+            await _fileService.DeleteFileAsync(attachment.FilePath);
+
+            await _unitOfWork.TaskAttachments.DeleteByIdAsync(attachmentId);
+			await _unitOfWork.SaveChangesAsync();
+		}
+
 	}
 }
