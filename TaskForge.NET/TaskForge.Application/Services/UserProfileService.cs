@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaskForge.Application.Interfaces.Repositories;
-using TaskForge.Application.Interfaces.Repositories.Common;
+﻿using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 
@@ -19,12 +13,12 @@ namespace TaskForge.Application.Services
         }
 
 
-        public async Task CreateUserProfileAsync(string userId, string FullName)
+        public async Task CreateUserProfileAsync(string userId, string fullName)
         {
             var userProfile = new UserProfile
             {
                 UserId = userId,
-                FullName = FullName
+                FullName = fullName
             };
             await _unitOfWork.UserProfiles.AddAsync(userProfile);
             await _unitOfWork.SaveChangesAsync();

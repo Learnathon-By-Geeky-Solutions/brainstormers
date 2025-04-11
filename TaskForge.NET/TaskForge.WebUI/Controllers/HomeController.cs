@@ -50,7 +50,8 @@ namespace TaskForge.WebUI.Controllers
 
 			var taskList = new HomeViewModel
 			{
-				TotalTasks = userTaskList.TotalCount,
+                TotalProjects = totalProjects,
+                TotalTasks = userTaskList.TotalCount,
 				CompletedTasks = userTaskList.Items.Count(task => task.Status == Domain.Enums.TaskWorkflowStatus.Done),
 
 				UserTasks = userTaskList.Items,
