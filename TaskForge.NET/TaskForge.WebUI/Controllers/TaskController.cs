@@ -70,7 +70,7 @@ namespace TaskForge.WebUI.Controllers
 				Status = task.Status.ToString(),
 				Priority = task.Priority.ToString(),
 				AssignedUsers = task.AssignedUsers.Select(a => new { a.UserProfile.FullName }),
-				Attachments = task.Attachments.Select(a => new { a.FileName, a.FilePath })
+				Attachments = task.Attachments.Select(a => new { a.FileName, a.StoredFileName, a.FilePath })
 			});
 		}
 
@@ -95,7 +95,7 @@ namespace TaskForge.WebUI.Controllers
 				{
 					id = a.Id,
 					fileName = a.FileName,
-                    downloadUrl = Url.Content($"~/uploads/tasks/{a.FileName}")
+                    downloadUrl = Url.Content($"~/uploads/tasks/{a.StoredFileName}")
         }),
 				assignedUserIds = task.AssignedUsers.Select(u => u.UserProfileId),
 				allUsers = allUsers.Select(u => new { id = u.UserProfileId, name = u.Name })

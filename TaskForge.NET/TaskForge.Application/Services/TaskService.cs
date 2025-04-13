@@ -68,7 +68,8 @@ namespace TaskForge.Application.Services
 						Directory.CreateDirectory(uploadsFolder);
 
                         var fileName = file.FileName;
-                        var filePath = Path.Combine(uploadsFolder, fileName);
+                        var StoredFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+                        var filePath = Path.Combine(uploadsFolder, StoredFileName);
 
 						using (var stream = new FileStream(filePath, FileMode.Create))
 						{
@@ -78,7 +79,8 @@ namespace TaskForge.Application.Services
 						taskItem.Attachments.Add(new TaskAttachment
 						{
 							FileName = file.FileName,
-							FilePath = Path.Combine("uploads", "tasks", fileName).Replace("\\", "/"),
+							StoredFileName = StoredFileName,
+                            FilePath = Path.Combine("uploads", "tasks", fileName).Replace("\\", "/"),
 							ContentType = file.ContentType
 						});
 					}
@@ -174,8 +176,9 @@ namespace TaskForge.Application.Services
 						var uploadsFolder = Path.Combine("wwwroot", "uploads", "tasks");
 						Directory.CreateDirectory(uploadsFolder);
 
-						var fileName = file.FileName;
-                        var filePath = Path.Combine(uploadsFolder, fileName);
+                        var fileName = file.FileName;
+                        var StoredFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+                        var filePath = Path.Combine(uploadsFolder, StoredFileName);
 
 						using (var stream = new FileStream(filePath, FileMode.Create))
 						{
@@ -184,8 +187,9 @@ namespace TaskForge.Application.Services
 
 						task.Attachments.Add(new TaskAttachment
 						{
-							FileName = file.FileName,
-							FilePath = Path.Combine("uploads", "tasks", fileName).Replace("\\", "/"),
+							FileName = fileName,
+							StoredFileName = StoredFileName,
+							FilePath = Path.Combine("uploads", "tasks", StoredFileName).Replace("\\", "/"),
 							ContentType = file.ContentType
 						});
 					}
