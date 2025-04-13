@@ -2,719 +2,740 @@
 @model ProjectDashboardViewModel
 
 @{
-	ViewData["Title"] = "Project Dashboard - " + Model.ProjectTitle;
+    ViewData["Title"] = "Project Dashboard - " + Model.ProjectTitle;
 }
 
 <div class="container mt-4">
-	<!-- Hidden form to inject AntiForgeryToken -->
-	<form id="antiForgeryForm" style="display: none;">
-		@Html.AntiForgeryToken()
-	</form>
+    <!-- Hidden form to inject AntiForgeryToken -->
+    <form id="antiForgeryForm" style="display: none;">
+        @Html.AntiForgeryToken()
+    </form>
 
-	<!-- Project Overview -->
-	<div class="row">
-		<div class="col-md-8">
-			<h3 class="fw-bold mb-3"><i class="bi bi-kanban"></i> @Model.ProjectTitle</h3>
-			<h6 class="text-muted fw-normal fst-italic mb-3">
-				@Model.ProjectDescription
-			</h6>
+    <!-- Project Overview -->
+    <div class="row">
+        <div class="col-md-8">
+            <h3 class="fw-bold mb-3"><i class="bi bi-kanban"></i> @Model.ProjectTitle</h3>
+            <h6 class="text-muted fw-normal fst-italic mb-3">
+                @Model.ProjectDescription
+            </h6>
 
-			<div class="d-flex align-items-center gap-3 mb-3">
-				<div class="fw-normal">
-					<strong>Project Status: </strong>
-					@if (Model.ProjectStatus == ProjectStatus.NotStarted)
-					{
-						<span class="badge bg-secondary">@Model.ProjectStatus.GetDisplayName()</span>
-					}
-					else if (Model.ProjectStatus == ProjectStatus.InProgress)
-					{
-						<span class="badge bg-info">@Model.ProjectStatus.GetDisplayName()</span>
-					}
-					else if (Model.ProjectStatus == ProjectStatus.OnHold)
-					{
-						<span class="badge bg-warning">@Model.ProjectStatus.GetDisplayName()</span>
-					}
-					else if (Model.ProjectStatus == ProjectStatus.Completed)
-					{
-						<span class="badge bg-success">@Model.ProjectStatus.GetDisplayName()</span>
-					}
-					else if (Model.ProjectStatus == ProjectStatus.Cancelled)
-					{
-						<span class="badge bg-danger">@Model.ProjectStatus.GetDisplayName()</span>
-					}
-					else
-					{
-						<span class="badge bg-dark">@Model.ProjectStatus.GetDisplayName()</span>
-					}
-				</div>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="fw-normal">
+                    <strong>Project Status: </strong>
+                    @if (Model.ProjectStatus == ProjectStatus.NotStarted)
+                    {
+                        <span class="badge bg-secondary">@Model.ProjectStatus.GetDisplayName()</span>
+                    }
+                    else if (Model.ProjectStatus == ProjectStatus.InProgress)
+                    {
+                        <span class="badge bg-info">@Model.ProjectStatus.GetDisplayName()</span>
+                    }
+                    else if (Model.ProjectStatus == ProjectStatus.OnHold)
+                    {
+                        <span class="badge bg-warning">@Model.ProjectStatus.GetDisplayName()</span>
+                    }
+                    else if (Model.ProjectStatus == ProjectStatus.Completed)
+                    {
+                        <span class="badge bg-success">@Model.ProjectStatus.GetDisplayName()</span>
+                    }
+                    else if (Model.ProjectStatus == ProjectStatus.Cancelled)
+                    {
+                        <span class="badge bg-danger">@Model.ProjectStatus.GetDisplayName()</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-dark">@Model.ProjectStatus.GetDisplayName()</span>
+                    }
+                </div>
 
-				<div>
-					<strong><i class="bi bi-calendar-event"></i> Start Date:</strong>
-					<span class="badge bg-primary">@Model.StartDate.ToString("MMM dd, yyyy")</span>
-				</div>
-				<div>
-					<strong><i class="bi bi-calendar-check"></i> End Date:</strong>
-					<span class="badge @(Model.EndDate.HasValue ? "bg-danger" : "bg-secondary")">
-						@(Model.EndDate.HasValue ? Model.EndDate.Value.ToString("MMM dd, yyyy") : "Not Set")
-					</span>
-				</div>
-			</div>
+                <div>
+                    <strong><i class="bi bi-calendar-event"></i> Start Date:</strong>
+                    <span class="badge bg-primary">@Model.StartDate.ToString("MMM dd, yyyy")</span>
+                </div>
+                <div>
+                    <strong><i class="bi bi-calendar-check"></i> End Date:</strong>
+                    <span class="badge @(Model.EndDate.HasValue ? "bg-danger" : "bg-secondary")">
+                        @(Model.EndDate.HasValue ? Model.EndDate.Value.ToString("MMM dd, yyyy") : "Not Set")
+                    </span>
+                </div>
+            </div>
 
-		</div>
+        </div>
 
-		<!-- Button to trigger the Edit Modal -->
-		@if (Model.UserRoleInThisProject == ProjectRole.Admin)
-		{
-			<div class="col-md-4 text-end">
-				<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProjectModal">
-					<i class="bi bi-pencil-square"></i> Edit Project
-				</button>
+        <!-- Button to trigger the Edit Modal -->
+        @if (Model.UserRoleInThisProject == ProjectRole.Admin)
+        {
+            <div class="col-md-4 text-end">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProjectModal">
+                    <i class="bi bi-pencil-square"></i> Edit Project
+                </button>
 
-				<a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="btn btn-warning" target="_blank">
-					<i class="bi bi-people"></i> Manage Members
-				</a>
-			</div>
+                <a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="btn btn-warning" target="_blank">
+                    <i class="bi bi-people"></i> Manage Members
+                </a>
+            </div>
 
-			<!-- Modal for Editing Project -->
-			<div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
-				<div class="modal-dialog">
-					<div class="modal-content">
-						<div class="modal-header">
-							<h5 class="modal-title" id="editProjectModalLabel">Edit Project</h5>
-							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-						</div>
-						<div class="modal-body">
-							@if (Model.UpdateViewModel != null)
-							{
-								@await Html.PartialAsync("~/Views/Project/PartialViews/_EditProjectForm.cshtml", Model.UpdateViewModel)
-							}
-							else
-							{
-								<p class="text-danger">Error loading project details.</p>
-							}
-						</div>
-					</div>
-				</div>
-			</div>
-		}
-	</div>
+            <!-- Modal for Editing Project -->
+            <div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editProjectModalLabel">Edit Project</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            @if (Model.UpdateViewModel != null)
+                            {
+                                @await Html.PartialAsync("~/Views/Project/PartialViews/_EditProjectForm.cshtml", Model.UpdateViewModel)
+                            }
+                            else
+                            {
+                                <p class="text-danger">Error loading project details.</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
 </div>
 
 <!-- Main Section -->
 <div class="">
-	<!-- Bootstrap Tabs -->
-	<ul class="nav nav-tabs" id="dashboardTabs">
-		<!-- Summary Tab -->
-		<li class="nav-item">
-			<button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">
-				<i class="bi bi-bar-chart-fill"></i> Summary
-			</button>
-		</li>
-		<!-- Tasks Tab -->
-		<li class="nav-item">
-			<button class="nav-link" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab" aria-controls="tasks" aria-selected="false">
-				<i class="bi bi-list-task"></i> Tasks
-			</button>
-		</li>
-	</ul>
+    <!-- Bootstrap Tabs -->
+    <ul class="nav nav-tabs" id="dashboardTabs">
+        <!-- Summary Tab -->
+        <li class="nav-item">
+            <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">
+                <i class="bi bi-bar-chart-fill"></i> Summary
+            </button>
+        </li>
+        <!-- Tasks Tab -->
+        <li class="nav-item">
+            <button class="nav-link" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab" aria-controls="tasks" aria-selected="false">
+                <i class="bi bi-list-task"></i> Tasks
+            </button>
+        </li>
+    </ul>
 
-	<!-- Tab Content -->
-	<div class="tab-content mt-3" id="dashboardTabsContent">
-		<!-- Summary Content -->
-		<div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
-			<div class="row">
-				<!-- Task Summary -->
-				<div class="col-md-4">
-					<div class="card shadow-sm border-primary">
-						<div class="card-body text-center">
-							<h5 class="card-title"><i class="bi bi-list-task text-primary"></i> Task Summary</h5>
-							<p class="mb-1"><strong>Total Tasks:</strong> @Model.TotalTasks</p>
-							<p class="mb-1 text-warning"><strong>Pending:</strong> @Model.PendingTasks</p>
-							<p class="mb-1 text-success"><strong>Completed:</strong> @Model.CompletedTasks</p>
-						</div>
-					</div>
-				</div>
+    <!-- Tab Content -->
+    <div class="tab-content mt-3" id="dashboardTabsContent">
+        <!-- Summary Content -->
+        <div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+            <div class="row">
+                <!-- Task Summary -->
+                <div class="col-md-4">
+                    <div class="card shadow-sm border-primary">
+                        <div class="card-body text-center">
+                            <h5 class="card-title"><i class="bi bi-list-task text-primary"></i> Task Summary</h5>
+                            <p class="mb-1"><strong>Total Tasks:</strong> @Model.TotalTasks</p>
+                            <p class="mb-1 text-warning"><strong>Pending:</strong> @Model.PendingTasks</p>
+                            <p class="mb-1 text-success"><strong>Completed:</strong> @Model.CompletedTasks</p>
+                        </div>
+                    </div>
+                </div>
 
-				<!-- Team Members -->
-				<div class="col-md-4">
-					<div class="card shadow-sm border-info">
-						<div class="card-body text-center">
-							<h5 class="card-title"><i class="bi bi-people text-info"></i> Team Members</h5>
-							<p class="mb-1"><strong>Admin:</strong> @Model.Members.Where(m => m.Role == ProjectRole.Admin).ToList().Count</p>
-							<p class="mb-1"><strong>Contributor:</strong> @Model.Members.Where(m => m.Role == ProjectRole.Contributor).ToList().Count</p>
-							<p class="mb-1"><strong>Viewer:</strong> @Model.Members.Where(m => m.Role == ProjectRole.Viewer).ToList().Count</p>
-							<p class="mb-1"><strong>Pending Invitations:</strong> @Model.Invitations.Count</p>
-							@* <p class="mb-1"><a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="text-info">View Members</a></p> *@
-						</div>
-					</div>
-				</div>
+                <!-- Team Members -->
+                <div class="col-md-4">
+                    <div class="card shadow-sm border-info">
+                        <div class="card-body text-center">
+                            <h5 class="card-title"><i class="bi bi-people text-info"></i> Team Members</h5>
+                            <p class="mb-1"><strong>Admin:</strong> @Model.Members.Where(m => m.Role == ProjectRole.Admin).ToList().Count</p>
+                            <p class="mb-1"><strong>Contributor:</strong> @Model.Members.Where(m => m.Role == ProjectRole.Contributor).ToList().Count</p>
+                            <p class="mb-1"><strong>Viewer:</strong> @Model.Members.Where(m => m.Role == ProjectRole.Viewer).ToList().Count</p>
+                            <p class="mb-1"><strong>Pending Invitations:</strong> @Model.Invitations.Count</p>
+                            @* <p class="mb-1"><a asp-action="ManageMembers" asp-route-id="@Model.ProjectId" class="text-info">View Members</a></p> *@
+                        </div>
+                    </div>
+                </div>
 
-				<!-- Project Dates -->
-				<div class="col-md-4">
-					<div class="card shadow-sm border-secondary">
-						<div class="card-body text-center">
-							<h5 class="card-title"><i class="bi bi-calendar-check text-secondary"></i> Project Timeline</h5>
-							<p class="mb-1"><strong>Start Date:</strong> @Model.StartDate.ToString("yyyy-MM-dd")</p>
-							<p class="mb-1"><strong>End Date:</strong> @Model.EndDate?.ToString("yyyy-MM-dd")</p>
-						</div>
-					</div>
-				</div>
-			</div>
+                <!-- Project Dates -->
+                <div class="col-md-4">
+                    <div class="card shadow-sm border-secondary">
+                        <div class="card-body text-center">
+                            <h5 class="card-title"><i class="bi bi-calendar-check text-secondary"></i> Project Timeline</h5>
+                            <p class="mb-1"><strong>Start Date:</strong> @Model.StartDate.ToString("yyyy-MM-dd")</p>
+                            <p class="mb-1"><strong>End Date:</strong> @Model.EndDate?.ToString("yyyy-MM-dd")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-			<!-- Team Members -->
-			<div class="row mt-4">
-				<div class="col-md-12">
-					<h4 class="mb-3"><i class="bi bi-people text-info"></i> Team Members</h4>
-					<table class="table table-bordered table-hover">
-						<thead class="table-dark">
-							<tr class="text-center">
-								<th>#</th>
-								<th>Name</th>
-								<th>Email</th>
-								<th>Role</th>
-							</tr>
-						</thead>
-						<tbody>
-							@if (Model.Members != null && Model.Members.Any())
-							{
-								var serial = 1;
-								foreach (var member in Model.Members)
-								{
-									<tr class="text-center">
-										<td>@(serial++)</td>
-										<td>@member.Name</td>
-										<td>@member.Email</td>
-										<td>@member.Role</td>
-									</tr>
-								}
-							}
-							else
-							{
-								<tr>
-									<td colspan="5" class="text-center">No members found.</td>
-								</tr>
-							}
-						</tbody>
-					</table>
-				</div>
-			</div>
-		</div>
+            <!-- Team Members -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h4 class="mb-3"><i class="bi bi-people text-info"></i> Team Members</h4>
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-dark">
+                            <tr class="text-center">
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Members != null && Model.Members.Any())
+                            {
+                                var serial = 1;
+                                foreach (var member in Model.Members)
+                                {
+                                    <tr class="text-center">
+                                        <td>@(serial++)</td>
+                                        <td>@member.Name</td>
+                                        <td>@member.Email</td>
+                                        <td>@member.Role</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center">No members found.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-		<!-- Tasks Content -->
-		<div class="tab-pane fade" id="tasks" role="tabpanel" aria-labelledby="tasks-tab">
-			<div class="row mt-4">
-				<div class="col-12">
-					<div class="card shadow-sm border">
-						<div class="card-body">
-							<div class="d-flex justify-content-between bg-light p-2 mb-3">
-								<!-- Custom Styles for Nav Pills -->
-								<style>
-									.nav-pills .nav-link {
-										transition: background-color 0.3s, color 0.3s;
-									}
+        <!-- Tasks Content -->
+        <div class="tab-pane fade" id="tasks" role="tabpanel" aria-labelledby="tasks-tab">
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow-sm border">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between bg-light p-2 mb-3">
+                                <!-- Custom Styles for Nav Pills -->
+                                <style>
+                                    .nav-pills .nav-link {
+                                        transition: background-color 0.3s, color 0.3s;
+                                    }
 
-										.nav-pills .nav-link.active {
-											background-color: #007bff;
-											color: #fff;
-										}
+                                        .nav-pills .nav-link.active {
+                                            background-color: #007bff;
+                                            color: #fff;
+                                        }
 
-										.nav-pills .nav-link:hover {
-											background-color: rgba(0, 123, 255, 0.1);
-											color: #0056b3;
-										}
+                                        .nav-pills .nav-link:hover {
+                                            background-color: rgba(0, 123, 255, 0.1);
+                                            color: #0056b3;
+                                        }
 
-										.nav-pills .nav-link[data-bs-toggle="pill"]:focus {
-											box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5);
-										}
-								</style>
+                                        .nav-pills .nav-link[data-bs-toggle="pill"]:focus {
+                                            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5);
+                                        }
+                                </style>
 
-								<!-- Nav Tabs -->
-								<ul class="nav nav-pills" id="taskTabs">
-									<li class="nav-item me-1">
-										<a class="nav-link " id="todo-tab" data-bs-toggle="pill" href="#todo">
-											<i class="bi bi-slash-circle"></i> To Do
-										</a>
-									</li>
-									<li class="nav-item me-1">
-										<a class="nav-link" id="inprogress-tab" data-bs-toggle="pill" href="#inprogress">
-											<i class="bi bi-hourglass-split"></i> In Progress
-										</a>
-									</li>
-									<li class="nav-item me-1">
-										<a class="nav-link" id="completed-tab" data-bs-toggle="pill" href="#completed">
-											<i class="bi bi-check2-circle"></i> Completed
-										</a>
-									</li>
-									<li class="nav-item me-1">
-										<a class="nav-link" id="blocked-tab" data-bs-toggle="pill" href="#blocked">
-											<i class="bi bi-exclamation-circle"></i> Blocked
-										</a>
-									</li>
-								</ul>
+                                <!-- Nav Tabs -->
+                                <ul class="nav nav-pills" id="taskTabs">
+                                    <li class="nav-item me-1">
+                                        <a class="nav-link " id="todo-tab" data-bs-toggle="pill" href="#todo">
+                                            <i class="bi bi-slash-circle"></i> To Do
+                                        </a>
+                                    </li>
+                                    <li class="nav-item me-1">
+                                        <a class="nav-link" id="inprogress-tab" data-bs-toggle="pill" href="#inprogress">
+                                            <i class="bi bi-hourglass-split"></i> In Progress
+                                        </a>
+                                    </li>
+                                    <li class="nav-item me-1">
+                                        <a class="nav-link" id="completed-tab" data-bs-toggle="pill" href="#completed">
+                                            <i class="bi bi-check2-circle"></i> Completed
+                                        </a>
+                                    </li>
+                                    <li class="nav-item me-1">
+                                        <a class="nav-link" id="blocked-tab" data-bs-toggle="pill" href="#blocked">
+                                            <i class="bi bi-exclamation-circle"></i> Blocked
+                                        </a>
+                                    </li>
+                                </ul>
 
-								@if (Model.UserRoleInThisProject == ProjectRole.Admin || Model.UserRoleInThisProject == ProjectRole.Contributor)
-								{
-									<!-- Add Task Button -->
-									<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTaskModal">
-										<i class="bi bi-plus-circle"></i> Add New Task
-									</button>
+                                @if (Model.UserRoleInThisProject == ProjectRole.Admin || Model.UserRoleInThisProject == ProjectRole.Contributor)
+                                {
+                                    <!-- Add Task Button -->
+                                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                                        <i class="bi bi-plus-circle"></i> Add New Task
+                                    </button>
 
-									<!-- Modal for Adding Task -->
-									<div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
-										<div class="modal-dialog modal-lg">
-											<div class="modal-content">
-												<div class="modal-header">
-													<h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
-													<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-												</div>
-												<div class="modal-body">
-													<!-- Render the Partial View for Task Form -->
-													@await Html.PartialAsync("~/Views/Task/PartialViews/_AddTaskForm.cshtml", new TaskItemViewModel
-	   {
-		   ProjectId = Model.ProjectId
-	   })
-												</div>
-											</div>
-										</div>
-									</div>
-								}
-							</div>
-
-
-							<!-- Task Details Modal -->
-							<div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel" aria-hidden="true">
-								<div class="modal-dialog modal-xl modal-dialog-scrollable">
-									<div class="modal-content">
-										<div class="modal-header">
-											<h5 class="modal-title" id="taskDetailsModalLabel">Edit Task</h5>
-											<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-										</div>
-										<div class="modal-body">
-											<form id="taskEditForm" enctype="multipart/form-data">
-												<input type="hidden" name="Id" id="task-id" />
-
-												<div class="row g-3">
-													<!-- Left Column -->
-													<div class="col-md-6">
-														<div class="mb-3">
-															<label for="task-title" class="form-label">Title</label>
-															<input type="text" class="form-control" id="task-title" name="Title" />
-															<div class="invalid-feedback" id="title-error">Title is required and must be under 200 characters.</div>
-
-														</div>
-
-														<div class="mb-3">
-															<label for="task-description" class="form-label">Description</label>
-															<textarea class="form-control" id="task-description" name="Description" rows="6"></textarea>
-															<div class="invalid-feedback" id="description-error">Description must be under 1000 characters.</div>
-														</div>
-
-														<div class="mb-3">
-															<label for="task-status" class="form-label">Status</label>
-															<select class="form-select" id="task-status" name="Status">
-																<option value="0">To Do</option>
-																<option value="1">In Progress</option>
-																<option value="2">Done</option>
-																<option value="3">Blocked</option>
-															</select>
-														</div>
-
-														<div class="mb-3">
-															<label for="task-priority" class="form-label">Priority</label>
-															<select class="form-select" id="task-priority" name="Priority">
-																<option value="0">Low</option>
-																<option value="1">Medium</option>
-																<option value="2">High</option>
-																<option value="3">Critical</option>
-															</select>
-														</div>
-													</div>
-
-													<!-- Right Column -->
-													<div class="col-md-6">
-														<div class="mb-3">
-															<label class="form-label">Start Date</label>
-															<input type="date" class="form-control" id="task-startdate" name="StartDate" />
-														</div>
-
-														<div class="mb-3">
-															<label class="form-label">Due Date</label>
-															<input type="date" class="form-control" id="task-duedate" name="DueDate" />
-															<div class="invalid-feedback" id="duedate-error">Due Date cannot be earlier than Start Date.</div>
-														</div>
-
-														<div class="mb-3">
-															<label class="form-label">Assigned Members</label>
-															<select class="form-select" id="task-members" name="AssignedUserIds" multiple></select>
-														</div>
-
-														<div class="mb-3">
-															<label class="form-label">Attachments</label>
-															<input type="file" class="form-control" id="task-attachments" name="Attachments" multiple />
-															<div class="invalid-feedback d-block attachments-error" style="display: none;"></div>
-															<ul class="list-group mt-2" id="task-attachment-list"></ul>
-														</div>
-													</div>
-												</div>
-											</form>
-										</div>
-
-										<div class="modal-footer">
-											<button type="submit" class="btn btn-primary" form="taskEditForm">Save Changes</button>
-										</div>
-									</div>
-								</div>
-							</div>
+                                    <!-- Modal for Adding Task -->
+                                    <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-lg">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="addTaskModalLabel">Add New Task</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <!-- Render the Partial View for Task Form -->
+                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_AddTaskForm.cshtml", new TaskItemViewModel
+                                           {
+                                               ProjectId = Model.ProjectId
+                                           })
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
 
 
-							<!-- Tab Content -->
-							<div class="tab-content">
-								<!-- To Do Tab -->
-								<div class="tab-pane fade" id="todo">
-									<div class="row">
-										@foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.ToDo))
-										{
-											@await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
-										}
-									</div>
-								</div>
+                            <!-- Task Details Modal -->
+                            <div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="taskDetailsModalLabel">Edit Task</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form id="taskEditForm" enctype="multipart/form-data">
+                                                <input type="hidden" name="Id" id="task-id" />
 
-								<!-- In Progress Tab -->
-								<div class="tab-pane fade" id="inprogress">
-									<div class="row">
-										@foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.InProgress))
-										{
-											@await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
-										}
-									</div>
-								</div>
+                                                <div class="row g-3">
+                                                    <!-- Left Column -->
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="task-title" class="form-label">Title</label>
+                                                            <input type="text" class="form-control" id="task-title" name="Title" />
+                                                            <div class="invalid-feedback" id="title-error">Title is required and must be under 200 characters.</div>
 
-								<!-- Completed Tab -->
-								<div class="tab-pane fade" id="completed">
-									<div class="row">
-										@foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Done))
-										{
-											@await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
-										}
-									</div>
-								</div>
+                                                        </div>
 
-								<!-- Blocked Tab -->
-								<div class="tab-pane fade" id="blocked">
-									<div class="row">
-										@foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Blocked))
-										{
-											@await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
-										}
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+                                                        <div class="mb-3">
+                                                            <label for="task-description" class="form-label">Description</label>
+                                                            <textarea class="form-control" id="task-description" name="Description" rows="6"></textarea>
+                                                            <div class="invalid-feedback" id="description-error">Description must be under 1000 characters.</div>
+                                                        </div>
+
+                                                        <div class="mb-3">
+                                                            <label for="task-status" class="form-label">Status</label>
+                                                            <select class="form-select" id="task-status" name="Status">
+                                                                <option value="0">To Do</option>
+                                                                <option value="1">In Progress</option>
+                                                                <option value="2">Done</option>
+                                                                <option value="3">Blocked</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="mb-3">
+                                                            <label for="task-priority" class="form-label">Priority</label>
+                                                            <select class="form-select" id="task-priority" name="Priority">
+                                                                <option value="0">Low</option>
+                                                                <option value="1">Medium</option>
+                                                                <option value="2">High</option>
+                                                                <option value="3">Critical</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Right Column -->
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Start Date</label>
+                                                            <input type="date" class="form-control" id="task-startdate" name="StartDate" />
+                                                        </div>
+
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Due Date</label>
+                                                            <input type="date" class="form-control" id="task-duedate" name="DueDate" />
+                                                            <div class="invalid-feedback" id="duedate-error">Due Date cannot be earlier than Start Date.</div>
+                                                        </div>
+
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Assigned Members</label>
+                                                            <select class="form-select" id="task-members" name="AssignedUserIds" multiple></select>
+                                                        </div>
+
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Attachments</label>
+                                                            <input type="file" class="form-control" id="task-attachments" name="Attachments" multiple />
+                                                            <div class="invalid-feedback d-block attachments-error" style="display: none;"></div>
+                                                            <ul class="list-group mt-2" id="task-attachment-list"></ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-primary" form="taskEditForm">Save Changes</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!-- Tab Content -->
+                            <div class="tab-content">
+                                <!-- To Do Tab -->
+                                <div class="tab-pane fade" id="todo">
+                                    <div class="row">
+                                        @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.ToDo))
+                                        {
+                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- In Progress Tab -->
+                                <div class="tab-pane fade" id="inprogress">
+                                    <div class="row">
+                                        @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.InProgress))
+                                        {
+                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- Completed Tab -->
+                                <div class="tab-pane fade" id="completed">
+                                    <div class="row">
+                                        @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Done))
+                                        {
+                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- Blocked Tab -->
+                                <div class="tab-pane fade" id="blocked">
+                                    <div class="row">
+                                        @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Blocked))
+                                        {
+                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 
 @section Scripts {
-	<script>
-		const projectId = "@Model.ProjectId";
-		const mainTabKey = `activeMainTab_project_${projectId}`;
-		const subTabKey = `activeSubTab_project_${projectId}`;
-		const lastVisitedId = localStorage.getItem("lastVisitedProjectId");
+    <script>
+        const projectId = "@Model.ProjectId";
+        const mainTabKey = `activeMainTab_project_${projectId}`;
+        const subTabKey = `activeSubTab_project_${projectId}`;
+        const lastVisitedId = localStorage.getItem("lastVisitedProjectId");
 
-		if (lastVisitedId && lastVisitedId !== projectId) {
-			localStorage.removeItem(`activeMainTab_project_${lastVisitedId}`);
-			localStorage.removeItem(`activeSubTab_project_${lastVisitedId}`);
-		}
+        if (lastVisitedId && lastVisitedId !== projectId) {
+            localStorage.removeItem(`activeMainTab_project_${lastVisitedId}`);
+            localStorage.removeItem(`activeSubTab_project_${lastVisitedId}`);
+        }
 
-		$(document).ready(function () {
-			// Task Create Form
-			$('#taskForm').on('submit', function (e) {
-				e.preventDefault();
-				const formData = new FormData(this);
+        $(document).ready(function () {
+            // Task Create Form
+            $('#taskForm').on('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
 
-				const startDate = $('#taskStartDate').val();
-				const dueDate = $('#taskDueDate').val();
-				const attachments = $('#taskAttachments')[0].files;
+                const startDate = $('#taskStartDate').val();
+                const dueDate = $('#taskDueDate').val();
+                const attachments = $('#taskAttachments')[0].files;
 
-				// Reset previous errors
-				$('.is-invalid').removeClass('is-invalid');
+                // Reset previous errors
+                $('.is-invalid').removeClass('is-invalid');
 
-				let hasError = false;
+                let hasError = false;
 
-				// DueDate >= StartDate
-				if (startDate && dueDate && new Date(dueDate) < new Date(startDate)) {
-					$('#taskDueDate').addClass('is-invalid');
-					hasError = true;
-				}
+                // DueDate >= StartDate
+                if (startDate && dueDate && new Date(dueDate) < new Date(startDate)) {
+                    $('#taskDueDate').addClass('is-invalid');
+                    hasError = true;
+                }
 
-				if (hasError) {
-					$(this).find('button[type="submit"]').prop('disabled', false);
-					return;
-				}
+                if (hasError) {
+                    $(this).find('button[type="submit"]').prop('disabled', false);
+                    return;
+                }
 
-				$.ajax({
-					type: 'POST',
-					url: '/Task/Create',
-					data: formData,
-					processData: false,
-					contentType: false,
-					success: function (response) {
-						if (response.success) {
-							const selectedStatus = $('#taskForm select[name="Status"]').val();
-							$('#addTaskModal').modal('hide');
-							$('#taskForm')[0].reset();
+                $.ajax({
+                    type: 'POST',
+                    url: '/Task/Create',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        if (response.success) {
+                            const selectedStatus = $('#taskForm select[name="Status"]').val();
+                            $('#addTaskModal').modal('hide');
+                            $('#taskForm')[0].reset();
 
-							// Map status values to tab IDs
-							const statusToTab = {
-								0: '#todo',
-								1: '#inprogress',
-								2: '#completed',
-								3: '#blocked'
-							};
+                            // Map status values to tab IDs
+                            const statusToTab = {
+                                0: '#todo',
+                                1: '#inprogress',
+                                2: '#completed',
+                                3: '#blocked'
+                            };
 
-							// Save active main and sub tab so it opens where the task was added
-							localStorage.setItem(mainTabKey, "#tasks");
+                            // Save active main and sub tab so it opens where the task was added
+                            localStorage.setItem(mainTabKey, "#tasks");
 
-							if (statusToTab[selectedStatus]) {
-								localStorage.setItem(subTabKey, statusToTab[selectedStatus]);
-							}
+                            if (statusToTab[selectedStatus]) {
+                                localStorage.setItem(subTabKey, statusToTab[selectedStatus]);
+                            }
 
-							// Reload to reflect the new task under the correct tab
-							location.reload();
+                            // Reload to reflect the new task under the correct tab
+                            location.reload();
 
-						} else {
-							alert("Failed to create task: " + response.message);
-						}
-					},
-					error: function (xhr, status, error) {
-						alert('Something went wrong: ' + error);
-					}
-				});
-			});
+                        } else {
+                            alert("Failed to create task: " + response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Something went wrong: ' + error);
+                    }
+                });
+            });
 
-			// Tab persistence
-			const mainTab = localStorage.getItem(mainTabKey);
-			const taskSubTab = localStorage.getItem(subTabKey);
+            // Tab persistence
+            const mainTab = localStorage.getItem(mainTabKey);
+            const taskSubTab = localStorage.getItem(subTabKey);
 
-			if (mainTab) {
-				const mainTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="${mainTab}"]`);
-				if (mainTabButton) new bootstrap.Tab(mainTabButton).show();
-			} else {
-				const defaultTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="#summary"]`);
-				if (defaultTabButton) new bootstrap.Tab(defaultTabButton).show();
-			}
+            if (mainTab) {
+                const mainTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="${mainTab}"]`);
+                if (mainTabButton) new bootstrap.Tab(mainTabButton).show();
+            } else {
+                const defaultTabButton = document.querySelector(`#dashboardTabs button[data-bs-target="#summary"]`);
+                if (defaultTabButton) new bootstrap.Tab(defaultTabButton).show();
+            }
 
-			if (mainTab === "#tasks" && taskSubTab) {
-				const subTabLink = document.querySelector(`#taskTabs a[href="${taskSubTab}"]`);
-				if (subTabLink) new bootstrap.Tab(subTabLink).show();
-			}
+            if (mainTab === "#tasks" && taskSubTab) {
+                const subTabLink = document.querySelector(`#taskTabs a[href="${taskSubTab}"]`);
+                if (subTabLink) new bootstrap.Tab(subTabLink).show();
+            }
 
-			// Save tab selections
-			$('#dashboardTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
-				localStorage.setItem(mainTabKey, $(e.target).data("bs-target"));
-			});
-			$('#taskTabs a[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
-				localStorage.setItem(subTabKey, $(e.target).attr("href"));
-			});
+            // Save tab selections
+            $('#dashboardTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                localStorage.setItem(mainTabKey, $(e.target).data("bs-target"));
+            });
+            $('#taskTabs a[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
+                localStorage.setItem(subTabKey, $(e.target).attr("href"));
+            });
 
-			// When task modal is opened, fetch task details
-			$('#taskDetailsModal').on('show.bs.modal', function (event) {
-				const button = $(event.relatedTarget); // Button that triggered the modal
-				const taskId = button.data('task-id');
+            // When task modal is opened, fetch task details
+            $('#taskDetailsModal').on('show.bs.modal', function (event) {
+                const button = $(event.relatedTarget); // Button that triggered the modal
+                const taskId = button.data('task-id');
 
-				if (!taskId) {
-					console.error("No taskId found on button");
-					return;
-				}
+                if (!taskId) {
+                    console.error("No taskId found on button");
+                    return;
+                }
 
-				GetTaskDetails(taskId);
-			});
-		});
-
-
-		// Save current project ID
-		localStorage.setItem("lastVisitedProjectId", projectId);
+                GetTaskDetails(taskId);
+            });
+        });
 
 
-		// Get task and populate modal
-		function GetTaskDetails(taskId) {
-
-			$.ajax({
-				url: `/Task/GetTask/${taskId}`,
-				method: 'GET',
-				success: function (data) {
-					//console.log("Fetched Task Data:", data);
-
-					$('#task-id').val(data.id);
-					$('#task-title').val(data.title);
-					$('#task-description').val(data.description);
-					$('#task-status').val(data.status);
-					$('#task-priority').val(data.priority);
-					if (data.startDate && data.startDate.includes('T')) {
-						$('#task-startdate').val(data.startDate.split('T')[0]);
-					} else {
-						$('#task-startdate').val('');
-					}
-					if (data.dueDate && data.dueDate.includes('T')) {
-						$('#task-duedate').val(data.dueDate.split('T')[0]);
-					} else {
-						$('#task-duedate').val('');
-					}
-
-					// Members
-					$('#task-members').empty();
-					data.allUsers.forEach(user => {
-						const selected = data.assignedUserIds.includes(user.id) ? 'selected' : '';
-						$('#task-members').append(`<option value="${user.id}" ${selected}>${user.name}</option>`);
-					});
-
-					// Attachments
-					$('#task-attachment-list').empty();
-					data.attachments.forEach(att => {
-						$('#task-attachment-list').append(`
-							<li class="list-group-item d-flex justify-content-between align-items-center">
-								<a href="${att.downloadUrl}" target="_blank">${att.fileName}</a>
-								<button type="button" class="btn btn-sm btn-danger" onclick="RemoveAttachment(${att.id})">
-									<i class="bi bi-trash"></i>
-								</button>
-							</li>
-						`);
-					});
-				},
-				error: function (xhr) {
-					console.error("Failed to fetch task", xhr.responseText);
-					alert("Failed to load task.");
-				}
-			});
-		}
+        // Save current project ID
+        localStorage.setItem("lastVisitedProjectId", projectId);
 
 
-		$('input[name="Attachments"]').on('change', function () {
-			const files = this.files;
-			let error = '';
+        // Get task and populate modal
+        function GetTaskDetails(taskId) {
 
-			if (files.length > 10) {
-				error = "You can't upload more than 10 files.";
-			} else {
-				for (let file of files) {
-					if (file.size > 10 * 1024 * 1024) {
-						error = `${file.name} is larger than 10MB.`;
-						break;
-					}
-				}
-			}
+            $.ajax({
+                url: `/Task/GetTask/${taskId}`,
+                method: 'GET',
+                success: function (data) {
+                    //console.log("Fetched Task Data:", data);
 
-			if (error) {
-				$(this).parent().find('.attachments-error').text(error).show();
-				$(this).addClass('is-invalid');
-				this.value = '';
-			} else {
-				$(this).parent().find('.attachments-error').text('').hide();
-				$(this).removeClass('is-invalid');
-			}
-		});
+                    $('#task-id').val(data.id);
+                    $('#task-title').val(data.title);
+                    $('#task-description').val(data.description);
+                    $('#task-status').val(data.status);
+                    $('#task-priority').val(data.priority);
+                    if (data.startDate && data.startDate.includes('T')) {
+                        $('#task-startdate').val(data.startDate.split('T')[0]);
+                    } else {
+                        $('#task-startdate').val('');
+                    }
+                    if (data.dueDate && data.dueDate.includes('T')) {
+                        $('#task-duedate').val(data.dueDate.split('T')[0]);
+                    } else {
+                        $('#task-duedate').val('');
+                    }
+
+                    // Members
+                    $('#task-members').empty();
+                    data.allUsers.forEach(user => {
+                        const selected = data.assignedUserIds.includes(user.id) ? 'selected' : '';
+                        $('#task-members').append(`<option value="${user.id}" ${selected}>${user.name}</option>`);
+                    });
+
+                    // Attachments
+                    $('#task-attachment-list').empty();
+                    data.attachments.forEach(att => {
+                        $('#task-attachment-list').append(`
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <a href="${att.downloadUrl}" target="_blank">${att.fileName}</a>
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="RemoveAttachment(${att.id})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </li>
+                                `);
+                    });
+                },
+                error: function (xhr) {
+                    console.error("Failed to fetch task", xhr.responseText);
+                    alert("Failed to load task.");
+                }
+            });
+        }
 
 
-		// Task Edit Form Submission
-		$('#taskEditForm').on('submit', function (e) {
-			$(this).find('button[type="submit"]').prop('disabled', true);
+        function RemoveAttachment(attachmentId) {
+            if (!confirm("Are you sure you want to delete this attachment?")) return;
 
-			e.preventDefault();
-			const formData = new FormData(this);
+            $.ajax({
+                url: `/Task/DeleteAttachment/${attachmentId}`,
+                type: 'DELETE',
+                success: function () {
+                    // remove the list item from UI without full reload
+                    $(`#task-attachment-list button[onclick="RemoveAttachment(${attachmentId})"]`)
+                        .closest('li')
+                        .remove();
+                },
+                error: function (xhr) {
+                    console.error("Failed to delete attachment:", xhr.responseText);
+                    alert("Failed to delete attachment.");
+                }
+            });
+        }
 
-			const title = $('#task-title').val().trim();
-			const description = $('#task-description').val().trim();
-			const startDate = $('#task-startdate').val();
-			const dueDate = $('#task-duedate').val();
-			const attachments = $('#task-attachments')[0].files;
 
-			// Reset previous errors
-			$('.is-invalid').removeClass('is-invalid');
 
-			let hasError = false;
+        $('input[name="Attachments"]').on('change', function () {
+            const files = this.files;
+            let error = '';
 
-			// Title length
-			if (title.length === 0 || title.length > 200) {
-				$('#task-title').addClass('is-invalid');
-				hasError = true;
-			}
+            if (files.length > 10) {
+                error = "You can't upload more than 10 files.";
+            } else {
+                for (let file of files) {
+                    if (file.size > 10 * 1024 * 1024) {
+                        error = `${file.name} is larger than 10MB.`;
+                        break;
+                    }
+                }
+            }
 
-			// Description length
-			if (description.length > 1000) {
-				$('#task-description').addClass('is-invalid');
-				hasError = true;
-			}
+            if (error) {
+                $(this).parent().find('.attachments-error').text(error).show();
+                $(this).addClass('is-invalid');
+                this.value = '';
+            } else {
+                $(this).parent().find('.attachments-error').text('').hide();
+                $(this).removeClass('is-invalid');
+            }
+        });
 
-			// DueDate >= StartDate
-			if (startDate && dueDate && new Date(dueDate) < new Date(startDate)) {
-				$('#task-duedate').addClass('is-invalid');
-				hasError = true;
-			}
 
-			if (hasError) {
-				$(this).find('button[type="submit"]').prop('disabled', false); // Re-enable button
-				return;
-			}
+        // Task Edit Form Submission
+        $('#taskEditForm').on('submit', function (e) {
+            $(this).find('button[type="submit"]').prop('disabled', true);
 
-			$.ajax({
-				url: '/Task/Update',
-				type: 'POST',
-				data: formData,
-				processData: false,
-				contentType: false,
-				success: (response) => {
-					if (response.success) {
-						$('#taskDetailsModal').modal('hide');
-						location.reload();
-					} else {
-						alert("Failed to update task: " + response.message);
-					}
-				},
-				error: function (xhr) {
-					const message = xhr.responseJSON?.message || "Something went wrong. Please try again.";
-					alert("Request failed: " + message);
-					console.error(xhr);
-				}
-			});
-		});
-	</script>
+            e.preventDefault();
+            const formData = new FormData(this);
 
-	<script>
-		$(document).ready(function () {
-			const token = $('#antiForgeryForm input[name="__RequestVerificationToken"]').val();
+            const title = $('#task-title').val().trim();
+            const description = $('#task-description').val().trim();
+            const startDate = $('#task-startdate').val();
+            const dueDate = $('#task-duedate').val();
+            const attachments = $('#task-attachments')[0].files;
 
-			$(".delete-task-btn").click(function () {
-				const taskId = $(this).data("id");
-				const card = $(this).closest(".task-card");
+            // Reset previous errors
+            $('.is-invalid').removeClass('is-invalid');
 
-				if (confirm("Are you sure you want to delete this task?")) {
-					$.ajax({
-						url: '@Url.Action("Delete", "Task")',
-						type: 'POST',
-						data: {
-							id: taskId,
-							__RequestVerificationToken: token
-						},
-						success: function (response) {
-							if (response.success) {
-								card.fadeOut(300, function () {
-									$(this).remove(); // Fully remove from DOM
-								});
-							} else {
-								alert(response.message || "Error deleting task.");
-							}
-						},
-						error: function () {
-							alert("Something went wrong. Please try again.");
-						}
-					});
-				}
-			});
-		});
-	</script>
+            let hasError = false;
+
+            // Title length
+            if (title.length === 0 || title.length > 200) {
+                $('#task-title').addClass('is-invalid');
+                hasError = true;
+            }
+
+            // Description length
+            if (description.length > 1000) {
+                $('#task-description').addClass('is-invalid');
+                hasError = true;
+            }
+
+            // DueDate >= StartDate
+            if (startDate && dueDate && new Date(dueDate) < new Date(startDate)) {
+                $('#task-duedate').addClass('is-invalid');
+                hasError = true;
+            }
+
+            if (hasError) {
+                $(this).find('button[type="submit"]').prop('disabled', false); // Re-enable button
+                return;
+            }
+
+            $.ajax({
+                url: '/Task/Update',
+                type: 'PUT',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: (response) => {
+                    if (response.success) {
+                        $('#taskDetailsModal').modal('hide');
+                        location.reload();
+                    } else {
+                        alert("Failed to update task: " + response.message);
+                    }
+                },
+                error: function (xhr) {
+                    const message = xhr.responseJSON?.message || "Something went wrong. Please try again.";
+                    alert("Request failed: " + message);
+                    console.error(xhr);
+                }
+            });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            const token = $('#antiForgeryForm input[name="__RequestVerificationToken"]').val();
+
+            $(".delete-task-btn").click(function () {
+                const taskId = $(this).data("id");
+                const card = $(this).closest(".task-card");
+
+                if (confirm("Are you sure you want to delete this task?")) {
+                    $.ajax({
+                        url: '@Url.Action("Delete", "Task")',
+                        type: 'DELETE',
+                        data: {
+                            id: taskId,
+                            __RequestVerificationToken: token
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                card.fadeOut(300, function () {
+                                    $(this).remove();
+                                });
+                            } else {
+                                alert(response.message || "Error deleting task.");
+                            }
+                        },
+                        error: function () {
+                            alert("Something went wrong. Please try again.");
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 }
 

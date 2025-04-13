@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
@@ -12,13 +11,11 @@ namespace TaskForge.WebUI.Controllers
     {
         private readonly ITaskService _taskService;
         private readonly IProjectMemberService _projectMemberService;
-        private readonly UserManager<IdentityUser> _userManager;
 
-        public TaskController(ITaskService taskService, IProjectMemberService projectMemberService, UserManager<IdentityUser> userManager)
+        public TaskController(ITaskService taskService, IProjectMemberService projectMemberService)
         {
             _taskService = taskService;
             _projectMemberService = projectMemberService;
-            _userManager = userManager;
         }
 
 
@@ -71,7 +68,7 @@ namespace TaskForge.WebUI.Controllers
                 Status = task.Status.ToString(),
                 Priority = task.Priority.ToString(),
                 AssignedUsers = task.AssignedUsers.Select(a => new { a.UserProfile.FullName }),
-                Attachments = task.Attachments.Select(a => new { a.FileName, a.FilePath })
+                Attachments = task.Attachments.Select(a => new { a.FileName, a.StoredFileName, a.FilePath })
             });
         }
 
@@ -96,7 +93,7 @@ namespace TaskForge.WebUI.Controllers
                 {
                     id = a.Id,
                     fileName = a.FileName,
-                    downloadUrl = Url.Action("Download", "Attachment", new { id = a.Id })
+                    downloadUrl = Url.Content($"~/uploads/tasks/{a.StoredFileName}")
                 }),
                 assignedUserIds = task.AssignedUsers.Select(u => u.UserProfileId),
                 allUsers = allUsers.Select(u => new { id = u.UserProfileId, name = u.Name })
@@ -104,7 +101,7 @@ namespace TaskForge.WebUI.Controllers
         }
 
 
-        [HttpPost]
+        [HttpPut]
         public async Task<IActionResult> Update(TaskUpdateDto dto)
         {
             try
@@ -118,13 +115,12 @@ namespace TaskForge.WebUI.Controllers
             }
             catch (Exception ex)
             {
-                // Log exception if needed
                 return Json(new { success = false, message = ex.Message });
             }
         }
 
 
-        [HttpPost]
+        [HttpDelete]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
@@ -138,6 +134,23 @@ namespace TaskForge.WebUI.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteAttachment(int id)
+        {
+            try
+            {
+                await _taskService.DeleteAttachmentAsync(id);
+                return Json(new { success = true, message = "TaskAttachment deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+
     }
 }
 
