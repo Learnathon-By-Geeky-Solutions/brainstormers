@@ -12,17 +12,35 @@ namespace TaskForge.Application.Services
             _environment = environment;
         }
 
-        public Task DeleteFileAsync(string relativePath)
+        public async Task DeleteFileAsync(string relativePath)
         {
-            var fullPath = Path.Combine(_environment.WebRootPath, relativePath);
-
-            if (File.Exists(fullPath))
+            // Prevent path traversal attacks
+            if (string.IsNullOrEmpty(relativePath) ||
+                relativePath.Contains("..") ||
+                Path.IsPathRooted(relativePath))
             {
-                File.Delete(fullPath);
+                throw new ArgumentException("Invalid file path specified", nameof(relativePath));
             }
 
-            return Task.CompletedTask;
+            var fullPath = Path.Combine(_environment.WebRootPath, relativePath);
+
+            try
+            {
+                if (File.Exists(fullPath))
+                {
+                    await Task.Run(() => File.Delete(fullPath)); // Run on thread pool to avoid blocking
+                }
+            }
+            catch (IOException ex)
+            {
+                throw new InvalidOperationException($"Could not delete file: {relativePath}. It might be in use.", ex);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                throw new InvalidOperationException($"Access denied when trying to delete file: {relativePath}", ex);
+            }
         }
+
     }
 
 }

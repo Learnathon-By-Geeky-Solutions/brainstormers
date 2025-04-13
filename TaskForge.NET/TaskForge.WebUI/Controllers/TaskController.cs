@@ -137,6 +137,7 @@ namespace TaskForge.WebUI.Controllers
 
 
         [HttpDelete]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAttachment(int id)
         {
             try

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
@@ -46,9 +45,9 @@ namespace TaskForge.Application.Services
 		public async Task CreateTaskAsync(TaskDto taskDto)
 		{
 			if (taskDto.Attachments != null && taskDto.Attachments.Count > 10)
-				throw new Exception("You can only attach up to 10 files.");
+                throw new InvalidOperationException("You can only attach up to 10 files.");
 
-			var taskItem = new TaskItem
+            var taskItem = new TaskItem
 			{
 				ProjectId = taskDto.ProjectId,
 				Title = taskDto.Title,
