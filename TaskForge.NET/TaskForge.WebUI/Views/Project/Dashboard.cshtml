@@ -683,7 +683,7 @@
 
             $.ajax({
                 url: '/Task/Update',
-                type: 'POST',
+                type: 'PUT',
                 data: formData,
                 processData: false,
                 contentType: false,
@@ -715,7 +715,7 @@
                 if (confirm("Are you sure you want to delete this task?")) {
                     $.ajax({
                         url: '@Url.Action("Delete", "Task")',
-                        type: 'POST',
+                        type: 'DELETE',
                         data: {
                             id: taskId,
                             __RequestVerificationToken: token

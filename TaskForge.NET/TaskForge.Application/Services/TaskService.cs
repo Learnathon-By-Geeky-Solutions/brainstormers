@@ -13,10 +13,12 @@ namespace TaskForge.Application.Services
 	public class TaskService : ITaskService
 	{
 		private readonly IUnitOfWork _unitOfWork;
-        public TaskService(IUnitOfWork unitOfWork)
+		private readonly IFileService _fileService;
+        public TaskService(IUnitOfWork unitOfWork, IFileService fileService)
 		{
 			_unitOfWork = unitOfWork;
-		}
+            _fileService = fileService;
+        }
 
 		public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
 		{
@@ -80,7 +82,7 @@ namespace TaskForge.Application.Services
 						{
 							FileName = file.FileName,
 							StoredFileName = StoredFileName,
-                            FilePath = Path.Combine("uploads", "tasks", fileName).Replace("\\", "/"),
+                            FilePath = Path.Combine("uploads", "tasks", StoredFileName).Replace("\\", "/"),
 							ContentType = file.ContentType
 						});
 					}
@@ -217,6 +219,12 @@ namespace TaskForge.Application.Services
             if (taskItem == null)
                 throw new Exception("Task not found");
 
+            // Delete media files associated with attachments
+            foreach (var attachment in taskItem.Attachments)
+            {
+                await _fileService.DeleteFileAsync(attachment.FilePath);
+            }
+
             // Soft delete the main task
             await _unitOfWork.Tasks.DeleteByIdAsync(id);
 
@@ -237,6 +245,7 @@ namespace TaskForge.Application.Services
 			if (attachment == null)
 				throw new KeyNotFoundException("Attachment not found");
 
+            await _fileService.DeleteFileAsync(attachment.FilePath);
             await _unitOfWork.TaskAttachments.DeleteByIdAsync(attachmentId);
 			await _unitOfWork.SaveChangesAsync();
 		}
