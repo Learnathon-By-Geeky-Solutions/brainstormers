@@ -596,9 +596,14 @@
         function RemoveAttachment(attachmentId) {
             if (!confirm("Are you sure you want to delete this attachment?")) return;
 
+            const token = $('#antiForgeryForm input[name="__RequestVerificationToken"]').val();
+
             $.ajax({
                 url: `/Task/DeleteAttachment/${attachmentId}`,
                 type: 'DELETE',
+                headers: {
+                    'RequestVerificationToken': token
+                },
                 success: function () {
                     // remove the list item from UI without full reload
                     $(`#task-attachment-list button[onclick="RemoveAttachment(${attachmentId})"]`)
@@ -607,7 +612,18 @@
                 },
                 error: function (xhr) {
                     console.error("Failed to delete attachment:", xhr.responseText);
-                    alert("Failed to delete attachment.");
+                    if (xhr.status === 403)
+                    {
+                    alert("Permission denied. You do not have rights to delete this attachment.");
+                }
+                    else if (xhr.status === 404)
+                    {
+                    alert("Attachment not found. It may have been already deleted.");
+                }
+                    else
+                    {
+                    alert("Failed to delete attachment: " + (xhr.responseJSON?.message || "Unknown error"));
+                }
                 }
             });
         }
