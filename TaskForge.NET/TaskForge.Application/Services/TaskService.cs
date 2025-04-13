@@ -13,11 +13,9 @@ namespace TaskForge.Application.Services
 	public class TaskService : ITaskService
 	{
 		private readonly IUnitOfWork _unitOfWork;
-		private readonly IFileService _fileService;
-        public TaskService(IUnitOfWork unitOfWork, IFileService fileService)
+        public TaskService(IUnitOfWork unitOfWork)
 		{
 			_unitOfWork = unitOfWork;
-			_fileService = fileService;
 		}
 
 		public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
@@ -215,12 +213,6 @@ namespace TaskForge.Application.Services
             if (taskItem == null)
                 throw new Exception("Task not found");
 
-            // Delete media files associated with attachments
-            foreach (var attachment in taskItem.Attachments)
-            {
-                await _fileService.DeleteFileAsync(attachment.FilePath);
-            }
-
             // Soft delete the main task
             await _unitOfWork.Tasks.DeleteByIdAsync(id);
 
@@ -240,8 +232,6 @@ namespace TaskForge.Application.Services
 			var attachment = await _unitOfWork.TaskAttachments.GetByIdAsync(attachmentId);
 			if (attachment == null)
 				throw new KeyNotFoundException("Attachment not found");
-
-            await _fileService.DeleteFileAsync(attachment.FilePath);
 
             await _unitOfWork.TaskAttachments.DeleteByIdAsync(attachmentId);
 			await _unitOfWork.SaveChangesAsync();
