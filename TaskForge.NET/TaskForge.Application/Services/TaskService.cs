@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
@@ -68,8 +69,8 @@ namespace TaskForge.Application.Services
 						var uploadsFolder = Path.Combine("wwwroot", "uploads", "tasks");
 						Directory.CreateDirectory(uploadsFolder);
 
-						var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-						var filePath = Path.Combine(uploadsFolder, fileName);
+                        var fileName = file.FileName;
+                        var filePath = Path.Combine(uploadsFolder, fileName);
 
 						using (var stream = new FileStream(filePath, FileMode.Create))
 						{
@@ -124,40 +125,6 @@ namespace TaskForge.Application.Services
 			return new PaginatedList<TaskDto>(taskListDto, totalCount, pageIndex, pageSize);
 		}
 
-		public async Task RemoveTaskAsync(int id)
-		{
-			// Get the task with related data
-			var task = await _unitOfWork.Tasks.FindByExpressionAsync(
-				t => t.Id == id,
-				includes: query => query
-					.Include(t => t.Attachments)
-					.Include(t => t.AssignedUsers)
-			);
-
-			var taskItem = task.FirstOrDefault();
-			if (taskItem == null)
-				throw new Exception("Task not found");
-
-            // Delete media files associated with attachments
-            foreach (var attachment in taskItem.Attachments)
-            {
-                await _fileService.DeleteFileAsync(attachment.FilePath);
-            }
-
-            // Soft delete the main task
-            await _unitOfWork.Tasks.DeleteByIdAsync(id);
-
-			// Soft delete attachments
-			var attachmentIds = taskItem.Attachments.Select(a => a.Id);
-			await _unitOfWork.TaskAttachments.DeleteByIdsAsync(attachmentIds);
-
-			// Soft delete assignments
-			var assignmentIds = taskItem.AssignedUsers.Select(a => a.Id);
-			await _unitOfWork.TaskAssignments.DeleteByIdsAsync(assignmentIds);
-
-			await _unitOfWork.SaveChangesAsync();
-		}
-
 		public async Task UpdateTaskAsync(TaskUpdateDto dto)
 		{
 			// Step 1: Retrieve the task with its related data (e.g., AssignedUsers, Attachments, etc.)
@@ -209,8 +176,8 @@ namespace TaskForge.Application.Services
 						var uploadsFolder = Path.Combine("wwwroot", "uploads", "tasks");
 						Directory.CreateDirectory(uploadsFolder);
 
-						var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-						var filePath = Path.Combine(uploadsFolder, fileName);
+						var fileName = file.FileName;
+                        var filePath = Path.Combine(uploadsFolder, fileName);
 
 						using (var stream = new FileStream(filePath, FileMode.Create))
 						{
@@ -234,7 +201,41 @@ namespace TaskForge.Application.Services
 			await _unitOfWork.SaveChangesAsync();
 		}
 
-		public async Task DeleteAttachmentAsync(int attachmentId)
+        public async Task RemoveTaskAsync(int id)
+        {
+            // Get the task with related data
+            var task = await _unitOfWork.Tasks.FindByExpressionAsync(
+                t => t.Id == id,
+                includes: query => query
+                    .Include(t => t.Attachments)
+                    .Include(t => t.AssignedUsers)
+            );
+
+            var taskItem = task.FirstOrDefault();
+            if (taskItem == null)
+                throw new Exception("Task not found");
+
+            // Delete media files associated with attachments
+            foreach (var attachment in taskItem.Attachments)
+            {
+                await _fileService.DeleteFileAsync(attachment.FilePath);
+            }
+
+            // Soft delete the main task
+            await _unitOfWork.Tasks.DeleteByIdAsync(id);
+
+            // Soft delete attachments
+            var attachmentIds = taskItem.Attachments.Select(a => a.Id);
+            await _unitOfWork.TaskAttachments.DeleteByIdsAsync(attachmentIds);
+
+            // Soft delete assignments
+            var assignmentIds = taskItem.AssignedUsers.Select(a => a.Id);
+            await _unitOfWork.TaskAssignments.DeleteByIdsAsync(assignmentIds);
+
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task DeleteAttachmentAsync(int attachmentId)
 		{
 			var attachment = await _unitOfWork.TaskAttachments.GetByIdAsync(attachmentId);
 			if (attachment == null)

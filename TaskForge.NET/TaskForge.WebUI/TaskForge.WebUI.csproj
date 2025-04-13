@@ -34,4 +34,8 @@
     <ProjectReference Include="..\TaskForge.Infrastructure\TaskForge.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\uploads\tasks\" />
+  </ItemGroup>
+
 </Project>

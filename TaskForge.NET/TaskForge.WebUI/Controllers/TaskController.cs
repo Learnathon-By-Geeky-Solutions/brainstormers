@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.WebUI.Models;
@@ -11,12 +12,12 @@ namespace TaskForge.WebUI.Controllers
 	public class TaskController : Controller
 	{
 		private readonly ITaskService _taskService;
-		private readonly IProjectMemberService _projectMemberService;
+        private readonly IProjectMemberService _projectMemberService;
 
 		public TaskController(ITaskService taskService, IProjectMemberService projectMemberService)
 		{
 			_taskService = taskService;
-			_projectMemberService = projectMemberService;
+            _projectMemberService = projectMemberService;
 		}
 
 
@@ -94,15 +95,15 @@ namespace TaskForge.WebUI.Controllers
 				{
 					id = a.Id,
 					fileName = a.FileName,
-					downloadUrl = Url.Action("Download", "Attachment", new { id = a.Id })
-				}),
+                    downloadUrl = Url.Content($"~/uploads/tasks/{a.FileName}")
+        }),
 				assignedUserIds = task.AssignedUsers.Select(u => u.UserProfileId),
 				allUsers = allUsers.Select(u => new { id = u.UserProfileId, name = u.Name })
 			});
 		}
 
 
-		[HttpPost]
+        [HttpPost]
 		public async Task<IActionResult> Update(TaskUpdateDto dto)
 		{
 			try
