@@ -7,12 +7,11 @@ namespace TaskForge.Application.Interfaces.Services
 	public interface ITaskService
 	{
 		Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId);
-		Task<TaskItem?> GetTaskByIdAsync(int id);
 		Task<PaginatedList<TaskDto>> GetUserTaskAsync(int? userProfileId, int pageIndex, int pageSize);
 		Task CreateTaskAsync(TaskDto taskDto);
 		Task UpdateTaskAsync(TaskUpdateDto dto);
 		Task RemoveTaskAsync(int id);
 		Task DeleteAttachmentAsync(int attachmentId);
-
-	}
+		Task<TaskDetailsDto?> GetTaskDetailsAsync(int id);
+    }
 }

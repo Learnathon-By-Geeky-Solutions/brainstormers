@@ -344,8 +344,13 @@
                                                         </div>
 
                                                         <div class="mb-3">
-                                                            <label class="form-label">Assigned Members</label>
-                                                            <select class="form-select" id="task-members" name="AssignedUserIds" multiple></select>
+                                                            <label class="form-label d-flex justify-content-between align-items-center">
+                                                                <span>Assigned Members</span>
+                                                                <button type="button" class="btn btn-sm btn-outline-primary" id="openAssignPopup">
+                                                                    <i class="bi bi-plus-circle"></i> Add
+                                                                </button>
+                                                            </label>
+                                                            <select class="form-select" id="task-members" name="AssignedUserIds" multiple readonly></select>
                                                         </div>
 
                                                         <div class="mb-3">
@@ -411,6 +416,30 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Assigning Members -->
+<div class="modal fade" id="assignMemberModal" tabindex="-1" aria-labelledby="assignMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assign Members</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-2">
+                    <strong>Group assignees</strong>
+                    <ul class="list-group" id="assigned-member-list"></ul>
+                </div>
+
+                <div class="mb-2 mt-3">
+                    <strong>Suggestions</strong>
+                    <ul class="list-group" id="suggested-member-list"></ul>
                 </div>
             </div>
         </div>
@@ -547,43 +576,39 @@
                 url: `/Task/GetTask/${taskId}`,
                 method: 'GET',
                 success: function (data) {
-                    //console.log("Fetched Task Data:", data);
-
+                    // Basic fields
                     $('#task-id').val(data.id);
                     $('#task-title').val(data.title);
                     $('#task-description').val(data.description);
                     $('#task-status').val(data.status);
                     $('#task-priority').val(data.priority);
-                    if (data.startDate && data.startDate.includes('T')) {
-                        $('#task-startdate').val(data.startDate.split('T')[0]);
-                    } else {
-                        $('#task-startdate').val('');
-                    }
-                    if (data.dueDate && data.dueDate.includes('T')) {
-                        $('#task-duedate').val(data.dueDate.split('T')[0]);
-                    } else {
-                        $('#task-duedate').val('');
-                    }
+                    $('#task-startdate').val(data.startDate?.split('T')[0] || '');
+                    $('#task-duedate').val(data.dueDate?.split('T')[0] || '');
 
                     // Members
                     $('#task-members').empty();
-                    data.allUsers.forEach(user => {
-                        const selected = data.assignedUserIds.includes(user.id) ? 'selected' : '';
-                        $('#task-members').append(`<option value="${user.id}" ${selected}>${user.name}</option>`);
+                    data.assignedUsers.forEach(user => {
+                        $('#task-members').append(`<option value="${user.id}" selected>${user.name}</option>`);
                     });
+
+                    // Store members globally for assign popup
+                    allAssignedUsers = data.assignedUsers;
+                    allSuggestedUsers = data.suggestUserList;
 
                     // Attachments
                     $('#task-attachment-list').empty();
                     data.attachments.forEach(att => {
                         $('#task-attachment-list').append(`
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <a href="${att.downloadUrl}" target="_blank">${att.fileName}</a>
-                                        <button type="button" class="btn btn-sm btn-danger" onclick="RemoveAttachment(${att.id})">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </li>
-                                `);
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a href="${att.downloadUrl}" target="_blank">${att.fileName}</a>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="RemoveAttachment(${att.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </li>
+                        `);
                     });
+
+                    $('#taskDetailsModal').modal('show');
                 },
                 error: function (xhr) {
                     console.error("Failed to fetch task", xhr.responseText);
@@ -591,6 +616,68 @@
                 }
             });
         }
+
+        // Open Member Assignment Popup
+        $('#openAssignPopup').on('click', function () {
+            populateAssignPopup();
+            $('#assignMemberModal').modal('show');
+        });
+
+        function populateAssignPopup() {
+            $('#assigned-member-list').empty();
+            $('#suggested-member-list').empty();
+
+            // Assigned Members
+            allAssignedUsers.forEach(user => {
+                $('#assigned-member-list').append(`
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        ${user.name}
+                        <button class="btn btn-sm btn-danger remove-member" data-id="${user.id}">&times;</button>
+                    </li>
+                `);
+            });
+
+            // Suggested Members
+            allSuggestedUsers.forEach(user => {
+                $('#suggested-member-list').append(`
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        ${user.name}
+                        <button class="btn btn-sm btn-success add-member" data-id="${user.id}" data-name="${user.name}">+</button>
+                    </li>
+                `);
+            });
+        }
+
+        // Add member
+        $(document).on('click', '.add-member', function () {
+            const id = $(this).data('id');
+            const name = $(this).data('name');
+
+            // Add to select
+            $('#task-members').append(`<option value="${id}" selected>${name}</option>`);
+
+            // Update global lists
+            const user = allSuggestedUsers.find(u => u.id === id);
+            allAssignedUsers.push({ id: user.id, name: user.name });
+            allSuggestedUsers = allSuggestedUsers.filter(u => u.id !== id);
+
+            populateAssignPopup(); // Refresh
+        });
+
+        // Remove member
+        $(document).on('click', '.remove-member', function () {
+            const id = $(this).data('id');
+
+            // Remove from select
+            $(`#task-members option[value="${id}"]`).remove();
+
+            // Update global lists
+            const user = allAssignedUsers.find(u => u.id === id);
+            allSuggestedUsers.push({ id: user.id, name: user.name });
+            allAssignedUsers = allAssignedUsers.filter(u => u.id !== id);
+
+            populateAssignPopup(); // Refresh
+        });
 
 
         function RemoveAttachment(attachmentId) {

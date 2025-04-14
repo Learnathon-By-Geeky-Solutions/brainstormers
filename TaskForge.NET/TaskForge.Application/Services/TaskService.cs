@@ -13,10 +13,12 @@ namespace TaskForge.Application.Services
 	public class TaskService : ITaskService
 	{
 		private readonly IUnitOfWork _unitOfWork;
-        public TaskService(IUnitOfWork unitOfWork)
+        private readonly IProjectMemberService _projectMemberService;
+        public TaskService(IUnitOfWork unitOfWork, IProjectMemberService projectMemberService)
 		{
 			_unitOfWork = unitOfWork;
-		}
+            _projectMemberService = projectMemberService;
+        }
 
 		public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
 		{
@@ -27,21 +29,65 @@ namespace TaskForge.Application.Services
 			);
 		}
 
-		public async Task<TaskItem?> GetTaskByIdAsync(int taskId)
-		{
-			Expression<Func<TaskItem, bool>> predicate = t => t.Id == taskId;
+        public async Task<TaskDetailsDto?> GetTaskDetailsAsync(int id)
+        {
+            Expression<Func<TaskItem, bool>> predicate = t => t.Id == id;
 
-			Func<IQueryable<TaskItem>, IQueryable<TaskItem>> includes = query =>
-				query.Include(t => t.Attachments.Where(a => !a.IsDeleted))
-					 .Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile)
-					 .Include(t => t.Project);
+            Func<IQueryable<TaskItem>, IQueryable<TaskItem>> includes = query =>
+                query.Include(t => t.Attachments.Where(a => !a.IsDeleted))
+                     .Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile)
+                     .Include(t => t.Project);
 
-			var result = await _unitOfWork.Tasks.FindByExpressionAsync(predicate, includes: includes);
+            var task = (await _unitOfWork.Tasks.FindByExpressionAsync(
+				predicate: predicate, 
+				includes: includes)).FirstOrDefault();
 
-			return result.FirstOrDefault();
-		}
+            if (task == null) return null;
 
-		public async Task CreateTaskAsync(TaskDto taskDto)
+            var projectMembers = await _projectMemberService.GetProjectMembersAsync(task.ProjectId);
+
+            var assignedUserIds = task.AssignedUsers.Select(u => u.UserProfileId).ToList();
+
+            var assignedUsers = task.AssignedUsers.Select(u => new SimpleUserDto
+            {
+                Id = u.UserProfileId,
+                Name = u.UserProfile.FullName
+            }).ToList();
+
+            var suggestUsers = projectMembers
+                .Where(m => !assignedUserIds.Contains(m.UserProfileId))
+                .Select(m => new SuggestedUserDto
+                {
+                    Id = m.UserProfileId,
+                    Name = m.Name,
+                    Email = m.Email
+                }).ToList();
+
+            var attachments = task.Attachments.Select(a => new AttachmentDto
+            {
+                Id = a.Id,
+                FileName = a.FileName,
+                DownloadUrl = $"/uploads/tasks/{a.FileName}" // No UrlHelper in service; keep raw path
+            }).ToList();
+
+            return new TaskDetailsDto
+            {
+                Id = task.Id,
+                Title = task.Title,
+                Description = task.Description,
+                StartDate = task.StartDate?.ToString("yyyy-MM-ddTHH:mm"),
+                DueDate = task.DueDate?.ToString("yyyy-MM-ddTHH:mm"),
+                Status = (int)task.Status,
+                Priority = (int)task.Priority,
+                Attachments = attachments,
+                AssignedUserIds = assignedUserIds,
+                AssignedUsers = assignedUsers,
+                SuggestUserList = suggestUsers
+            };
+        }
+
+
+        public async Task CreateTaskAsync(TaskDto taskDto)
 		{
 			if (taskDto.Attachments != null && taskDto.Attachments.Count > 10)
 				throw new Exception("You can only attach up to 10 files.");
