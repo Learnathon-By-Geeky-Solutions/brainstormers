@@ -52,27 +52,6 @@ namespace TaskForge.WebUI.Controllers
         }
 
 
-        [HttpGet("Tasks/GetTaskById/{id}")]
-        public async Task<IActionResult> GetTaskDetailsById(int id)
-        {
-            var task = await _taskService.GetTaskByIdAsync(id);
-            if (task == null) return NotFound();
-
-            return Ok(new
-            {
-                task.Id,
-                task.Title,
-                task.Description,
-                StartDate = task.StartDate?.ToString("g"),
-                DueDate = task.DueDate?.ToString("g"),
-                Status = task.Status.ToString(),
-                Priority = task.Priority.ToString(),
-                AssignedUsers = task.AssignedUsers.Select(a => new { a.UserProfile.FullName }),
-                Attachments = task.Attachments.Select(a => new { a.FileName, a.StoredFileName, a.FilePath })
-            });
-        }
-
-
         [HttpGet]
         public async Task<IActionResult> GetTask(int id)
         {
@@ -124,6 +103,10 @@ namespace TaskForge.WebUI.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             try
             {
                 await _taskService.RemoveTaskAsync(id);

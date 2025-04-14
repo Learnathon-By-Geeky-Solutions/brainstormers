@@ -94,9 +94,9 @@
 
             <!-- Previous Button -->
             <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
-                <a class="page-link" href="javascript:void(0)" onclick="changePage(@(Model.PageIndex - 1))">
+                <button class="page-link" type="button" onclick="changePage(@(Model.PageIndex - 1))">
                     <i class="fas fa-chevron-left"></i> Previous
-                </a>
+                </button>
             </li>
 
             <!-- Page Info -->
@@ -108,9 +108,9 @@
 
             <!-- Next Button -->
             <li class="page-item @(Model.PageIndex == Model.TotalPages ? "disabled" : "")">
-                <a class="page-link" href="javascript:void(0)" onclick="changePage(@(Model.PageIndex + 1))">
+                <button class="page-link" type="button" onclick="changePage(@(Model.PageIndex + 1))">
                     Next <i class="fas fa-chevron-right"></i>
-                </a>
+                </button>
             </li>
         </ul>
     </nav>

@@ -139,15 +139,15 @@ namespace TaskForge.Application.Services
 
 			var task = taskList.FirstOrDefault();
 
-			if (task == null)
-				throw new Exception("Task not found.");
+            if (task == null)
+                throw new KeyNotFoundException("Task not found.");
 
-			if (task.Attachments.Count + dto.Attachments?.Count > 10)
-				throw new Exception("You can only attach up to 10 files.");
+            if (task.Attachments.Count + dto.Attachments?.Count > 10)
+                throw new InvalidOperationException("You can only attach up to 10 files.");
 
 
-			// Step 2: Update task fields from the provided DTO
-			task.Title = dto.Title;
+            // Step 2: Update task fields from the provided DTO
+            task.Title = dto.Title;
 			task.Description = dto.Description;
 			task.Status = (TaskWorkflowStatus)dto.Status;
 			task.Priority = (TaskPriority)dto.Priority;
@@ -216,7 +216,7 @@ namespace TaskForge.Application.Services
 
             var taskItem = task.FirstOrDefault();
             if (taskItem == null)
-                throw new Exception("Task not found");
+                throw new KeyNotFoundException("Task not found");
 
             // Delete media files associated with attachments
             foreach (var attachment in taskItem.Attachments)
@@ -239,15 +239,17 @@ namespace TaskForge.Application.Services
         }
 
         public async Task DeleteAttachmentAsync(int attachmentId)
-		{
-			var attachment = await _unitOfWork.TaskAttachments.GetByIdAsync(attachmentId);
-			if (attachment == null)
-				throw new KeyNotFoundException("Attachment not found");
+        {
+            var attachment = await _unitOfWork.TaskAttachments.GetByIdAsync(attachmentId);
+            if (attachment == null)
+            {
+                throw new KeyNotFoundException("Attachment not found");
+            }
 
             await _fileService.DeleteFileAsync(attachment.FilePath);
             await _unitOfWork.TaskAttachments.DeleteByIdAsync(attachmentId);
-			await _unitOfWork.SaveChangesAsync();
-		}
+            await _unitOfWork.SaveChangesAsync();
+        }
 
-	}
+    }
 }

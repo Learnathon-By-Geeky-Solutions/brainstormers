@@ -86,6 +86,10 @@ namespace TaskForge.WebUI.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(InviteViewModel viewModel)
         {
+            if (!ModelState.IsValid)
+            {
+                return View(viewModel);
+            }
             // Restrict project access to assigned users only
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
@@ -114,6 +118,10 @@ namespace TaskForge.WebUI.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(InviteViewModel viewModel)
         {
+            if (!ModelState.IsValid)
+            {
+                return View(viewModel);
+            }
             // Fetch the invitation
             var invitation = await _invitationService.GetByIdAsync(viewModel.Id);
             if (invitation == null)

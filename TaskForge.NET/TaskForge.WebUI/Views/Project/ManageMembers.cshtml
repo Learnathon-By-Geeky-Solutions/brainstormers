@@ -222,9 +222,11 @@
 
                         <!-- Previous Button -->
                         <li class="page-item @(Model.ProjectInvitations.PageIndex == 1 ? "disabled" : "")">
-                            <a class="page-link" href="javascript:void(0)" onclick="changePage(@(Model.ProjectInvitations.PageIndex - 1))">
+                            <button type="button" class="page-link"
+                                    onclick="changePage(@(Model.ProjectInvitations.PageIndex - 1))"
+                            @(Model.ProjectInvitations.PageIndex == 1 ? "disabled" : "")>
                                 <i class="fas fa-chevron-left"></i> Previous
-                            </a>
+                            </button>
                         </li>
 
                         <!-- Page Info -->
@@ -236,10 +238,13 @@
 
                         <!-- Next Button -->
                         <li class="page-item @(Model.ProjectInvitations.PageIndex == Model.ProjectInvitations.TotalPages ? "disabled" : "")">
-                            <a class="page-link" href="javascript:void(0)" onclick="changePage(@(Model.ProjectInvitations.PageIndex + 1))">
+                            <button type="button" class="page-link"
+                                    onclick="changePage(@(Model.ProjectInvitations.PageIndex + 1))"
+                            @(Model.ProjectInvitations.PageIndex == Model.ProjectInvitations.TotalPages ? "disabled" : "")>
                                 Next <i class="fas fa-chevron-right"></i>
-                            </a>
+                            </button>
                         </li>
+
                     </ul>
                 </nav>
 

@@ -351,6 +351,10 @@ namespace TaskForge.WebUI.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveMember(int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             // Fetch the member
             var member = await _projectMemberService.GetByIdAsync(id);
             if (member == null)
@@ -385,6 +389,10 @@ namespace TaskForge.WebUI.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CancelInvitation(int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             // Fetch the invitation
             var invitation = await _invitationService.GetByIdAsync(id);
             if (invitation == null)

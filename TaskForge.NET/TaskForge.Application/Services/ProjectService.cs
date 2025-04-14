@@ -1,26 +1,16 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore.Query;
+using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
-using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using TaskForge.Application.Common.Model;
 
 namespace TaskForge.Application.Services
 {
-    public class ProjectService: IProjectService
+    public class ProjectService : IProjectService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserProfileService _userProfileService;
@@ -60,7 +50,8 @@ namespace TaskForge.Application.Services
                                    .FirstOrDefault();
 
                 if (userProfileId == default)
-                    throw new Exception("User profile not found for the provided CreatedBy user ID.");
+                    throw new InvalidOperationException("User profile not found for the provided user ID.");
+
 
                 // 3. Add the creator as a member of the project
                 var projectMember = new ProjectMember
@@ -71,35 +62,35 @@ namespace TaskForge.Application.Services
                 };
 
                 await _unitOfWork.ProjectMembers.AddAsync(projectMember);
-                await _unitOfWork.SaveChangesAsync(); // Commit both entities
+                await _unitOfWork.SaveChangesAsync();
 
                 // 4. Commit transaction
                 await transaction.CommitAsync();
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync(); // Rollback in case of an error
-                throw new Exception("Error creating project: " + ex.Message, ex); // Re-throw with additional context
+                await transaction.RollbackAsync();
+                throw new InvalidOperationException("Error creating project.", ex);
             }
         }
 
 
         public async Task UpdateProjectAsync(Project dto)
         {
-                var project = new Project
-                {
-                    Title = dto.Title,
-                    Description = dto.Description,
-                    Status = dto.Status,
-                    StartDate = dto.StartDate,
-                    UpdatedBy = dto.UpdatedBy,
-                    UpdatedDate = dto.UpdatedDate,
-                };
+            var project = new Project
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                Status = dto.Status,
+                StartDate = dto.StartDate,
+                UpdatedBy = dto.UpdatedBy,
+                UpdatedDate = dto.UpdatedDate,
+            };
 
-                if (dto.EndDate != null) project.SetEndDate(dto.EndDate);
+            if (dto.EndDate != null) project.SetEndDate(dto.EndDate);
 
-                await _unitOfWork.Projects.UpdateAsync(project);
-                await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.Projects.UpdateAsync(project);
+            await _unitOfWork.SaveChangesAsync();
         }
 
 
@@ -130,14 +121,14 @@ namespace TaskForge.Application.Services
         }
 
 
-		public async Task<PaginatedList<ProjectWithRoleDto>> GetFilteredProjectsAsync(ProjectFilterDto filter, int pageIndex, int pageSize)
-		{
-			if (filter.UserId == null) return new PaginatedList<ProjectWithRoleDto>(new List<ProjectWithRoleDto>(), 0, pageIndex, pageSize);
+        public async Task<PaginatedList<ProjectWithRoleDto>> GetFilteredProjectsAsync(ProjectFilterDto filter, int pageIndex, int pageSize)
+        {
+            if (filter.UserId == null) return new PaginatedList<ProjectWithRoleDto>(new List<ProjectWithRoleDto>(), 0, pageIndex, pageSize);
 
-			var userProfileId = await _userProfileService.GetByUserIdAsync(filter.UserId);
-			if (userProfileId == 0) return new PaginatedList<ProjectWithRoleDto>(new List<ProjectWithRoleDto>(), 0, pageIndex, pageSize);
+            var userProfileId = await _userProfileService.GetByUserIdAsync(filter.UserId);
+            if (userProfileId == 0) return new PaginatedList<ProjectWithRoleDto>(new List<ProjectWithRoleDto>(), 0, pageIndex, pageSize);
 
-			Expression<Func<ProjectMember, bool>> _predicate = pm => 
+            Expression<Func<ProjectMember, bool>> _predicate = pm =>
                     pm.UserProfileId == userProfileId &&
                     (string.IsNullOrWhiteSpace(filter.Title) || pm.Project.Title.Contains(filter.Title)) &&
                     (!filter.Status.HasValue || pm.Project.Status == filter.Status.Value) &&
@@ -163,18 +154,18 @@ namespace TaskForge.Application.Services
                 };
             };
 
-			var (filteredProjectList, totalCount) = await _unitOfWork.ProjectMembers.GetPaginatedListAsync(
-				predicate: _predicate,
+            var (filteredProjectList, totalCount) = await _unitOfWork.ProjectMembers.GetPaginatedListAsync(
+                predicate: _predicate,
                 orderBy: _orderBy,
                 includes: query => query
                     .Include(pm => pm.Project),
-				skip: (pageIndex - 1) * pageSize,
-				take: pageSize
-			);
+                skip: (pageIndex - 1) * pageSize,
+                take: pageSize
+            );
 
 
-			var projectList = filteredProjectList.Select(pm => new ProjectWithRoleDto
-			{
+            var projectList = filteredProjectList.Select(pm => new ProjectWithRoleDto
+            {
                 ProjectId = pm.Project.Id,
                 ProjectTitle = pm.Project.Title,
                 ProjectStatus = pm.Project.Status,
@@ -182,8 +173,8 @@ namespace TaskForge.Application.Services
                 ProjectEndDate = pm.Project.EndDate,
                 UserRoleInThisProject = pm.Role
             });
-			return new PaginatedList<ProjectWithRoleDto>(projectList, totalCount, pageIndex, pageSize);
-		}
+            return new PaginatedList<ProjectWithRoleDto>(projectList, totalCount, pageIndex, pageSize);
+        }
 
     }
 }

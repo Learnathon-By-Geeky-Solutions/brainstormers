@@ -14,6 +14,7 @@ namespace TaskForge.Infrastructure.Repositories.Common
     public class UnitOfWork : IUnitOfWork
     {
         private readonly ApplicationDbContext _context;
+        private bool _disposed = false;
 
         public IProjectRepository Projects { get; }
         public ITaskRepository Tasks { get; }
@@ -46,9 +47,24 @@ namespace TaskForge.Infrastructure.Repositories.Common
             return await _context.Database.BeginTransactionAsync(isolationLevel);
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // Dispose managed resources
+                    _context.Dispose();
+                }
+                // Free unmanaged resources (if any)
+                _disposed = true;
+            }
+        }
+
         public void Dispose()
         {
-            _context.Dispose();
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }
