@@ -49,8 +49,7 @@ namespace TaskForge.WebUI.Controllers
             }
         }
 
-
-        [HttpGet("Tasks/GetTaskById/{id}")]
+        [HttpGet]
         public async Task<IActionResult> GetTask(int id)
         {
             var taskDetailsDTO = await _taskService.GetTaskDetailsAsync(id);
@@ -63,7 +62,7 @@ namespace TaskForge.WebUI.Controllers
         }
 
 
-        [HttpPost]
+        [HttpPut]
         public async Task<IActionResult> Update(TaskUpdateDto dto)
         {
             try
