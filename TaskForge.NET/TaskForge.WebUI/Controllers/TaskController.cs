@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
@@ -82,7 +82,7 @@ namespace TaskForge.WebUI.Controllers
         }
 
 
-        [HttpPost]
+        [HttpDelete]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
@@ -99,6 +99,7 @@ namespace TaskForge.WebUI.Controllers
 
 
         [HttpDelete]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAttachment(int id)
         {
             try
@@ -114,4 +115,3 @@ namespace TaskForge.WebUI.Controllers
 
     }
 }
-

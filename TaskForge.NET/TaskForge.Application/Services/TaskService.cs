@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
@@ -13,12 +12,17 @@ namespace TaskForge.Application.Services
 	public class TaskService : ITaskService
 	{
 		private readonly IUnitOfWork _unitOfWork;
-        private readonly IProjectMemberService _projectMemberService;
-        public TaskService(IUnitOfWork unitOfWork, IProjectMemberService projectMemberService)
-		{
-			_unitOfWork = unitOfWork;
-            _projectMemberService = projectMemberService;
-        }
+    private readonly IProjectMemberService _projectMemberService;
+    private readonly IFileService _fileService;
+    
+    public TaskService(IUnitOfWork unitOfWork, 
+      IProjectMemberService projectMemberService, 
+      IFileService fileService)
+    {
+      _unitOfWork = unitOfWork;
+      _projectMemberService = projectMemberService;
+      _fileService = fileService;
+    }
 
 		public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
 		{
@@ -90,9 +94,9 @@ namespace TaskForge.Application.Services
         public async Task CreateTaskAsync(TaskDto taskDto)
 		{
 			if (taskDto.Attachments != null && taskDto.Attachments.Count > 10)
-				throw new Exception("You can only attach up to 10 files.");
+                throw new InvalidOperationException("You can only attach up to 10 files.");
 
-			var taskItem = new TaskItem
+            var taskItem = new TaskItem
 			{
 				ProjectId = taskDto.ProjectId,
 				Title = taskDto.Title,
@@ -114,7 +118,8 @@ namespace TaskForge.Application.Services
 						Directory.CreateDirectory(uploadsFolder);
 
                         var fileName = file.FileName;
-                        var filePath = Path.Combine(uploadsFolder, fileName);
+                        var StoredFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+                        var filePath = Path.Combine(uploadsFolder, StoredFileName);
 
 						using (var stream = new FileStream(filePath, FileMode.Create))
 						{
@@ -124,7 +129,8 @@ namespace TaskForge.Application.Services
 						taskItem.Attachments.Add(new TaskAttachment
 						{
 							FileName = file.FileName,
-							FilePath = Path.Combine("uploads", "tasks", fileName).Replace("\\", "/"),
+							StoredFileName = StoredFileName,
+                            FilePath = Path.Combine("uploads", "tasks", StoredFileName).Replace("\\", "/"),
 							ContentType = file.ContentType
 						});
 					}
@@ -220,8 +226,9 @@ namespace TaskForge.Application.Services
 						var uploadsFolder = Path.Combine("wwwroot", "uploads", "tasks");
 						Directory.CreateDirectory(uploadsFolder);
 
-						var fileName = file.FileName;
-                        var filePath = Path.Combine(uploadsFolder, fileName);
+                        var fileName = file.FileName;
+                        var StoredFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+                        var filePath = Path.Combine(uploadsFolder, StoredFileName);
 
 						using (var stream = new FileStream(filePath, FileMode.Create))
 						{
@@ -230,8 +237,9 @@ namespace TaskForge.Application.Services
 
 						task.Attachments.Add(new TaskAttachment
 						{
-							FileName = file.FileName,
-							FilePath = Path.Combine("uploads", "tasks", fileName).Replace("\\", "/"),
+							FileName = fileName,
+							StoredFileName = StoredFileName,
+							FilePath = Path.Combine("uploads", "tasks", StoredFileName).Replace("\\", "/"),
 							ContentType = file.ContentType
 						});
 					}
@@ -259,6 +267,12 @@ namespace TaskForge.Application.Services
             if (taskItem == null)
                 throw new Exception("Task not found");
 
+            // Delete media files associated with attachments
+            foreach (var attachment in taskItem.Attachments)
+            {
+                await _fileService.DeleteFileAsync(attachment.FilePath);
+            }
+
             // Soft delete the main task
             await _unitOfWork.Tasks.DeleteByIdAsync(id);
 
@@ -279,6 +293,7 @@ namespace TaskForge.Application.Services
 			if (attachment == null)
 				throw new KeyNotFoundException("Attachment not found");
 
+            await _fileService.DeleteFileAsync(attachment.FilePath);
             await _unitOfWork.TaskAttachments.DeleteByIdAsync(attachmentId);
 			await _unitOfWork.SaveChangesAsync();
 		}

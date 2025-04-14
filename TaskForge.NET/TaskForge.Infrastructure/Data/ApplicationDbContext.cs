@@ -1,11 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using TaskForge.Domain.Entities;
 
 namespace TaskForge.Infrastructure.Data
@@ -24,6 +20,7 @@ namespace TaskForge.Infrastructure.Data
         public DbSet<ProjectInvitation> ProjectInvitations { get; set; }
         public DbSet<TaskItem> TaskItems { get; set; }
         public DbSet<TaskAssignment> TaskAssignments { get; set; }
+        public DbSet<TaskDependency> TaskDependencies { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -63,6 +60,23 @@ namespace TaskForge.Infrastructure.Data
             {
                 entity.ToTable("RoleClaims");
             });
+
+
+            builder.Entity<TaskDependency>()
+                .HasKey(td => new { td.TaskId, td.DependsOnTaskId });
+
+            builder.Entity<TaskDependency>()
+                .HasOne(td => td.Task)
+                .WithMany(t => t.Dependencies)
+                .HasForeignKey(td => td.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<TaskDependency>()
+                .HasOne(td => td.DependsOnTask)
+                .WithMany(t => t.DependentOnThis)
+                .HasForeignKey(td => td.DependsOnTaskId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent circular delete
+
         }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TaskForge.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using TaskForge.Infrastructure.Data;
 namespace TaskForge.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250413115545_add StoredFileName field to TaskAttachment")]
+    partial class addStoredFileNamefieldtoTaskAttachment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -455,21 +458,6 @@ namespace TaskForge.Infrastructure.Migrations
                     b.ToTable("TaskAttachment");
                 });
 
-            modelBuilder.Entity("TaskForge.Domain.Entities.TaskDependency", b =>
-                {
-                    b.Property<int>("TaskId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DependsOnTaskId")
-                        .HasColumnType("int");
-
-                    b.HasKey("TaskId", "DependsOnTaskId");
-
-                    b.HasIndex("DependsOnTaskId");
-
-                    b.ToTable("TaskDependencies");
-                });
-
             modelBuilder.Entity("TaskForge.Domain.Entities.TaskItem", b =>
                 {
                     b.Property<int>("Id")
@@ -716,25 +704,6 @@ namespace TaskForge.Infrastructure.Migrations
                     b.Navigation("Task");
                 });
 
-            modelBuilder.Entity("TaskForge.Domain.Entities.TaskDependency", b =>
-                {
-                    b.HasOne("TaskForge.Domain.Entities.TaskItem", "DependsOnTask")
-                        .WithMany("DependentOnThis")
-                        .HasForeignKey("DependsOnTaskId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TaskForge.Domain.Entities.TaskItem", "Task")
-                        .WithMany("Dependencies")
-                        .HasForeignKey("TaskId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DependsOnTask");
-
-                    b.Navigation("Task");
-                });
-
             modelBuilder.Entity("TaskForge.Domain.Entities.TaskItem", b =>
                 {
                     b.HasOne("TaskForge.Domain.Entities.Project", "Project")
@@ -771,10 +740,6 @@ namespace TaskForge.Infrastructure.Migrations
                     b.Navigation("AssignedUsers");
 
                     b.Navigation("Attachments");
-
-                    b.Navigation("Dependencies");
-
-                    b.Navigation("DependentOnThis");
                 });
 
             modelBuilder.Entity("TaskForge.Domain.Entities.UserProfile", b =>

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using TaskForge.Domain.Entities.Common;
 using TaskForge.Domain.Enums;
 
@@ -29,16 +27,19 @@ namespace TaskForge.Domain.Entities
 
         public virtual ICollection<TaskAssignment> AssignedUsers { get; set; } = new List<TaskAssignment>();
 
-		public void SetDueDate(DateTime? dueDate)
-		{
-			if (dueDate.HasValue && StartDate.HasValue && dueDate < StartDate)
-				throw new ValidationException("Due date cannot be earlier than Start date.");
+        public ICollection<TaskDependency> Dependencies { get; set; } = new List<TaskDependency>(); // Tasks this one depends on
+        public ICollection<TaskDependency> DependentOnThis { get; set; } = new List<TaskDependency>(); // Tasks that depend on this one
 
-			DueDate = dueDate;
-		}
+        public void SetDueDate(DateTime? dueDate)
+        {
+            if (dueDate.HasValue && StartDate.HasValue && dueDate < StartDate)
+                throw new ValidationException("Due date cannot be earlier than Start date.");
+
+            DueDate = dueDate;
+        }
 
 
-		public void SetStatus(TaskWorkflowStatus newStatus)
+        public void SetStatus(TaskWorkflowStatus newStatus)
         {
             if (newStatus == TaskWorkflowStatus.InProgress && StartDate == null)
             {
