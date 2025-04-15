@@ -28,9 +28,9 @@ namespace TaskForge.Application.Services
 			);
 		}
 
-		public async Task<TaskItem?> GetTaskByIdAsync(int taskId)
+		public async Task<TaskItem?> GetTaskByIdAsync(int id)
 		{
-			Expression<Func<TaskItem, bool>> predicate = t => t.Id == taskId;
+			Expression<Func<TaskItem, bool>> predicate = t => t.Id == id;
 
 			Func<IQueryable<TaskItem>, IQueryable<TaskItem>> includes = query =>
 				query.Include(t => t.Attachments.Where(a => !a.IsDeleted))

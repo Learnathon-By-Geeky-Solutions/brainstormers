@@ -18,6 +18,8 @@ namespace TaskForge.WebUI.Areas.Identity.Pages.Account
         /// </summary>
         public void OnGet()
         {
-        }
-    }
+			// Intentionally left empty.
+			// The AccessDenied page does not require any server-side processing.
+		}
+	}
 }

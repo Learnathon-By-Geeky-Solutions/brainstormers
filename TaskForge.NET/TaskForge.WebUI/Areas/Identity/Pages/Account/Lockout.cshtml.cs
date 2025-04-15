@@ -20,6 +20,8 @@ namespace TaskForge.WebUI.Areas.Identity.Pages.Account
         /// </summary>
         public void OnGet()
         {
-        }
-    }
+			// Intentionally left empty.
+			// This page displays lockout information and does not require backend logic.
+		}
+	}
 }

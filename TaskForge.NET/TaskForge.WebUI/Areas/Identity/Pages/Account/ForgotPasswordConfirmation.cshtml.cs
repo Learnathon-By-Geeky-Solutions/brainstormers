@@ -20,6 +20,8 @@ namespace TaskForge.WebUI.Areas.Identity.Pages.Account
         /// </summary>
         public void OnGet()
         {
-        }
-    }
+			// Intentionally left empty.
+			// This page only serves as a confirmation view with no server-side logic.
+		}
+	}
 }

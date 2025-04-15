@@ -52,9 +52,11 @@ namespace TaskForge.WebUI.Areas.Identity.Pages.Account
 
         public void OnGet()
         {
-        }
+			// This method is intentionally left empty.
+			// It serves the Razor Page for resending email confirmation without any server-side logic.
+		}
 
-        public async Task<IActionResult> OnPostAsync()
+		public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
             {

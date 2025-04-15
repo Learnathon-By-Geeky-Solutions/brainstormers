@@ -18,7 +18,6 @@ namespace TaskForge.WebUI.Controllers
     {
         private readonly IProjectService _projectService;
         private readonly ITaskService _taskService;
-        private readonly IUserProfileService _userProfileService;
         private readonly IProjectMemberService _projectMemberService;
         private readonly IProjectInvitationService _invitationService;
         private readonly UserManager<IdentityUser> _userManager;
@@ -27,14 +26,12 @@ namespace TaskForge.WebUI.Controllers
             IProjectMemberService projectMemberService,
             IProjectService projectService,
             ITaskService taskService,
-            IUserProfileService userProfileService,
             IProjectInvitationService invitationService,
             UserManager<IdentityUser> userManager)
         {
             _projectMemberService = projectMemberService;
             _projectService = projectService;
             _taskService = taskService;
-            _userProfileService = userProfileService;
             _invitationService = invitationService;
             _userManager = userManager;
         }
@@ -82,7 +79,6 @@ namespace TaskForge.WebUI.Controllers
             return View(viewModel);
         }
 
-
         // POST: Projects/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -115,8 +111,6 @@ namespace TaskForge.WebUI.Controllers
 
 		}
 
-
-
         [HttpGet]
         public async Task<IActionResult> Update(int id)
         {
@@ -135,7 +129,6 @@ namespace TaskForge.WebUI.Controllers
 
 			return PartialView("_EditProjectForm", projectUpdate);
 		}
-
 
         // POST: Projects/Update
         [HttpPost]
@@ -178,7 +171,6 @@ namespace TaskForge.WebUI.Controllers
             return RedirectToAction("Dashboard", "Project", new { id = existingProject.Id });
         }
 
-
         // GET: Project/Details/5
         public async Task<IActionResult> Details(int id)
         {
@@ -210,7 +202,6 @@ namespace TaskForge.WebUI.Controllers
 
             return View(viewModel);
         }
-
 		
 		// GET: Project/Dashboard/5
 		public async Task<IActionResult> Dashboard(int id)
@@ -294,7 +285,6 @@ namespace TaskForge.WebUI.Controllers
 
         }
 
-
         // GET: Project/ManageMembers
         [HttpGet]
         public async Task<IActionResult> ManageMembers(int Id, int pageIndex = 1, int pageSize = 10)
@@ -346,7 +336,6 @@ namespace TaskForge.WebUI.Controllers
             return View(manageMembersViewModel);
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveMember(int id)
@@ -383,7 +372,6 @@ namespace TaskForge.WebUI.Controllers
             // Redirect back to the Project Management Members page
             return RedirectToAction("ManageMembers", "Project", new { Id = member.ProjectId });
         }
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
