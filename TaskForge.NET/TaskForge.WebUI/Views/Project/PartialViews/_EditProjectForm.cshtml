@@ -1,0 +1,63 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using TaskForge.Domain.Enums
+@model TaskForge.WebUI.Models.ProjectUpdateViewModel
+
+<form id="editProjectForm" asp-controller="Project" asp-action="Update" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label class="form-label">Title</label>
+        <input type="text" class="form-control" asp-for="Title" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" asp-for="Description"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Start Date</label>
+        <input type="date" class="form-control" asp-for="StartDate" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">End Date</label>
+        <input type="date" class="form-control" asp-for="EndDateInput" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Status</label>
+        <select class="form-select" asp-for="Status" asp-items="Html.GetEnumSelectList<ProjectStatus>()"></select>
+    </div>
+
+    <div class="text-end">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    </div>
+</form>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let startDateInput = document.querySelector("#StartDate");
+        let endDateInput = document.querySelector("#EndDateInput");
+
+        function validateDates() {
+            let startDate = new Date(startDateInput.value);
+            let endDate = new Date(endDateInput.value);
+
+            if (endDateInput.value && endDate < startDate) {
+                endDateInput.setCustomValidity("End Date cannot be earlier than Start Date.");
+            } else {
+                endDateInput.setCustomValidity("");
+            }
+        }
+
+        startDateInput.addEventListener("change", function () {
+            endDateInput.min = startDateInput.value;
+            validateDates();
+        });
+
+        endDateInput.addEventListener("change", validateDates);
+    });
+</script>

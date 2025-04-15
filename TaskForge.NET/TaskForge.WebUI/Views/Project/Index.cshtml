@@ -1,0 +1,229 @@
+﻿@model TaskForge.Web.Models.ProjectListViewModel
+@using TaskForge.Domain.Enums
+
+@{
+    ViewData["Title"] = "Projects List";
+    string currentSortBy = Context.Request.Query["sortBy"].ToString() ?? "defaultSortBy";
+    string currentSortOrder = Context.Request.Query["sortOrder"].ToString() ?? "asc";
+}
+
+<h2>Projects</h2>
+
+<div class="mb-4">
+    <form asp-action="Index" method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label for="Title" class="form-label">Title</label>
+            <input name="Title" value="@Model.Filter?.Title" class="form-control" placeholder="Enter project title" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="Status" class="form-label">Status</label>
+            <select name="Status" class="form-select">
+                <option value="">All</option>
+                @foreach (ProjectStatus status in Enum.GetValues(typeof(ProjectStatus)))
+                {
+                    <option value="@((int)status)" selected="@(Model.Filter?.Status == status ? "selected" : null)">
+                        @status.GetDisplayName()
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label for="StartDateFrom" class="form-label">Start Date (From)</label>
+            <input name="StartDateFrom" type="date" value="@Model.Filter?.StartDateFrom?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="StartDateTo" class="form-label">Start Date (To)</label>
+            <input name="StartDateTo" type="date" value="@Model.Filter?.StartDateTo?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="EndDateFrom" class="form-label">End Date (From)</label>
+            <input name="EndDateFrom" type="date" value="@Model.Filter?.EndDateFrom?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="EndDateTo" class="form-label">End Date (To)</label>
+            <input name="EndDateTo" type="date" value="@Model.Filter?.EndDateTo?.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-2">
+            <label for="Role" class="form-label">Role</label>
+            <select name="Role" class="form-select">
+                <option value="">All</option>
+                @foreach (ProjectRole Role in Enum.GetValues(typeof(ProjectRole)))
+                {
+                    <option value="@((int)Role)" selected="@(Model.Filter?.Role == Role ? "selected" : null)">
+                        @Role.GetDisplayName()
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+
+        <div class="col-md-2">
+            <button type="button" class="btn btn-secondary w-100" id="clearFilters">Clear</button>
+        </div>
+    </form>
+</div>
+
+<div class="text-end mb-3">
+    <a asp-action="Create" class="btn btn-success">Create New Project</a>
+</div>
+
+<div>
+    @if (Model.FilteredProjectList != null && Model.FilteredProjectList.Any())
+    {
+        <div class="text-center">Click Table Column Headers for Sorting</div>
+    }
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th class="text-center">#</th>
+                <th class="header-cell" onclick="sortTable('Title')" tabindex="0">
+                    Project Name
+                    <i class="bi @(currentSortBy == "Title" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="titleSortIcon"></i>
+                </th>
+                <th class="header-cell" onclick="sortTable('Status')" tabindex="0">
+                    Status
+                    <i class="bi @(currentSortBy == "Status" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="statusSortIcon"></i>
+                </th>
+                <th class="header-cell" onclick="sortTable('Role')" tabindex="0">
+                    Role
+                    <i class="bi @(currentSortBy == "Role" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="RoleSortIcon"></i>
+                </th>
+                <th class="header-cell" onclick="sortTable('StartDate')" tabindex="0">
+                    Start Date
+                    <i class="bi @(currentSortBy == "StartDate" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="startDateSortIcon"></i>
+                </th>
+                <th class="header-cell" onclick="sortTable('EndDate')" tabindex="0">
+                    End Date
+                    <i class="bi @(currentSortBy == "EndDate" ? (currentSortOrder == "asc" ? "bi-sort-up" : "bi-sort-down") : "bi-sort")" id="endDateSortIcon"></i>
+                </th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.FilteredProjectList != null && Model.FilteredProjectList.Any())
+            {
+                var serial = (Model.PageIndex - 1) * Model.PageSize + 1;
+
+                @foreach (var project in Model.FilteredProjectList)
+                {
+                    <tr class="text-center">
+                        <td>@(serial++)</td>
+                        <td>@project.ProjectTitle</td>
+                        <td>@project.ProjectStatus?.GetDisplayName()</td>
+                        <td>@project.UserRoleInThisProject</td>
+                        <td>@(project.ProjectStartDate?.ToString("yyyy-MM-dd") ?? "----")</td>
+                        <td>@(project.ProjectEndDate?.ToString("yyyy-MM-dd") ?? "N/A")</td>
+                        <td>
+                            <div class="dropdown d-flex justify-content-center">
+                                <button class="btn btn-primary dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-cogs me-1"></i> Actions
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center" asp-action="Dashboard" asp-route-id="@project.ProjectId">
+                                            <i class="fas fa-chart-line text-primary me-2"></i> Dashboard
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center" asp-action="Details" asp-route-id="@project.ProjectId">
+                                            <i class="fas fa-info-circle text-info me-2"></i> Details
+                                        </a>
+                                    </li>
+                                    @if (project.UserRoleInThisProject == ProjectRole.Admin)
+                                    {
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center" asp-action="ManageMembers" asp-route-id="@project.ProjectId">
+                                                <i class="fas fa-users text-warning me-2"></i> Members
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center">
+                        <p>No projects available.</p>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Pagination Controls -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center align-items-center">
+
+            <!-- Page Size Selection -->
+            <li class="page-item d-flex align-items-center me-2">
+                <span class="page-link bg-light border-0 text-dark">Page Size:</span>
+            </li>
+            <li class="page-item me-3">
+                <select id="pageSize" name="pageSize" class="form-select form-select-sm"
+                        onchange="changePageSize(this.value)">
+                    <option value="5" selected="@(Model.PageSize == 5)">5</option>
+                    <option value="10" selected="@(Model.PageSize == 10)">10</option>
+                    <option value="20" selected="@(Model.PageSize == 20)">20</option>
+                </select>
+            </li>
+
+            <!-- Previous Button -->
+            <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
+                <button type="button" class="page-link" onclick="changePage(@(Model.PageIndex - 1))" @(Model.PageIndex == 1 ? "disabled" : "")>
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+            </li>
+
+            <!-- Page Info -->
+            <li class="page-item disabled">
+                <span class="page-link bg-primary text-white">
+                    Page @Model.PageIndex of @Model.TotalPages
+                </span>
+            </li>
+
+            <!-- Next Button -->
+            <li class="page-item @(Model.PageIndex == Model.TotalPages ? "disabled" : "")">
+                <button type="button" class="page-link" onclick="changePage(@(Model.PageIndex + 1))" @(Model.PageIndex == Model.TotalPages ? "disabled" : "")>
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </li>
+
+        </ul>
+    </nav>
+
+    <!-- JavaScript for Pagination -->
+    <script>
+        function changePageSize(size) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('pageSize', size);
+            url.searchParams.set('pageIndex', 1); // Reset to first page when changing page size
+            window.location.href = url.toString();
+        }
+        function changePage(pageIndex) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('pageIndex', pageIndex);
+            window.location.href = url.toString();
+        }
+    </script>
+
+    <!-- Add FontAwesome for Icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</div>
+
+@section Scripts {
+    <script src="~/js/sortTable.js"></script>
+    <script src="~/js/clearProjectFilter.js"></script>
+}

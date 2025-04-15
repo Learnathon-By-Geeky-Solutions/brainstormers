@@ -1,0 +1,149 @@
+﻿@model ProjectInvitationListViewModel
+@{
+	ViewData["Title"] = "Index";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+	<h2>Project Invitations</h2>
+
+	<table class="table table-bordered table-hover">
+		<thead class="table-dark">
+			<tr>
+			<th class="text-center">#</th>
+				<th>Project</th>
+				<th>Status</th>
+				<th>Role</th>
+				<th>Invitation Sent</th>
+				<th>Accepted</th>
+				<th>Declined</th>
+				<th class="text-center">Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+		@if (Model.Invitations != null && Model.Invitations.Any())
+		{
+			var serial = (Model.PageIndex - 1) * Model.PageSize + 1;
+
+			@foreach (var invitation in Model.Invitations)
+			{
+				<tr class="text-center">
+					<td>@(serial++)</td>
+					<td>@invitation.ProjectTitle</td>
+					<td>
+						<span class="badge 
+								@(invitation.Status == "Pending" ? "bg-warning text-dark" :
+								invitation.Status == "Accepted" ? "bg-success" :
+								invitation.Status == "Declined" ? "bg-danger" : "bg-secondary")">
+								@invitation.Status
+						</span>
+					</td>
+					<td>@invitation.Role</td>
+					<td>@invitation.InvitationSentDate.ToString("dd/MM/yyyy hh:mm:ss tt")</td>
+					<td>@(invitation.AcceptedDate.HasValue ? invitation.AcceptedDate.Value.ToString("dd/MM/yyyy hh:mm:ss tt") : "Not Accepted")</td>
+					<td>@(invitation.DeclinedDate.HasValue ? invitation.DeclinedDate.Value.ToString("dd/MM/yyyy hh:mm:ss tt") : "Not Declined")</td>
+					<td class="text-center">
+						@if (invitation.Status == "Pending")
+						{
+							<form asp-controller="ProjectInvitation" asp-action="Edit" method="post" class="d-inline" onsubmit="return confirmAction('accept');">
+								<input type="hidden" name="Id" value="@invitation.Id" />
+								<input type="hidden" name="Status" value="Accepted" />
+								<button type="submit" class="btn btn-success btn-sm">Accept</button>
+							</form>
+
+							<form asp-controller="ProjectInvitation" asp-action="Edit" method="post" class="d-inline" onsubmit="return confirmAction('decline');">
+								<input type="hidden" name="Id" value="@invitation.Id" />
+								<input type="hidden" name="Status" value="Declined" />
+								<button type="submit" class="btn btn-danger btn-sm">Decline</button>
+							</form>
+						}
+					</td>
+				</tr>
+			}
+		}
+		else
+		{
+			<tr >
+				<td colspan="100" class="text-center">You have no invitations at the moment.</td>
+			</tr>
+		}
+		</tbody>
+	</table>
+	<!-- Pagination Controls -->
+	<nav aria-label="Page navigation">
+		<ul class="pagination justify-content-center align-items-center">
+
+			<!-- Page Size Selection -->
+			<li class="page-item d-flex align-items-center me-2">
+				<span class="page-link bg-light border-0 text-dark">Page Size:</span>
+			</li>
+			<li class="page-item me-3">
+				<select id="pageSize" name="pageSize" class="form-select form-select-sm"
+						onchange="changePageSize(this.value)">
+					<option value="5" selected="@(Model.PageSize == 5)">5</option>
+					<option value="10" selected="@(Model.PageSize == 10)">10</option>
+					<option value="20" selected="@(Model.PageSize == 20)">20</option>
+				</select>
+			</li>
+
+			<!-- Previous Button -->
+			<li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
+				<button type="button" class="page-link"
+						onclick="changePage(@(Model.PageIndex - 1))"
+				@(Model.PageIndex == 1 ? "disabled" : "")>
+					<i class="fas fa-chevron-left"></i> Previous
+				</button>
+			</li>
+
+			<!-- Page Info -->
+			<li class="page-item disabled">
+				<span class="page-link bg-primary text-white">
+					Page @Model.PageIndex of @Model.TotalPages
+				</span>
+			</li>
+
+			<!-- Next Button -->
+			<li class="page-item @(Model.PageIndex == Model.TotalPages ? "disabled" : "")">
+				<button type="button" class="page-link"
+						onclick="changePage(@(Model.PageIndex + 1))"
+				@(Model.PageIndex == Model.TotalPages ? "disabled" : "")>
+					Next <i class="fas fa-chevron-right"></i>
+				</button>
+			</li>
+
+		</ul>
+	</nav>
+
+	<!-- JavaScript for Pagination -->
+	<script>
+		function changePageSize(size) {
+			const url = new URL(window.location.href);
+			url.searchParams.set('pageSize', size);
+			url.searchParams.set('pageIndex', 1); // Reset to first page when changing page size
+			window.location.href = url.toString();
+		}
+
+		function changePage(pageIndex) {
+			const url = new URL(window.location.href);
+			url.searchParams.set('pageIndex', pageIndex);
+			window.location.href = url.toString();
+		}
+	</script>
+
+	<!-- Add FontAwesome for Icons -->
+	<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</div>
+
+							
+<script type="text/javascript">
+	function confirmAction(action) {
+		var message = '';
+		if (action === 'accept') {
+			message = 'Are you sure you want to accept this invitation?';
+		} else if (action === 'decline') {
+			message = 'Are you sure you want to decline this invitation?';
+		}
+
+		return confirm(message);
+	}
+</script>
