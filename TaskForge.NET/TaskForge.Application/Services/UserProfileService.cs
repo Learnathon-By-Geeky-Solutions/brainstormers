@@ -12,7 +12,6 @@ namespace TaskForge.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-
         public async Task CreateUserProfileAsync(string userId, string fullName)
         {
             var userProfile = new UserProfile

@@ -55,6 +55,8 @@ namespace TaskForge.WebUI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTask(int id)
         {
+            if (!ModelState.IsValid) return View();
+
             var task = await _taskService.GetTaskByIdAsync(id);
             if (task == null) return NotFound();
 
@@ -123,6 +125,8 @@ namespace TaskForge.WebUI.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAttachment(int id)
         {
+            if (!ModelState.IsValid) return View();
+
             try
             {
                 await _taskService.DeleteAttachmentAsync(id);
@@ -133,7 +137,6 @@ namespace TaskForge.WebUI.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
-
 
     }
 }

@@ -1,5 +1,4 @@
 ﻿using TaskForge.Application.Interfaces.Repositories;
-using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 using TaskForge.Infrastructure.Data;
@@ -9,10 +8,11 @@ namespace TaskForge.Infrastructure.Repositories
 {
     public class TaskRepository : Repository<TaskItem>, ITaskRepository
     {
-        public TaskRepository(ApplicationDbContext context, IUserContextService userContextService) : base(context, userContextService)
+        // This interface is intentionally left empty as a marker for repository types
+        public TaskRepository(ApplicationDbContext context, IUserContextService userContextService)
+            : base(context, userContextService)
         {
 
         }
-
     }
 }

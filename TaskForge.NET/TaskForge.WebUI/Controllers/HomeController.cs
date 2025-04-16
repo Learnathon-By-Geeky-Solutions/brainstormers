@@ -1,12 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
-using TaskForge.Application.Interfaces;
-using System.Threading.Tasks;
-using TaskForge.WebUI.Models;
+using Microsoft.AspNetCore.Mvc;
 using TaskForge.Application.Interfaces.Services;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.AspNetCore.Http.HttpResults;
+using TaskForge.WebUI.Models;
 
 namespace TaskForge.WebUI.Controllers
 {
@@ -33,15 +29,12 @@ namespace TaskForge.WebUI.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Index(int pageIndex = 1, int pageSize = 10)
         {
-            if (!User.Identity.IsAuthenticated)
+            if (User?.Identity?.IsAuthenticated != true)
             {
                 return View("Welcome");
             }
 
-            if (!ModelState.IsValid)
-            {
-                return RedirectToAction("Index");
-            }
+            if (!ModelState.IsValid) return RedirectToAction("Index");
 
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account");
@@ -54,11 +47,11 @@ namespace TaskForge.WebUI.Controllers
             var totalProjects = await _projectMemberService.GetUserProjectCountAsync(userProfileId);
             var userTaskList = await _taskService.GetUserTaskAsync(userProfileId, pageIndex, pageSize);
 
-			var taskList = new HomeViewModel
-			{
+            var taskList = new HomeViewModel
+            {
                 TotalProjects = totalProjects,
                 TotalTasks = userTaskList.TotalCount,
-				CompletedTasks = userTaskList.Items.Count(task => task.Status == Domain.Enums.TaskWorkflowStatus.Done),
+                CompletedTasks = userTaskList.Items.Count(task => task.Status == Domain.Enums.TaskWorkflowStatus.Done),
 
                 UserTasks = userTaskList.Items,
                 PageIndex = pageIndex,

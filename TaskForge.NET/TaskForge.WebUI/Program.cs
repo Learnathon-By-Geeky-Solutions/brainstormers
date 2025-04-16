@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using TaskForge.Infrastructure.Data;
-using TaskForge.Application.Services;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using TaskForge.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
-using TaskForge.Infrastructure.Repositories;
 using TaskForge.Application.Interfaces.Repositories;
-using TaskForge.Application.Interfaces.Services;
 using TaskForge.Application.Interfaces.Repositories.Common;
+using TaskForge.Application.Interfaces.Services;
+using TaskForge.Application.Services;
+using TaskForge.Infrastructure;
+using TaskForge.Infrastructure.Data;
+using TaskForge.Infrastructure.Repositories;
 using TaskForge.Infrastructure.Repositories.Common;
 using TaskForge.Infrastructure.Services;
 
@@ -131,4 +131,4 @@ namespace TaskForge.WebUI
             await app.RunAsync();
         }
     }
-}       
+}

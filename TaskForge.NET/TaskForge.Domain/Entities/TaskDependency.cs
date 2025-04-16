@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TaskForge.Domain.Entities
+﻿namespace TaskForge.Domain.Entities
 {
     public class TaskDependency
     {
@@ -14,5 +8,4 @@ namespace TaskForge.Domain.Entities
         public int DependsOnTaskId { get; set; }
         public TaskItem DependsOnTask { get; set; } = null!;
     }
-
 }

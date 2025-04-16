@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace TaskForge.Application.Interfaces.Services
+﻿namespace TaskForge.Application.Interfaces.Services
 {
     public interface IUserContextService
     {

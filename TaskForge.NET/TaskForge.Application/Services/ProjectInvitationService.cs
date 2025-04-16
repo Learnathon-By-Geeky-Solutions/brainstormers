@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
-using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
@@ -68,7 +66,7 @@ namespace TaskForge.Application.Services
             }
 
             // Check if an invitation already exists
-            var existingInvitation = await _unitOfWork.ProjectInvitations.FindByExpressionAsync(i => i.InvitedUserProfileId == userProfileId.Value 
+            var existingInvitation = await _unitOfWork.ProjectInvitations.FindByExpressionAsync(i => i.InvitedUserProfileId == userProfileId.Value
                                             && i.ProjectId == projectId && i.Status == InvitationStatus.Pending);
             if (existingInvitation.Any())
             {

@@ -2,14 +2,12 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
+using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Enums;
-using TaskForge.Domain.Entities;
 using TaskForge.Web.Models;
 using TaskForge.WebUI.Models;
-using Project = TaskForge.Domain.Entities.Project;
-using TaskForge.Application.Common.Model;
 
 namespace TaskForge.WebUI.Controllers
 {
@@ -37,8 +35,8 @@ namespace TaskForge.WebUI.Controllers
         }
 
         [HttpGet]
-		public async Task<IActionResult> Index(ProjectFilterDto filter, int pageIndex = 1, int pageSize = 10)
-		{
+        public async Task<IActionResult> Index(ProjectFilterDto filter, int pageIndex = 1, int pageSize = 10)
+        {
             if (!ModelState.IsValid)
             {
                 return RedirectToAction("Index");
@@ -47,17 +45,17 @@ namespace TaskForge.WebUI.Controllers
             if (user == null) return Unauthorized();
 
             filter.UserId = user.Id;
-			var projectFilteredList = await _projectService.GetFilteredProjectsAsync(filter, pageIndex, pageSize);
+            var projectFilteredList = await _projectService.GetFilteredProjectsAsync(filter, pageIndex, pageSize);
 
-			var projectList = new ProjectListViewModel
-			{
+            var projectList = new ProjectListViewModel
+            {
                 Filter = filter,
                 FilteredProjectList = projectFilteredList.Items,
-				PageIndex = pageIndex,
-				PageSize = pageSize,
-				TotalItems = projectFilteredList.TotalCount,
-				TotalPages = projectFilteredList.TotalPages
-			};
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalItems = projectFilteredList.TotalCount,
+                TotalPages = projectFilteredList.TotalPages
+            };
 
             return View(projectList);
         }
@@ -82,53 +80,55 @@ namespace TaskForge.WebUI.Controllers
         // POST: Projects/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-		public async Task<IActionResult> Create(CreateProjectViewModel createProjectViewModel)
-		{
+        public async Task<IActionResult> Create(CreateProjectViewModel createProjectViewModel)
+        {
             if (!ModelState.IsValid)
             {
-				createProjectViewModel.StatusOptions = await _projectService.GetProjectStatusOptions();
-				return View(createProjectViewModel);
-			}
+                createProjectViewModel.StatusOptions = await _projectService.GetProjectStatusOptions();
+                return View(createProjectViewModel);
+            }
 
-			var user = await _userManager.GetUserAsync(User);
+            var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
                 return Unauthorized();
             }
 
-			var createNewProject = new CreateProjectDto
-			{
-				Title = createProjectViewModel.Title,
-				Description = createProjectViewModel.Description,
-				Status = createProjectViewModel.Status,
-				CreatedBy = user.Id,
-				StartDate = createProjectViewModel.StartDate,
-				EndDate = createProjectViewModel.EndDate,
-			};
+            var createNewProject = new CreateProjectDto
+            {
+                Title = createProjectViewModel.Title,
+                Description = createProjectViewModel.Description,
+                Status = createProjectViewModel.Status,
+                CreatedBy = user.Id,
+                StartDate = createProjectViewModel.StartDate,
+                EndDate = createProjectViewModel.EndDate,
+            };
 
-			await _projectService.CreateProjectAsync(createNewProject);
+            await _projectService.CreateProjectAsync(createNewProject);
             return RedirectToAction("Index");
 
-		}
+        }
 
         [HttpGet]
         public async Task<IActionResult> Update(int id)
         {
+            if (!ModelState.IsValid) return View();
+
             var project = await _projectService.GetProjectByIdAsync(id);
             if (project == null) return NotFound();
 
-			var projectUpdate = new ProjectUpdateViewModel
-			{
+            var projectUpdate = new ProjectUpdateViewModel
+            {
                 Id = project.Id,
-                    Title = project.Title,
-                    Description = project.Description,
-                    StartDate = project.StartDate,
-                    Status = project.Status,
-                    EndDateInput = project.EndDate,
+                Title = project.Title,
+                Description = project.Description,
+                StartDate = project.StartDate,
+                Status = project.Status,
+                EndDateInput = project.EndDate,
             };
 
-			return PartialView("_EditProjectForm", projectUpdate);
-		}
+            return PartialView("_EditProjectForm", projectUpdate);
+        }
 
         // POST: Projects/Update
         [HttpPost]
@@ -174,6 +174,8 @@ namespace TaskForge.WebUI.Controllers
         // GET: Project/Details/5
         public async Task<IActionResult> Details(int id)
         {
+            if (!ModelState.IsValid) return View();
+
             // Restrict project access to assigned users only
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
@@ -202,10 +204,12 @@ namespace TaskForge.WebUI.Controllers
 
             return View(viewModel);
         }
-		
-		// GET: Project/Dashboard/5
-		public async Task<IActionResult> Dashboard(int id)
+
+        // GET: Project/Dashboard/5
+        public async Task<IActionResult> Dashboard(int id)
         {
+            if (!ModelState.IsValid) return View();
+
             // Restrict project access to assigned users only
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
@@ -289,6 +293,8 @@ namespace TaskForge.WebUI.Controllers
         [HttpGet]
         public async Task<IActionResult> ManageMembers(int Id, int pageIndex = 1, int pageSize = 10)
         {
+            if (!ModelState.IsValid) return View();
+
             // Restrict project access to assigned users only
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
@@ -313,8 +319,8 @@ namespace TaskForge.WebUI.Controllers
                 ProjectMembers = projectMembers.Select(m => new ProjectMemberViewModel
                 {
                     Id = m.Id,
-                    Name = m.Name,
-                    Email = m.Email,
+                    Name = m.Name ?? "Unknown",
+                    Email = m.Email ?? "N/A",
                     Role = m.Role
                 }).ToList(),
                 ProjectInvitations = new PaginatedList<InviteViewModel>(
@@ -340,10 +346,8 @@ namespace TaskForge.WebUI.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveMember(int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return View();
+
             // Fetch the member
             var member = await _projectMemberService.GetByIdAsync(id);
             if (member == null)
@@ -412,7 +416,6 @@ namespace TaskForge.WebUI.Controllers
             // Redirect back to the Project Management Members page
             return RedirectToAction("ManageMembers", "Project", new { Id = invitation.ProjectId });
         }
-
 
     }
 }

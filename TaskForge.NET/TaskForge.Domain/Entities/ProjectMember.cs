@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
-using TaskForge.Domain.Entities;
-using TaskForge.Domain.Entities.Common;
+﻿using TaskForge.Domain.Entities.Common;
 using TaskForge.Domain.Enums;
 
 namespace TaskForge.Domain.Entities

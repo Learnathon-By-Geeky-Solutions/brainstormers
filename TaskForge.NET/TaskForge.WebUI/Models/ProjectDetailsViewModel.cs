@@ -4,6 +4,6 @@ namespace TaskForge.WebUI.Models
 {
     public class ProjectDetailsViewModel
     {
-        public Project Project { get; set; }
+        public Project? Project { get; set; }
     }
 }

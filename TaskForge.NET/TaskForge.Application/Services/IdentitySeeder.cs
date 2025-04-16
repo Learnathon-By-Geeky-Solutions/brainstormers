@@ -74,11 +74,10 @@ namespace TaskForge.Application.Services
             if (adminUserProfileId == 0)
             {
                 // Create UserProfile for Super Admin
-
                 await _userProfileService.CreateUserProfileAsync(adminUser.Id, "Super Admin");
 
                 _logger.LogInformation("Super admin UserProfile created successfully.");
-                
+
             }
             else
             {

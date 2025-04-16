@@ -2,15 +2,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
-using Microsoft.EntityFrameworkCore;
-using SQLitePCL;
 using System.Data;
-using System.Drawing.Printing;
 using TaskForge.Application.Interfaces.Services;
-using TaskForge.Application.Services;
-using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
-using TaskForge.Infrastructure.Data;
 using TaskForge.WebUI.Models;
 
 namespace TaskForge.WebUI.Controllers
@@ -23,7 +17,7 @@ namespace TaskForge.WebUI.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IUserProfileService _userProfileService;
 
-        public ProjectInvitationController (
+        public ProjectInvitationController(
             IProjectInvitationService invitationService,
             IProjectMemberService projectMemberService,
             IUserProfileService userProfileService,
@@ -57,7 +51,7 @@ namespace TaskForge.WebUI.Controllers
             }
 
             var paginatedInvitations = await _invitationService.GetInvitationsForUserAsync(userProfileId, pageIndex, pageSize);
-            if (!paginatedInvitations.Items.Any())
+            if (paginatedInvitations.Items.Count == 0)
             {
                 ViewData["NoInvitationsMessage"] = "You have no pending invitations.";
             }
@@ -77,10 +71,10 @@ namespace TaskForge.WebUI.Controllers
                 PageSize = paginatedInvitations.PageSize,
                 TotalItems = paginatedInvitations.TotalCount,
                 TotalPages = paginatedInvitations.TotalPages
-             };
- 
-             return View(projectInvitationViewModel);
-    }
+            };
+
+            return View(projectInvitationViewModel);
+        }
 
 
         [HttpPost]

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
+﻿using System.Linq.Expressions;
 using TaskForge.Domain.Entities.Common;
 
 namespace TaskForge.Application.Interfaces.Repositories.Common
@@ -15,13 +12,13 @@ namespace TaskForge.Application.Interfaces.Repositories.Common
            Func<IQueryable<T>, IQueryable<T>>? includes = null,
            int? take = null,
            int? skip = null);
-		Task<(IEnumerable<T> Items, int TotalCount)> GetPaginatedListAsync(
-			 Expression<Func<T, bool>> predicate,
-			 Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
-			 Func<IQueryable<T>, IQueryable<T>>? includes = null,
-			 int? take = null,
-			 int? skip = null);
-		Task<T?> GetByIdAsync(int id);
+        Task<(IEnumerable<T> Items, int TotalCount)> GetPaginatedListAsync(
+             Expression<Func<T, bool>> predicate,
+             Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+             Func<IQueryable<T>, IQueryable<T>>? includes = null,
+             int? take = null,
+             int? skip = null);
+        Task<T?> GetByIdAsync(int id);
         Task AddAsync(T entity);
         Task UpdateAsync(T entity);
         Task DeleteByIdAsync(int id);
@@ -29,6 +26,6 @@ namespace TaskForge.Application.Interfaces.Repositories.Common
         Task RestoreByIdAsync(int id);
         Task RestoreByIdsAsync(IEnumerable<int> ids);
         Task<bool> ExistsAsync(int id);
-       
+
     }
 }

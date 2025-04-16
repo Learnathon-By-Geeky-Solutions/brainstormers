@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 using TaskForge.Domain.Entities.Common;
 using TaskForge.Domain.Enums;
 
@@ -24,7 +19,7 @@ namespace TaskForge.Domain.Entities
         public ProjectStatus Status { get; set; } = ProjectStatus.NotStarted; // Enum for status
 
         public virtual ICollection<ProjectMember> Members { get; set; } = new List<ProjectMember>();
-        public virtual ICollection<ProjectInvitation> Invitations { get; set; } = new List<ProjectInvitation>(); 
+        public virtual ICollection<ProjectInvitation> Invitations { get; set; } = new List<ProjectInvitation>();
         public virtual ICollection<TaskItem> TaskItems { get; set; } = new List<TaskItem>();
 
 
