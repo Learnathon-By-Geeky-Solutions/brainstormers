@@ -12,6 +12,7 @@ namespace TaskForge.Application.DTOs
         public DateTime? StartDate { get; set; }
         public DateTime? DueDate { get; set; }
         public List<int>? AssignedUserIds { get; set; }
+        public List<int>? DependentTaskIds { get; set; }
         public List<IFormFile>? Attachments { get; set; }
     }
 }

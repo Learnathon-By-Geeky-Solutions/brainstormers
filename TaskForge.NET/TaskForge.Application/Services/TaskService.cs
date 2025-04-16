@@ -169,8 +169,17 @@ namespace TaskForge.Application.Services
                 }
             }
 
+            // Step 4: Update dependent tasks if any
+            task.Dependencies.Clear();
+            if (dto.DependentTaskIds != null && dto.DependentTaskIds.Any())
+            {
+                foreach (var dependentTask in dto.DependentTaskIds)
+                {
+                    task.Dependencies.Add(new TaskDependency { DependsOnTaskId = dependentTask });
+                }
+            }
 
-            // Step 4: Handle attachments (if any)
+            // Step 5: Handle attachments (if any)
             if (dto.Attachments != null && dto.Attachments.Any())
             {
                 foreach (var file in dto.Attachments)
@@ -200,10 +209,10 @@ namespace TaskForge.Application.Services
                 }
             }
 
-            // Step 5: Update the task in the repository
+            // Step 6: Update the task in the repository
             await _unitOfWork.Tasks.UpdateAsync(task);
 
-            // Step 6: Commit changes
+            // Step 7: Commit changes
             await _unitOfWork.SaveChangesAsync();
         }
 

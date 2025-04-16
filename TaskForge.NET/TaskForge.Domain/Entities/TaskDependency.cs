@@ -1,6 +1,8 @@
-﻿namespace TaskForge.Domain.Entities
+﻿using TaskForge.Domain.Entities.Common;
+
+namespace TaskForge.Domain.Entities
 {
-    public class TaskDependency
+    public class TaskDependency : BaseEntity
     {
         public int TaskId { get; set; }
         public TaskItem Task { get; set; } = null!;
