@@ -5,8 +5,8 @@
         public int Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public string? StartDate { get; set; }
-        public string? DueDate { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? DueDate { get; set; }
         public int Status { get; set; }
         public int Priority { get; set; }
         public List<AttachmentDto> Attachments { get; set; } = new();

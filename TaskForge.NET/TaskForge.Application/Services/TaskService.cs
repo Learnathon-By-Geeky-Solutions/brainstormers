@@ -46,7 +46,8 @@ namespace TaskForge.Application.Services
                 predicate: predicate,
                 includes: includes)).FirstOrDefault();
 
-            if (task == null) return null;
+            if (task == null)
+                throw new KeyNotFoundException("Task not found.");
 
             var projectMembers = await _projectMemberService.GetProjectMembersAsync(task.ProjectId);
 
@@ -79,8 +80,8 @@ namespace TaskForge.Application.Services
                 Id = task.Id,
                 Title = task.Title,
                 Description = task.Description,
-                StartDate = task.StartDate?.ToString("yyyy-MM-ddTHH:mm"),
-                DueDate = task.DueDate?.ToString("yyyy-MM-ddTHH:mm"),
+                StartDate = task.StartDate,
+                DueDate = task.DueDate,
                 Status = (int)task.Status,
                 Priority = (int)task.Priority,
                 Attachments = attachments,
@@ -189,10 +190,10 @@ namespace TaskForge.Application.Services
             var task = taskList.FirstOrDefault();
 
             if (task == null)
-                throw new Exception("Task not found.");
+                throw new KeyNotFoundException("Task not found.");
 
             if (task.Attachments.Count + dto.Attachments?.Count > 10)
-                throw new Exception("You can only attach up to 10 files.");
+                throw new InvalidOperationException("You can only attach up to 10 files.");
 
 
             // Step 2: Update task fields from the provided DTO
@@ -264,8 +265,8 @@ namespace TaskForge.Application.Services
             );
 
             var taskItem = task.FirstOrDefault();
-            if (taskItem == null)
-                throw new Exception("Task not found");
+            if (task == null)
+                throw new KeyNotFoundException("Task not found.");
 
             // Delete media files associated with attachments
             foreach (var attachment in taskItem.Attachments)
