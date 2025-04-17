@@ -23,12 +23,14 @@ namespace TaskForge.Application.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<int?> GetByUserIdAsync(string userId)
-        {
-            var userProfile = await _unitOfWork.UserProfiles
-                .FindByExpressionAsync(up => up.UserId == userId);
+		public async Task<int?> GetByUserIdAsync(string userId)
+		{
+			var userProfiles = await _unitOfWork.UserProfiles
+				.FindByExpressionAsync(up => up.UserId == userId);
 
-            return userProfile.Select(up => up.Id).FirstOrDefault();
-        }
-    }
+			var userProfile = userProfiles.FirstOrDefault();
+
+			return userProfile?.Id; // This returns null if userProfile is null
+		}
+	}
 }

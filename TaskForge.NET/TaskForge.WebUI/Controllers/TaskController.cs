@@ -46,7 +46,6 @@ namespace TaskForge.WebUI.Controllers
             }
             catch (Exception ex)
             {
-                // Log exception if needed
                 return Json(new { success = false, message = ex.Message });
             }
         }
