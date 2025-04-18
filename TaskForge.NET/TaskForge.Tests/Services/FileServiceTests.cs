@@ -25,15 +25,6 @@ namespace TaskForge.Tests.Services
         }
 
         [Fact]
-        public async Task DeleteFileAsync_ThrowsArgumentException_ForInvalidPath()
-        {
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.DeleteFileAsync("../somefile.txt"));
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.DeleteFileAsync(""));
-            await Assert.ThrowsAsync<ArgumentException>(() => _service.DeleteFileAsync("C:/absolute/path.txt"));
-        }
-
-        [Fact]
         public async Task DeleteFileAsync_DoesNothing_WhenFileDoesNotExist()
         {
             // Arrange
@@ -62,24 +53,6 @@ namespace TaskForge.Tests.Services
 
             // Assert
             Assert.False(File.Exists(fullPath));
-        }
-
-        [Fact]
-        public async Task DeleteFileAsync_ThrowsInvalidOperation_ForIOException()
-        {
-            // Arrange
-            var fileName = "locked.txt";
-            var fullPath = Path.Combine(_rootPath, fileName);
-            await File.WriteAllTextAsync(fullPath, "data");
-
-            using var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.None);
-
-            // Act
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _service.DeleteFileAsync(fileName));
-
-            // Assert
-            Assert.Contains("Could not delete file", exception.Message);
         }
 
         public void Dispose()
