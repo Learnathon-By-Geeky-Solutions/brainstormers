@@ -1,14 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities.Common;
 using TaskForge.Infrastructure.Data;
-using TaskForge.Infrastructure.Services;
 
 namespace TaskForge.Infrastructure.Repositories.Common
 {
@@ -104,7 +99,7 @@ namespace TaskForge.Infrastructure.Repositories.Common
         public async Task<IEnumerable<T>> FindByExpressionAsync(
             Expression<Func<T, bool>> predicate,
             Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
-            Func<IQueryable<T>, IQueryable<T>>? includes = null, 
+            Func<IQueryable<T>, IQueryable<T>>? includes = null,
             int? take = null,
             int? skip = null)
         {
@@ -139,43 +134,43 @@ namespace TaskForge.Infrastructure.Repositories.Common
             return await query.ToListAsync();
         }
 
-		public async Task<(IEnumerable<T> Items, int TotalCount)> GetPaginatedListAsync(
-			Expression<Func<T, bool>> predicate,
-			Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
-			Func<IQueryable<T>, IQueryable<T>>? includes = null,
-			int? take = null,
-			int? skip = null)
-		{
-			IQueryable<T> query = _dbSet.Where(e => !e.IsDeleted);
+        public async Task<(IEnumerable<T> Items, int TotalCount)> GetPaginatedListAsync(
+            Expression<Func<T, bool>> predicate,
+            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+            Func<IQueryable<T>, IQueryable<T>>? includes = null,
+            int? take = null,
+            int? skip = null)
+        {
+            IQueryable<T> query = _dbSet.Where(e => !e.IsDeleted);
 
-			if (includes != null)
-			{
-				query = includes(query);
-			}
+            if (includes != null)
+            {
+                query = includes(query);
+            }
 
-			if (predicate != null)
-			{
-				query = query.Where(predicate);
-			}
+            if (predicate != null)
+            {
+                query = query.Where(predicate);
+            }
 
-			int totalCount = await query.CountAsync();  // Get total count before pagination
+            int totalCount = await query.CountAsync();  // Get total count before pagination
 
-			if (orderBy != null)
-			{
-				query = orderBy(query);
-			}
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
 
-			if (skip.HasValue)
-			{
-				query = query.Skip(skip.Value);
-			}
+            if (skip.HasValue)
+            {
+                query = query.Skip(skip.Value);
+            }
 
-			if (take.HasValue)
-			{
-				query = query.Take(take.Value);
-			}
+            if (take.HasValue)
+            {
+                query = query.Take(take.Value);
+            }
 
-			return (await query.ToListAsync(), totalCount);
-		}
-	}
+            return (await query.ToListAsync(), totalCount);
+        }
+    }
 }

@@ -1,8 +1,4 @@
-﻿using Duende.IdentityServer;
-using Duende.IdentityServer.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Generic;
+﻿using Duende.IdentityServer.Models;
 
 namespace TaskForge.Infrastructure
 {

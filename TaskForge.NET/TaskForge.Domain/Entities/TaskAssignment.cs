@@ -1,5 +1,4 @@
-﻿using System;
-using TaskForge.Domain.Entities.Common;
+﻿using TaskForge.Domain.Entities.Common;
 
 namespace TaskForge.Domain.Entities
 {

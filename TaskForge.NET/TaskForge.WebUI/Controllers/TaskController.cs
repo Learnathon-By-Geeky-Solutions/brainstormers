@@ -46,7 +46,6 @@ namespace TaskForge.WebUI.Controllers
             }
             catch (Exception ex)
             {
-                // Log exception if needed
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -55,6 +54,8 @@ namespace TaskForge.WebUI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTask(int id)
         {
+            if (!ModelState.IsValid) return View();
+
             var task = await _taskService.GetTaskByIdAsync(id);
             if (task == null) return NotFound();
 
@@ -123,6 +124,8 @@ namespace TaskForge.WebUI.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAttachment(int id)
         {
+            if (!ModelState.IsValid) return View();
+
             try
             {
                 await _taskService.DeleteAttachmentAsync(id);
@@ -133,7 +136,6 @@ namespace TaskForge.WebUI.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
-
 
     }
 }

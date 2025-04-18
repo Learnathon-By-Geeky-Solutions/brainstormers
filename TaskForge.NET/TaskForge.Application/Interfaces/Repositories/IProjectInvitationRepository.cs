@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaskForge.Application.Interfaces.Repositories.Common;
+﻿using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Domain.Entities;
-using TaskForge.Domain.Enums;
 
 namespace TaskForge.Application.Interfaces.Repositories
 {
+    // This interface is intentionally left empty as a marker for repository types
     public interface IProjectInvitationRepository : IRepository<ProjectInvitation>
     {
 

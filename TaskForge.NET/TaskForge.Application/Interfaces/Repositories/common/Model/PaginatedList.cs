@@ -1,11 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TaskForge.Application.Common.Model
+﻿namespace TaskForge.Application.Common.Model
 {
     public class PaginatedList<T>
     {
