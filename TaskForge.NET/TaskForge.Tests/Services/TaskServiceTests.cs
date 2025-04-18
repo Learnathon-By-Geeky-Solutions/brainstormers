@@ -130,10 +130,10 @@ namespace TaskForge.Tests.Services
 			int pageSize = 2;
 
 			var projectMembers = new List<ProjectMember>
-	{
-		new ProjectMember { ProjectId = 10, UserProfileId = userProfileId },
-		new ProjectMember { ProjectId = 20, UserProfileId = userProfileId }
-	};
+			{
+				new ProjectMember { ProjectId = 10, UserProfileId = userProfileId },
+				new ProjectMember { ProjectId = 20, UserProfileId = userProfileId }
+			};
 
 			var task1 = new TaskItem
 			{
@@ -275,7 +275,6 @@ namespace TaskForge.Tests.Services
 			await _taskService.UpdateTaskAsync(dto);
 
 			// Assert
-			//_unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
 			_unitOfWorkMock.Verify(r => r.Tasks.UpdateAsync(It.Is<TaskItem>(t => t.Id == taskId && t.Title == dto.Title)), Times.Once);
 		}
 
@@ -402,15 +401,15 @@ namespace TaskForge.Tests.Services
 			// Arrange
 			var taskId = 1;
 			var attachments = new List<TaskAttachment>
-	{
-		new TaskAttachment { Id = 101, FilePath = "file1.txt" },
-		new TaskAttachment { Id = 102, FilePath = "file2.txt" }
-	};
-			var assignments = new List<TaskAssignment>
-	{
-		new TaskAssignment { Id = 201 },
-		new TaskAssignment { Id = 202 }
-	};
+			{
+				new TaskAttachment { Id = 101, FilePath = "file1.txt" },
+				new TaskAttachment { Id = 102, FilePath = "file2.txt" }
+			};
+					var assignments = new List<TaskAssignment>
+			{
+				new TaskAssignment { Id = 201 },
+				new TaskAssignment { Id = 202 }
+			};
 
 			var task = new TaskItem
 			{
