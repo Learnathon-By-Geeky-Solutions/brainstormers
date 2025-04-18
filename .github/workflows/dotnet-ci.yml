@@ -50,7 +50,7 @@ jobs:
             /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" \
             /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
             /d:sonar.sources="TaskForge.NET" \
-            /d:sonar.exclusions="**/bin/**,**/obj/**,**/*.Designer.cs,**/Migrations/**,**/*.cshtml,**/*.css,**/*.cshtml.cs" \
+            /d:sonar.exclusions="**/bin/**,**/obj/**,**/*.Designer.cs,**/Migrations/**,**/*.cshtml,**/*.css,**/*.cshtml.cs,**/*.less,**/*.scss,**/*.js,**/*.json" \
             /d:sonar.tests="TaskForge.NET" \
             /d:sonar.test.inclusions="**/*Tests/**/*.cs,**/*.Tests.cs,**/*.Test.cs" \
             /d:sonar.sourceEncoding="UTF-8" \
