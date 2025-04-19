@@ -90,14 +90,41 @@ function GetTaskDetails(taskId) {
             $('#wrapper-blocked-dependent-tasks').hide();
 
             if (data.status === 0) {
+
+                $('#todo-dependent-tasks').val(null).trigger('change');
+                $('#todo-dependent-tasks option').prop('disabled', false);
                 $('#wrapper-todo-dependent-tasks').show();
+                data.dependentTaskIds.forEach(taskId => {
+                    $('#todo-dependent-tasks').find(`option[value="${taskId}"]`).prop('disabled', true);
+                });
+                $('#todo-dependent-tasks').val(data.dependsOnTaskIds).trigger('change');
+
             } else if (data.status === 1) {
+                $('#inprogress-dependent-tasks').val(null).trigger('change');
+                $('#inprogress-dependent-tasks option').prop('disabled', false);
                 $('#wrapper-inprogress-dependent-tasks').show();
+                data.dependentTaskIds.forEach(taskId => {
+                    $('#inprogress-dependent-tasks').find(`option[value="${taskId}"]`).prop('disabled', true);
+                });
+                $('#inprogress-dependent-tasks').trigger('change');
             } else if (data.status === 2) {
+                $('#done-dependent-tasks').val(null).trigger('change');
+                $('#done-dependent-tasks option').prop('disabled', false);
                 $('#wrapper-done-dependent-tasks').show();
+                data.dependentTaskIds.forEach(taskId => {
+                    $('#done-dependent-tasks').find(`option[value="${taskId}"]`).prop('disabled', true);
+                });
+                $('#done-dependent-tasks').trigger('change');
             } else if (data.status === 3) {
+                $('#blocked-dependent-tasks').val(null).trigger('change');
+                $('#blocked-dependent-tasks option').prop('disabled', false);
                 $('#wrapper-blocked-dependent-tasks').show();
+                data.dependentTaskIds.forEach(taskId => {
+                    $('#blocked-dependent-tasks').find(`option[value="${taskId}"]`).prop('disabled', true);
+                });
+                $('#blocked-dependent-tasks').trigger('change');
             }
+
 
             // Attachments
             $('#task-attachment-list').empty();
@@ -220,7 +247,7 @@ $('#taskEditForm').on('submit', function (e) {
         return;
     }
 
-    //console.log(formData);
+    console.log(formData);
     $.ajax({
         url: '/Task/Update',
         type: 'PUT',

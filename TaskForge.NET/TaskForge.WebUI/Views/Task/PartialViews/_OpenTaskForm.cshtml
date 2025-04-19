@@ -86,7 +86,7 @@
                         <div class="mb-3">
                             <label class="form-label small fw-semibold">Depends On</label>
                             <p class="mb-0" id="wrapper-todo-dependent-tasks">
-                                <select class="form-select form-selct-sm select2" id="todo-dependent-tasks" name="DependentTaskIds" multiple="multiple">
+                                <select class="form-select form-selct-sm select2" id="todo-dependent-tasks" name="DependsOnTaskIds" multiple="multiple">
                                     @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.ToDo))
                                     {
                                         <option value="@task.Id">@task.Title</option>
@@ -94,7 +94,7 @@
                                 </select>
                             </p>
                             <p class="mb-0" id="wrapper-inprogress-dependent-tasks">
-                                <select class="form-select form-select-sm select2" id="inprogress-dependent-tasks" name="DependentTaskIds" multiple="multiple">
+                                <select class="form-select form-select-sm select2" id="inprogress-dependent-tasks" name="DependsOnTaskIds" multiple="multiple">
 									@foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.InProgress))
 									{
 										<option value="@task.Id">@task.Title</option>
@@ -102,7 +102,7 @@
 								</select>
                             </p>
                             <p class="mb-0" id="wrapper-done-dependent-tasks">
-                                <select class="form-select form-select-sm select2" id="done-dependent-tasks" name="DependentTaskIds" multiple="multiple">
+                                <select class="form-select form-select-sm select2" id="done-dependent-tasks" name="DependsOnTaskIds" multiple="multiple">
                                     @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Done))
                                     {
                                         <option value="@task.Id">@task.Title</option>
@@ -110,7 +110,7 @@
                                 </select>
                             </p>
                             <p class="mb-0" id="wrapper-blocked-dependent-tasks">
-                                <select class="form-select form-select-sm select2" id="blocked-dependent-tasks" name="DependentTaskIds" multiple="multiple">
+                                <select class="form-select form-select-sm select2" id="blocked-dependent-tasks" name="DependsOnTaskIds" multiple="multiple">
                                     @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Blocked))
                                     {
                                         <option value="@task.Id">@task.Title</option>
@@ -118,6 +118,7 @@
                                 </select>
                             <p class="mb-0">
                             <div class="form-text">This task can’t be completed until the selected tasks are done.</div>
+                            <div class="form-text">Some tasks are disabled because they either depend on the current task or the current task itself.</div>
                         </div>
                     </div>
 

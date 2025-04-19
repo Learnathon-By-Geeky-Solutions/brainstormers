@@ -2,6 +2,7 @@
 using System.Linq.Expressions;
 using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
+using TaskForge.Application.Helpers.DependencyResolvers;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
@@ -17,10 +18,12 @@ namespace TaskForge.Application.Services
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileService _fileService;
-        public TaskService(IUnitOfWork unitOfWork, IFileService fileService)
+        private readonly IDependentTaskStrategy _dependentTaskStrategy;
+        public TaskService(IUnitOfWork unitOfWork, IFileService fileService, IDependentTaskStrategy dependentTaskStrategy)
         {
             _unitOfWork = unitOfWork;
             _fileService = fileService;
+            _dependentTaskStrategy = dependentTaskStrategy;
         }
 
         public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
@@ -39,11 +42,21 @@ namespace TaskForge.Application.Services
             Func<IQueryable<TaskItem>, IQueryable<TaskItem>> includes = query =>
                 query.Include(t => t.Attachments.Where(a => !a.IsDeleted))
                      .Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile)
+                     .Include(t => t.Dependencies)
                      .Include(t => t.Project);
 
             var result = await _unitOfWork.Tasks.FindByExpressionAsync(predicate, includes: includes);
 
             return result.FirstOrDefault();
+        }
+
+        public async Task<List<int>> GetDependentTaskIdsAsync(int id, TaskWorkflowStatus status)
+        {
+            await _dependentTaskStrategy.InitializeAsync(status);
+
+            var result = await _dependentTaskStrategy.GetDependentTaskIdsAsync(id);
+
+            return result;
         }
 
         public async Task CreateTaskAsync(TaskDto taskDto)
@@ -138,6 +151,7 @@ namespace TaskForge.Application.Services
                     .Include(t => t.Attachments.Where(a => !a.IsDeleted))
                     .Include(t => t.AssignedUsers)
                     .ThenInclude(au => au.UserProfile)
+                    .Include(t => t.Dependencies)
             );
 
             var task = taskList.FirstOrDefault();
@@ -171,11 +185,11 @@ namespace TaskForge.Application.Services
 
             // Step 4: Update dependent tasks if any
             task.Dependencies.Clear();
-            if (dto.DependentTaskIds != null && dto.DependentTaskIds.Any())
+            if (dto.DependsOnTaskIds != null && dto.DependsOnTaskIds.Any())
             {
-                foreach (var dependentTask in dto.DependentTaskIds)
+                foreach (var dependsOnTaskId in dto.DependsOnTaskIds)
                 {
-                    task.Dependencies.Add(new TaskDependency { DependsOnTaskId = dependentTask });
+                    task.Dependencies.Add(new TaskDependency { DependsOnTaskId = dependsOnTaskId });
                 }
             }
 
