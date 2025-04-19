@@ -106,7 +106,7 @@ function GetTaskDetails(taskId) {
                 data.dependentTaskIds.forEach(taskId => {
                     $('#inprogress-dependent-tasks').find(`option[value="${taskId}"]`).prop('disabled', true);
                 });
-                $('#inprogress-dependent-tasks').trigger('change');
+                $('#inprogress-dependent-tasks').val(data.dependsOnTaskIds).trigger('change');
             } else if (data.status === 2) {
                 $('#done-dependent-tasks').val(null).trigger('change');
                 $('#done-dependent-tasks option').prop('disabled', false);
@@ -114,7 +114,7 @@ function GetTaskDetails(taskId) {
                 data.dependentTaskIds.forEach(taskId => {
                     $('#done-dependent-tasks').find(`option[value="${taskId}"]`).prop('disabled', true);
                 });
-                $('#done-dependent-tasks').trigger('change');
+                $('#done-dependent-tasks').val(data.dependsOnTaskIds).trigger('change');
             } else if (data.status === 3) {
                 $('#blocked-dependent-tasks').val(null).trigger('change');
                 $('#blocked-dependent-tasks option').prop('disabled', false);
@@ -122,7 +122,7 @@ function GetTaskDetails(taskId) {
                 data.dependentTaskIds.forEach(taskId => {
                     $('#blocked-dependent-tasks').find(`option[value="${taskId}"]`).prop('disabled', true);
                 });
-                $('#blocked-dependent-tasks').trigger('change');
+                $('#blocked-dependent-tasks').val(data.dependsOnTaskIds).trigger('change');
             }
 
 
