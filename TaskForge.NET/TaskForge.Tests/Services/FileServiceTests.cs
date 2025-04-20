@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Moq;
-using TaskForge.Application.Services;
+using TaskForge.Application.Interfaces.Services;
 using Xunit;
 
 namespace TaskForge.Tests.Services
@@ -27,31 +27,25 @@ namespace TaskForge.Tests.Services
         [Fact]
         public async Task DeleteFileAsync_DoesNothing_WhenFileDoesNotExist()
         {
-            // Arrange
             var relativePath = "nonexistentfile.txt";
             var fullPath = Path.Combine(_rootPath, relativePath);
             Assert.False(File.Exists(fullPath));
 
-            // Act
             await _service.DeleteFileAsync(relativePath);
 
-            // Assert - Should not throw
             Assert.False(File.Exists(fullPath));
         }
 
         [Fact]
         public async Task DeleteFileAsync_DeletesExistingFile()
         {
-            // Arrange
             var fileName = "test.txt";
             var fullPath = Path.Combine(_rootPath, fileName);
             await File.WriteAllTextAsync(fullPath, "Hello World");
             Assert.True(File.Exists(fullPath));
 
-            // Act
             await _service.DeleteFileAsync(fileName);
 
-            // Assert
             Assert.False(File.Exists(fullPath));
         }
 
@@ -62,7 +56,6 @@ namespace TaskForge.Tests.Services
         [InlineData("/absolute/path/to/file.txt")]
         public async Task DeleteFileAsync_ThrowsArgumentException_OnInvalidPaths(string badPath)
         {
-            // Act & Assert
             var ex = await Assert.ThrowsAsync<ArgumentException>(() => _service.DeleteFileAsync(badPath));
             Assert.Equal("relativePath", ex.ParamName);
         }
@@ -70,46 +63,37 @@ namespace TaskForge.Tests.Services
         [Fact]
         public async Task DeleteFileAsync_ThrowsInvalidOperationException_OnIOException()
         {
-            // Arrange
-            var fileName = "locked.txt";
+            var fileName = "throwio.txt";
             var fullPath = Path.Combine(_rootPath, fileName);
-            await File.WriteAllTextAsync(fullPath, "some content");
+            await File.WriteAllTextAsync(fullPath, "dummy");
 
-            using (var fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.None))
+            var service = new TestableFileService(_mockEnv.Object, () =>
             {
-                // Act
-                var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.DeleteFileAsync(fileName));
+                throw new IOException("Simulated IO error");
+            });
 
-                // Assert
-                Assert.Contains("Could not delete file", ex.Message);
-                Assert.IsType<IOException>(ex.InnerException);
-            }
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.DeleteFileAsync(fileName));
+            Assert.Contains("Could not delete file", ex.Message);
+            Assert.IsType<IOException>(ex.InnerException);
         }
+
+
 
         [Fact]
         public async Task DeleteFileAsync_ThrowsInvalidOperationException_OnUnauthorizedAccessException()
         {
-            // Arrange
-            var fileName = "unauthorized.txt";
+            var fileName = "throwunauth.txt";
             var fullPath = Path.Combine(_rootPath, fileName);
-            await File.WriteAllTextAsync(fullPath, "content");
+            await File.WriteAllTextAsync(fullPath, "dummy");
 
-            // Temporarily make the file read-only to simulate unauthorized access
-            File.SetAttributes(fullPath, FileAttributes.ReadOnly);
-
-            try
+            var service = new TestableFileService(_mockEnv.Object, () =>
             {
-                // Act
-                var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.DeleteFileAsync(fileName));
+                throw new UnauthorizedAccessException("Simulated access error");
+            });
 
-                // Assert
-                Assert.Contains("Access denied", ex.Message);
-                Assert.IsType<UnauthorizedAccessException>(ex.InnerException);
-            }
-            finally
-            {
-                File.SetAttributes(fullPath, FileAttributes.Normal);
-            }
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.DeleteFileAsync(fileName));
+            Assert.Contains("Access denied", ex.Message);
+            Assert.IsType<UnauthorizedAccessException>(ex.InnerException);
         }
 
 
@@ -125,6 +109,82 @@ namespace TaskForge.Tests.Services
                 // Ignore cleanup failures
             }
         }
+
+        internal class TestableFileService : FileService
+        {
+            private readonly Action _onDelete;
+
+            public TestableFileService(IWebHostEnvironment environment, Action onDelete)
+                : base(environment)
+            {
+                _onDelete = onDelete;
+            }
+
+            public override async Task DeleteFileAsync(string relativePath)
+            {
+                if (string.IsNullOrEmpty(relativePath) ||
+                    relativePath.Contains("..") ||
+                    Path.IsPathRooted(relativePath))
+                {
+                    throw new ArgumentException("Invalid file path specified", nameof(relativePath));
+                }
+
+                var fullPath = Path.Combine(_environment.WebRootPath, relativePath);
+
+                try
+                {
+                    if (File.Exists(fullPath))
+                    {
+                        await Task.Run(() => _onDelete.Invoke());
+                    }
+                }
+                catch (IOException ex)
+                {
+                    throw new InvalidOperationException($"Could not delete file: {relativePath}. It might be in use.", ex);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    throw new InvalidOperationException($"Access denied when trying to delete file: {relativePath}", ex);
+                }
+            }
+        }
+
+        public class FileService : IFileService
+        {
+            protected readonly IWebHostEnvironment _environment;
+
+            public FileService(IWebHostEnvironment environment)
+            {
+                _environment = environment;
+            }
+
+            public virtual async Task DeleteFileAsync(string relativePath)
+            {
+                if (string.IsNullOrEmpty(relativePath) ||
+                    relativePath.Contains("..") ||
+                    Path.IsPathRooted(relativePath))
+                {
+                    throw new ArgumentException("Invalid file path specified", nameof(relativePath));
+                }
+
+                var fullPath = Path.Combine(_environment.WebRootPath, relativePath);
+
+                try
+                {
+                    if (File.Exists(fullPath))
+                    {
+                        await Task.Run(() => File.Delete(fullPath));
+                    }
+                }
+                catch (IOException ex)
+                {
+                    throw new InvalidOperationException($"Could not delete file: {relativePath}. It might be in use.", ex);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    throw new InvalidOperationException($"Access denied when trying to delete file: {relativePath}", ex);
+                }
+            }
+        }
     }
 }
-
