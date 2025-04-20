@@ -55,18 +55,20 @@ namespace TaskForge.Tests.Services
             Assert.False(File.Exists(fullPath));
         }
 
-        public void Dispose()
-        {
-            try
-            {
-                if (Directory.Exists(_rootPath))
-                    Directory.Delete(_rootPath, recursive: true);
-            }
-            catch
-            {
-                // Ignore cleanup failures
-            }
-        }
-    }
+		public void Dispose()
+		{
+			try
+			{
+				if (Directory.Exists(_rootPath))
+					Directory.Delete(_rootPath, recursive: true);
+			}
+			catch
+			{
+				// Ignore cleanup failures
+			}
+
+			GC.SuppressFinalize(this);
+		}
+	}
 }
 
