@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting;
 using Moq;
 using TaskForge.Application.Interfaces.Services;
 using Xunit;
@@ -108,6 +108,7 @@ namespace TaskForge.Tests.Services
             {
                 // Ignore cleanup failures
             }
+            GC.SuppressFinalize(this);
         }
 
         internal class TestableFileService : FileService
