@@ -259,6 +259,7 @@ namespace TaskForge.WebUI.Controllers
                 TaskItems = taskList.Select(t => new TaskItemViewModel
                 {
                     Id = t.Id,
+                    ProjectId = t.ProjectId,
                     Title = t.Title,
                     Description = t.Description,
                     Status = t.Status,
