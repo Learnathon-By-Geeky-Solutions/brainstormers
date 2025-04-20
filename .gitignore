@@ -91,3 +91,8 @@ packages/
 # Ignore media files 
 **/uploads
 
+/TaskForge.NET/coverage-report
+/TaskForge.NET/coveragereport
+/TaskForge.NET/TaskForge.Tests/TestResults
+/TaskForge.NET/TaskForge.Tests/coveragereport
+/TaskForge.NET/TestResults
