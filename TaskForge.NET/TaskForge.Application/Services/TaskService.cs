@@ -97,7 +97,7 @@ namespace TaskForge.Application.Services
 	        if (taskDto.DueDate != null) taskItem.SetDueDate(taskDto.DueDate);
 
 	        // Save attachments if any
-	        if (taskDto.Attachments != null && taskDto.Attachments.Any())
+	        if (taskDto.Attachments != null && taskDto.Attachments.Count > 0)
 	        {
 		        foreach (var file in taskDto.Attachments)
 		        {
@@ -109,7 +109,7 @@ namespace TaskForge.Application.Services
 				        var StoredFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
 				        var filePath = Path.Combine(uploadsFolder, StoredFileName);
 
-				        using (var stream = new FileStream(filePath, FileMode.Create))
+				        await using (var stream = new FileStream(filePath, FileMode.Create))
 				        {
 					        await file.CopyToAsync(stream);
 				        }
@@ -160,7 +160,7 @@ namespace TaskForge.Application.Services
 
             // Step 3: Update assigned members if any
             task.AssignedUsers.Clear();
-            if (dto.AssignedUserIds != null && dto.AssignedUserIds.Any())
+            if (dto.AssignedUserIds != null && dto.AssignedUserIds.Count > 0)
             {
                 var users = await _unitOfWork.UserProfiles.FindByExpressionAsync(u => dto.AssignedUserIds.Contains(u.Id));
                 foreach (var user in users)
@@ -171,7 +171,7 @@ namespace TaskForge.Application.Services
 
 
             // Step 4: Handle attachments (if any)
-            if (dto.Attachments != null && dto.Attachments.Any())
+            if (dto.Attachments != null && dto.Attachments.Count > 0)
             {
                 foreach (var file in dto.Attachments)
                 {
@@ -222,7 +222,7 @@ namespace TaskForge.Application.Services
 				throw new KeyNotFoundException("Task not found");
 
 			// Delete media files associated with attachments (if any)
-			if (taskItem.Attachments != null && taskItem.Attachments.Any())
+			if (taskItem.Attachments != null && taskItem.Attachments.Count > 0)
 			{
 				foreach (var attachment in taskItem.Attachments)
 				{
@@ -234,7 +234,7 @@ namespace TaskForge.Application.Services
 			}
 
 			// Soft delete assignments (if any)
-			if (taskItem.AssignedUsers != null && taskItem.AssignedUsers.Any())
+			if (taskItem.AssignedUsers != null && taskItem.AssignedUsers.Count > 0)
 			{
 				var assignmentIds = taskItem.AssignedUsers.Select(a => a.Id);
 				await _unitOfWork.TaskAssignments.DeleteByIdsAsync(assignmentIds);
