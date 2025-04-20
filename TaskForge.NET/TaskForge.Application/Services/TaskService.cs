@@ -55,7 +55,7 @@ namespace TaskForge.Application.Services
 
 
             Expression<Func<TaskItem, bool>> _predicate = t => userProjectIds.Contains(t.ProjectId);
-            Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>> _orderBy = query => query.OrderBy(t => t.DueDate);
+            Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>> _orderBy = query => query.OrderByDescending(t => t.UpdatedDate);
 
             var (taskList, totalCount) = await _unitOfWork.Tasks.GetPaginatedListAsync(
                 predicate: _predicate,
