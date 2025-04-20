@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using TaskForge.Application.Helpers.DependencyResolvers;
+using TaskForge.Application.Helpers.TaskSorters;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
@@ -100,6 +101,7 @@ namespace TaskForge.WebUI
 
 
             builder.Services.AddScoped<IDependentTaskStrategy, RecursiveDependentTaskStrategy>();
+            builder.Services.AddScoped<ITaskSorter, TopologicalTaskSorter>();
 
             var app = builder.Build();
 
