@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
+using TaskForge.Application.Helpers.TaskSorters;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
@@ -18,29 +19,31 @@ namespace TaskForge.Tests.Controllers
 {
     public class ProjectControllerTests
     {
-        private readonly Mock<IProjectService> _projectServiceMock = new();
-        private readonly Mock<IProjectMemberService> _projectMemberServiceMock = new();
-        private readonly Mock<ITaskService> _taskServiceMock = new();
-        private readonly Mock<IProjectInvitationService> _invitationServiceMock = new();
-        private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
+		private readonly Mock<IProjectService> _projectServiceMock = new();
+		private readonly Mock<IProjectMemberService> _projectMemberServiceMock = new();
+		private readonly Mock<ITaskService> _taskServiceMock = new();
+		private readonly Mock<IProjectInvitationService> _invitationServiceMock = new();
+		private readonly Mock<ITaskSorter> _taskSorterMock = new();
+		private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
 
-        public ProjectControllerTests()
-        {
+		public ProjectControllerTests()
+		{
+			_userManagerMock = new Mock<UserManager<IdentityUser>>(
+				Mock.Of<IUserStore<IdentityUser>>(),
+				null, null, null, null, null, null, null, null);
+		}
 
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-            _userManagerMock = new Mock<UserManager<IdentityUser>>(
-                Mock.Of<IUserStore<IdentityUser>>(),
-                null, null, null, null, null, null, null, null);
-        }
+		private ProjectController CreateController() =>
+			new(
+				_projectMemberServiceMock.Object,
+				_projectServiceMock.Object,
+				_taskServiceMock.Object,
+				_taskSorterMock.Object, 
+				_invitationServiceMock.Object,
+				_userManagerMock.Object
+			);
 
-        private ProjectController CreateController() =>
-            new(_projectMemberServiceMock.Object,
-                _projectServiceMock.Object,
-                _taskServiceMock.Object,
-                _invitationServiceMock.Object,
-                _userManagerMock.Object);
-
-        [Fact]
+		[Fact]
         public async Task Index_ValidRequest_ReturnsViewWithProjectList()
         {
             var userId = "test-123";

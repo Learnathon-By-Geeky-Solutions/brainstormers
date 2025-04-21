@@ -232,10 +232,12 @@ namespace TaskForge.WebUI.Controllers
 
             var taskList = (await _taskService.GetTaskListAsync(project.Id)).ToList();
 
-            var sortedTodoTasks = (await _taskSorter.GetTopologicalOrderingsAsync(TaskWorkflowStatus.ToDo)).ToList();
-            var sortedInProgressTasks = (await _taskSorter.GetTopologicalOrderingsAsync(TaskWorkflowStatus.InProgress)).ToList();
-			var sortedCompletedTasks = (await _taskSorter.GetTopologicalOrderingsAsync(TaskWorkflowStatus.Done)).ToList();
-            var sortedBlockedTasks = (await _taskSorter.GetTopologicalOrderingsAsync(TaskWorkflowStatus.Blocked)).ToList();
+            var sortedTodoTasks = await _taskSorter.GetTopologicalOrderingsAsync(TaskWorkflowStatus.ToDo) ?? [];
+            var sortedInProgressTasks = await _taskSorter.GetTopologicalOrderingsAsync(TaskWorkflowStatus.InProgress) ?? [];
+            var sortedCompletedTasks = await _taskSorter.GetTopologicalOrderingsAsync(TaskWorkflowStatus.Done) ?? [];
+            var sortedBlockedTasks = await _taskSorter.GetTopologicalOrderingsAsync(TaskWorkflowStatus.Blocked) ?? [];
+
+
 
 			var model = new ProjectDashboardViewModel
             {
