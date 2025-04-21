@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using System.Security.Claims;
@@ -10,7 +9,7 @@ using TaskForge.Domain.Enums;
 using TaskForge.WebUI.Controllers;
 using TaskForge.WebUI.Models;
 using Xunit;
-namespace TaskForge.Tests.WebUILayer
+namespace TaskForge.Tests.WebUI.Controllers
 {
     public class HomeControllerTests
     {
@@ -58,7 +57,6 @@ namespace TaskForge.Tests.WebUILayer
             var viewResult = Assert.IsType<ViewResult>(result);
             Assert.Equal("Welcome", viewResult.ViewName);
         }
-
         [Fact]
         public async Task Index_ModelStateInvalid_RedirectsToIndex()
         {
@@ -71,7 +69,6 @@ namespace TaskForge.Tests.WebUILayer
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirectResult.ActionName);
         }
-
         [Fact]
         public async Task Index_UserIsNull_RedirectsToLogin()
         {
@@ -86,7 +83,6 @@ namespace TaskForge.Tests.WebUILayer
             Assert.Equal("Login", redirectResult.ActionName);
             Assert.Equal("Account", redirectResult.ControllerName);
         }
-
         [Fact]
         public async Task Index_UserProfileNotFound_ReturnsNotFound()
         {
@@ -101,7 +97,6 @@ namespace TaskForge.Tests.WebUILayer
 
             Assert.IsType<NotFoundResult>(result);
         }
-
         [Fact]
         public async Task Index_ValidUser_ReturnsDashboardViewWithFullTaskDtoCoverage()
         {
@@ -192,6 +187,6 @@ namespace TaskForge.Tests.WebUILayer
             Assert.Equal(TaskPriority.Medium, secondTask.Priority);
             Assert.NotNull(secondTask.Attachments);
         }
-    }
 
+    }
 }

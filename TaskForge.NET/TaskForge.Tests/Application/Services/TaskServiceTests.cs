@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Moq;
+﻿using Moq;
 using System.Linq.Expressions;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Helpers.DependencyResolvers;
@@ -10,14 +9,14 @@ using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
 using Xunit;
 
-namespace TaskForge.Tests.Services
+namespace TaskForge.Tests.Application.Services
 {
     public class TaskServiceTests
     {
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IFileService> _fileServiceMock;
         private readonly Mock<IDependentTaskStrategy> _dependentTaskStrategyMock = new();
-		private readonly TaskService _taskService;
+        private readonly TaskService _taskService;
 
         public TaskServiceTests()
         {
@@ -458,7 +457,7 @@ namespace TaskForge.Tests.Services
             var ex = await Assert.ThrowsAsync<KeyNotFoundException>(() => _taskService.RemoveTaskAsync(999));
             Assert.Equal("Task not found", ex.Message);
         }
-       
+
 
 
         [Fact]

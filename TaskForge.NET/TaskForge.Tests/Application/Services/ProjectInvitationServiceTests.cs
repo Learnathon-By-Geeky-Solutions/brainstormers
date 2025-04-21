@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Query;
-using Microsoft.Extensions.Logging;
 using Moq;
 using System.Linq.Expressions;
 using TaskForge.Application.Interfaces.Repositories;
@@ -10,7 +9,7 @@ using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
 using Xunit;
 
-namespace TaskForge.Tests.Services
+namespace TaskForge.Tests.Application.Services
 {
     public class ProjectInvitationServiceTests
     {

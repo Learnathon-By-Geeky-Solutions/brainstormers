@@ -7,7 +7,7 @@ using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
 using Xunit;
 
-namespace TaskForge.Tests.Services
+namespace TaskForge.Tests.Application.Services
 {
     public class ProjectMemberServiceTests
     {
@@ -205,7 +205,7 @@ namespace TaskForge.Tests.Services
                     It.IsAny<Func<IQueryable<ProjectMember>, IQueryable<ProjectMember>>>(),
                     null,
                     null))
-                .ThrowsAsync(new System.Exception("Database error"));
+                .ThrowsAsync(new Exception("Database error"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _projectMemberService.GetUserProjectRoleAsync(userId, projectId));
