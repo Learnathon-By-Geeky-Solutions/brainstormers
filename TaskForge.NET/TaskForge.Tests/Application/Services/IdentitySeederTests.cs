@@ -1,12 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Moq;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Application.Services;
 using Xunit;
 
-namespace TaskForge.Tests.Services
+namespace TaskForge.Tests.Application.Services
 {
     public class IdentitySeederTests
     {

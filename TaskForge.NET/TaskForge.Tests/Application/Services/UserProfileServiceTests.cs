@@ -6,7 +6,7 @@ using TaskForge.Application.Services;
 using TaskForge.Domain.Entities;
 using Xunit;
 
-namespace TaskForge.Tests.Services
+namespace TaskForge.Tests.Application.Services
 {
     public class UserProfileServiceTests
     {

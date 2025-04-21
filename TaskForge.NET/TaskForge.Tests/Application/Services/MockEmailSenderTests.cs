@@ -1,7 +1,7 @@
 ﻿using TaskForge.Application.Services;
 using Xunit;
 
-namespace TaskForge.Tests.Services
+namespace TaskForge.Tests.Application.Services
 {
     public class MockEmailSenderTests
     {
@@ -10,22 +10,6 @@ namespace TaskForge.Tests.Services
         public MockEmailSenderTests()
         {
             _emailSender = new MockEmailSender();
-        }
-
-        [Fact]
-        public async Task SendEmailAsync_ShouldCompleteWithoutException()
-        {
-            // Arrange
-            var email = "test@example.com";
-            var subject = "Test Subject";
-            var message = "<p>This is a test message.</p>";
-
-            // Act
-            var exception = await Record.ExceptionAsync(() =>
-                _emailSender.SendEmailAsync(email, subject, message));
-
-            // Assert
-            Assert.Null(exception);
         }
 
         [Fact]

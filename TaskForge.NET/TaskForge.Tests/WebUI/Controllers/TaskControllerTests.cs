@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Routing;
 using Moq;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
@@ -13,7 +11,7 @@ using TaskForge.WebUI.Controllers;
 using TaskForge.WebUI.Models;
 using Xunit;
 
-namespace TaskForge.Tests.Controllers
+namespace TaskForge.Tests.WebUI.Controllers
 {
     public class TaskControllerTests
     {
@@ -299,6 +297,8 @@ namespace TaskForge.Tests.Controllers
         }
         [Fact]
 
+
+
         public void SetDueDate_DueBeforeStart_ThrowsValidationException()
         {
             var task = new TaskItem
@@ -337,8 +337,6 @@ namespace TaskForge.Tests.Controllers
             Assert.Equal(originalStart, task.StartDate);
             Assert.Equal(TaskWorkflowStatus.InProgress, task.Status);
         }
-
-
 
 
 
