@@ -9,8 +9,9 @@ namespace TaskForge.Tests.Helpers
         public TestApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
+
         }
 
-        public DbSet<FakeEntity> FakeEntities { get; set; } = null!;
+        public DbSet<FakeEntity> FakeEntities => Set<FakeEntity>();
     }
 }
