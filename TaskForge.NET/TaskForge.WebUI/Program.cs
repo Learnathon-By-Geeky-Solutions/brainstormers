@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using TaskForge.Application.Helpers.DependencyResolvers;
+using TaskForge.Application.Helpers.TaskSorters;
 using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
@@ -87,6 +89,8 @@ namespace TaskForge.WebUI
             builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
             builder.Services.AddScoped<IProjectMemberRepository, ProjectMemberRepository>();
             builder.Services.AddScoped<ITaskAttachmentRepository, TaskAttachmentRepository>();
+            builder.Services.AddScoped<ITaskAssignmentRepository, TaskAssignmentRepository>();
+            builder.Services.AddScoped<ITaskDependencyRepository, TaskDependencyRepository>();
 
             builder.Services.AddScoped<IProjectService, ProjectService>();
             builder.Services.AddScoped<ITaskService, TaskService>();
@@ -95,6 +99,9 @@ namespace TaskForge.WebUI
             builder.Services.AddScoped<IUserProfileService, UserProfileService>();
             builder.Services.AddScoped<IFileService, FileService>();
 
+
+            builder.Services.AddScoped<IDependentTaskStrategy, RecursiveDependentTaskStrategy>();
+            builder.Services.AddScoped<ITaskSorter, TopologicalTaskSorter>();
 
             var app = builder.Build();
 

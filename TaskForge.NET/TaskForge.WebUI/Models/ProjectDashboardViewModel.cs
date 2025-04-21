@@ -20,12 +20,17 @@ namespace TaskForge.WebUI.Models
         public int TotalTasks { get; set; }
         public int PendingTasks { get; set; }
         public int CompletedTasks { get; set; }
-        public List<TaskItemViewModel> TaskItems { get; set; } = new();
+        public List<List<List<int>>> SortedTodoTasks { get; set; } = [];
+        public List<List<List<int>>> SortedInProgressTasks { get; set; } = [];
+		public List<List<List<int>>> SortedCompletedTasks { get; set; } = [];
+		public List<List<List<int>>> SortedBlockedTasks { get; set; } = [];
 
-        // Team Members
-        public List<ProjectMemberViewModel> Members { get; set; } = new();
-        public List<InviteViewModel> Invitations { get; set; } = new();
+		public List<TaskItemViewModel> TaskItems { get; set; } = [];
 
-    }
+		// Team Members
+		public List<ProjectMemberViewModel> Members { get; set; } = [];
+		public List<InviteViewModel> Invitations { get; set; } = [];
+
+	}
 
 }

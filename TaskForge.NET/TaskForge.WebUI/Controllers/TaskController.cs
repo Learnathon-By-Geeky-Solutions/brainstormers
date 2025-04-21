@@ -60,6 +60,9 @@ namespace TaskForge.WebUI.Controllers
             if (task == null) return NotFound();
 
             var allUsers = await _projectMemberService.GetProjectMembersAsync(task.ProjectId);
+
+            var dependentTaskIds = await _taskService.GetDependentTaskIdsAsync(id, task.Status);
+
             return Json(new
             {
                 id = task.Id,
@@ -76,7 +79,9 @@ namespace TaskForge.WebUI.Controllers
                     downloadUrl = Url.Content($"~/uploads/tasks/{a.StoredFileName}")
                 }),
                 assignedUserIds = task.AssignedUsers.Select(u => u.UserProfileId),
-                allUsers = allUsers.Select(u => new { id = u.UserProfileId, name = u.Name })
+                allUsers = allUsers.Select(u => new { id = u.UserProfileId, name = u.Name }),
+                dependsOnTaskIds = task.Dependencies.Select(u => u.DependsOnTaskId),
+                dependentTaskIds
             });
         }
 

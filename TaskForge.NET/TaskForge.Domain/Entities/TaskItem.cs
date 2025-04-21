@@ -23,12 +23,14 @@ namespace TaskForge.Domain.Entities
         public DateTime? StartDate { get; set; }
         public DateTime? DueDate { get; private set; }
 
-        public ICollection<TaskAttachment> Attachments { get; set; } = new List<TaskAttachment>();
+        public IList<TaskAttachment> Attachments { get; set; } = new List<TaskAttachment>();
+        public virtual IList<TaskAssignment> AssignedUsers { get; set; } = new List<TaskAssignment>();
 
-        public virtual ICollection<TaskAssignment> AssignedUsers { get; set; } = new List<TaskAssignment>();
+        // Tasks this one depends on
+        public IList<TaskDependency> Dependencies { get; set; } = new List<TaskDependency>();
 
-        public ICollection<TaskDependency> Dependencies { get; set; } = new List<TaskDependency>(); // Tasks this one depends on
-        public ICollection<TaskDependency> DependentOnThis { get; set; } = new List<TaskDependency>(); // Tasks that depend on this one
+        // Tasks that depend on this one
+        public IList<TaskDependency> DependentOnThis { get; set; } = new List<TaskDependency>(); 
 
         public void SetDueDate(DateTime? dueDate)
         {

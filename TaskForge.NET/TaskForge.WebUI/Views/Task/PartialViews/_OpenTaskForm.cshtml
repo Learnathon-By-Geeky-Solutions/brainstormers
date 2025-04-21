@@ -1,0 +1,136 @@
+﻿@using TaskForge.Domain.Enums
+@model TaskForge.WebUI.Models.ProjectDashboardViewModel
+
+<style>
+    .select2-selection--single,
+    .select2-selection--multiple {
+        min-height: 30px;
+        padding: 0.05rem 0.05rem;
+        font-size: 0.85rem;
+    }
+
+    .select2-results__option {
+        font-size: 0.85rem; /* Bootstrap sm font */
+    }
+</style>
+
+
+<form id="taskEditForm" enctype="multipart/form-data">
+    <input type="hidden" name="Id" id="task-id" />
+
+    <div class="px-2">
+        <div class="row gy-3">
+            <!-- Task Info Group -->
+            <div class="col-md-12">
+                <h6 class="fw-semibold mb-2 border-bottom pb-1">Task Information</h6>
+                <div class="row gy-2 gx-3">
+                    <div class="col-md-8">
+                        <label for="task-title" class="form-label fw-semibold small">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" id="task-title" name="Title" placeholder="Task title" />
+                        <div class="invalid-feedback" id="title-error">Title is required and must be under 200 characters.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="task-priority" class="form-label fw-semibold small">Priority</label>
+                        <select class="form-select form-select-sm" id="task-priority" name="Priority">
+                            <option value="0">Low</option>
+                            <option value="1">Medium</option>
+                            <option value="2">High</option>
+                            <option value="3">Critical</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label for="task-description" class="form-label fw-semibold small">Description</label>
+                        <textarea class="form-control form-control-sm" id="task-description" name="Description" rows="3" placeholder="Write a brief description..."></textarea>
+                        <div class="invalid-feedback" id="description-error">Description must be under 1000 characters.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule & Status -->
+            <div class="col-md-12 mt-3">
+                <h6 class="fw-semibold mb-2 border-bottom pb-1">Schedule & Status</h6>
+                <div class="row gy-2 gx-3">
+                    <div class="col-md-4">
+                        <label for="task-status" class="form-label fw-semibold small">Status</label>
+                        <select class="form-select form-select-sm" id="task-status" name="Status">
+                            <option value="0">To Do</option>
+                            <option value="1">In Progress</option>
+                            <option value="2">Done</option>
+                            <option value="3">Blocked</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="task-startdate" class="form-label fw-semibold small">Start Date</label>
+                        <input type="date" class="form-control form-control-sm" id="task-startdate" name="StartDate" />
+                    </div>
+                    <div class="col-md-4">
+                        <label for="task-duedate" class="form-label fw-semibold small">Due Date</label>
+                        <input type="date" class="form-control form-control-sm" id="task-duedate" name="DueDate" />
+                        <div class="invalid-feedback" id="duedate-error">Due Date cannot be earlier than Start Date.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Members & Attachments -->
+            <div class="col-md-12 mt-3">
+                <h6 class="fw-semibold mb-2 border-bottom pb-1">Assignments & Files</h6>
+                <div class="row gy-2 gx-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold" for="task-members">Assigned Members</label>
+                            <select class="form-select form-select-sm select2" id="task-members" name="AssignedUserIds" multiple="multiple">
+
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Depends On</label>
+                            <p class="mb-0" id="wrapper-todo-dependent-tasks">
+                                <select class="form-select form-selct-sm select2" id="todo-dependent-tasks" name="DependsOnTaskIds" multiple="multiple">
+                                    @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.ToDo))
+                                    {
+                                        <option value="@task.Id">@task.Title</option>
+                                    }
+                                </select>
+                            </p>
+                            <p class="mb-0" id="wrapper-inprogress-dependent-tasks">
+                                <select class="form-select form-select-sm select2" id="inprogress-dependent-tasks" name="DependsOnTaskIds" multiple="multiple">
+									@foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.InProgress))
+									{
+										<option value="@task.Id">@task.Title</option>
+									}
+								</select>
+                            </p>
+                            <p class="mb-0" id="wrapper-done-dependent-tasks">
+                                <select class="form-select form-select-sm select2" id="done-dependent-tasks" name="DependsOnTaskIds" multiple="multiple">
+                                    @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Done))
+                                    {
+                                        <option value="@task.Id">@task.Title</option>
+                                    }
+                                </select>
+                            </p>
+                            <p class="mb-0" id="wrapper-blocked-dependent-tasks">
+                                <select class="form-select form-select-sm select2" id="blocked-dependent-tasks" name="DependsOnTaskIds" multiple="multiple">
+                                    @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Blocked))
+                                    {
+                                        <option value="@task.Id">@task.Title</option>
+                                    }
+                                </select>
+                            <p class="mb-0">
+                            <div class="form-text">This task can’t be completed until the selected tasks are done.</div>
+                            <div class="form-text">Some tasks are disabled because they either depend on the current task or the current task itself.</div>
+                        </div>
+                    </div>
+
+
+                    <div class="col-md-6">
+                        <label for="task-attachments" class="form-label fw-semibold small">Attachments</label>
+                        <input type="file" class="form-control form-control-sm" id="task-attachments" name="Attachments" multiple />
+                        <div class="invalid-feedback d-block attachments-error small" style="display: none;"></div>
+                        <ul class="list-group list-group-sm mt-2" id="task-attachment-list" style="font-size: 0.875rem;"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
