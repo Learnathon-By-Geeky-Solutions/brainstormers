@@ -7,6 +7,7 @@ using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
+using TaskForge.Application.Helpers.TaskSorters;
 
 namespace TaskForge.Application.Services
 {
@@ -18,12 +19,14 @@ namespace TaskForge.Application.Services
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileService _fileService;
-        private readonly IDependentTaskStrategy _dependentTaskStrategy;
-        public TaskService(IUnitOfWork unitOfWork, IFileService fileService, IDependentTaskStrategy dependentTaskStrategy)
+		private readonly ITaskSorter _taskSorter;
+		private readonly IDependentTaskStrategy _dependentTaskStrategy;
+        public TaskService(IUnitOfWork unitOfWork, IFileService fileService, IDependentTaskStrategy dependentTaskStrategy, ITaskSorter taskSorter)
         {
             _unitOfWork = unitOfWork;
             _fileService = fileService;
-            _dependentTaskStrategy = dependentTaskStrategy;
+			_taskSorter = taskSorter;
+			_dependentTaskStrategy = dependentTaskStrategy;
         }
 
         public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
@@ -50,7 +53,15 @@ namespace TaskForge.Application.Services
             return result.FirstOrDefault();
         }
 
-        public async Task<List<int>> GetDependentTaskIdsAsync(int id, TaskWorkflowStatus status)
+		public async Task<List<List<List<int>>>> GetSortedTasksAsync(TaskWorkflowStatus status, int projectId)
+		{
+			if (projectId <= 0)
+				throw new ArgumentException("Invalid project ID", nameof(projectId));
+
+			var sortedTasks = await _taskSorter.GetTopologicalOrderingsAsync(status, projectId);
+			return sortedTasks ?? new List<List<List<int>>>();
+		}
+		public async Task<List<int>> GetDependentTaskIdsAsync(int id, TaskWorkflowStatus status)
         {
             await _dependentTaskStrategy.InitializeAsync(status);
 
@@ -259,7 +270,7 @@ namespace TaskForge.Application.Services
             var assignmentIds = taskItem.AssignedUsers.Select(a => a.Id);
             await _unitOfWork.TaskAssignments.DeleteByIdsAsync(assignmentIds);
 
-            await _unitOfWork.SaveChangesAsync();
+			await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DeleteAttachmentAsync(int attachmentId)
