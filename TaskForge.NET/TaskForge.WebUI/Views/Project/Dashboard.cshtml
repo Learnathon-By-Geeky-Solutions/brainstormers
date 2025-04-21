@@ -210,22 +210,22 @@
                                 <!-- Custom Styles for Nav Pills -->
                                 <style>
                                     .nav-pills .nav-link {
-                                        transition: background-color 0.3s, color 0.3s;
+                                    transition: background-color 0.3s, color 0.3s;
                                     }
 
-                                        .nav-pills .nav-link.active {
-                                            background-color: #007bff;
-                                            color: #fff;
-                                        }
+                                    .nav-pills .nav-link.active {
+                                    background-color: #007bff;
+                                    color: #fff;
+                                    }
 
-                                        .nav-pills .nav-link:hover {
-                                            background-color: rgba(0, 123, 255, 0.1);
-                                            color: #0056b3;
-                                        }
+                                    .nav-pills .nav-link:hover {
+                                    background-color: rgba(0, 123, 255, 0.1);
+                                    color: #0056b3;
+                                    }
 
-                                        .nav-pills .nav-link[data-bs-toggle="pill"]:focus {
-                                            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5);
-                                        }
+                                    .nav-pills .nav-link[data-bs-toggle="pill"]:focus {
+                                    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5);
+                                    }
                                 </style>
 
                                 <!-- Nav Tabs -->
@@ -285,9 +285,20 @@
                                 <!-- To Do Tab -->
                                 <div class="tab-pane fade" id="todo">
                                     <div class="row">
-                                        @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.ToDo))
+                                        @foreach (var taskSequence in Model.SortedTodoTasks)
                                         {
-                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                            <div class="d-flex justify-content-start mb-3" style="overflow-x: auto; overflow-y: visible;">
+                                                @foreach (var taskPhase in taskSequence)
+                                                {
+                                                    <div class="d-flex flex-column me-3">
+                                                        @foreach (var taskId in taskPhase)
+                                                        {
+                                                            var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
+                                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
                                         }
                                     </div>
                                 </div>

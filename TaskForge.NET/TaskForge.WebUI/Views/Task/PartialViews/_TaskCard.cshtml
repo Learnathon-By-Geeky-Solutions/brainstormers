@@ -2,8 +2,8 @@
 @using TaskForge.Domain.Enums
 @model TaskItemViewModel
 
-<div class="col-md-4 task-card" data-id="@Model.Id">
-	<div class="card border mb-3">
+<div class="task-card" data-id="@Model.Id" style="width: 320px;">
+	<div class="card border">
 		<div class="card-body">
 			<h6 class="card-title text-primary"><i class="bi bi-clipboard-check"></i> @Model.Title</h6>
 			<p class="text-muted">@Model.Description?.Substring(0, Math.Min(Model.Description.Length, 60))...</p>
