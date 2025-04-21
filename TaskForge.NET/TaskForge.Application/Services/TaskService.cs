@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
@@ -76,31 +76,29 @@ namespace TaskForge.Application.Services
             if (taskDto.DueDate != null) taskItem.SetDueDate(taskDto.DueDate);
 
             // Save attachments if any
-            if (taskDto.Attachments != null && taskDto.Attachments.Any())
+            if (taskDto.Attachments != null && taskDto.Attachments.Count > 0)
             {
                 foreach (var file in taskDto.Attachments)
                 {
-                    if (file.Length > 0)
-                    {
-                        var uploadsFolder = Path.Combine(RootFolder, UploadsFolder, TaskFolder);
-                        Directory.CreateDirectory(uploadsFolder);
+	                if (file.Length <= 0) continue;
+	                var uploadsFolder = Path.Combine(RootFolder, UploadsFolder, TaskFolder);
+	                Directory.CreateDirectory(uploadsFolder);
 
-                        var StoredFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-                        var filePath = Path.Combine(uploadsFolder, StoredFileName);
+	                var storedFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+	                var filePath = Path.Combine(uploadsFolder, storedFileName);
 
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await file.CopyToAsync(stream);
-                        }
+	                await using (var stream = new FileStream(filePath, FileMode.Create))
+	                {
+		                await file.CopyToAsync(stream);
+	                }
 
-                        taskItem.Attachments.Add(new TaskAttachment
-                        {
-                            FileName = file.FileName,
-                            StoredFileName = StoredFileName,
-                            FilePath = Path.Combine(UploadsFolder, TaskFolder, StoredFileName).Replace("\\", "/"),
-                            ContentType = file.ContentType
-                        });
-                    }
+	                taskItem.Attachments.Add(new TaskAttachment
+	                {
+		                FileName = file.FileName,
+		                StoredFileName = storedFileName,
+		                FilePath = Path.Combine(UploadsFolder, TaskFolder, storedFileName).Replace("\\", "/"),
+		                ContentType = file.ContentType
+	                });
                 }
             }
 

@@ -24,6 +24,9 @@ namespace TaskForge.Application.Services
 
         public async Task CreateProjectAsync(CreateProjectDto dto)
         {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto), "CreateProjectDto cannot be null.");
+
             using var transaction = await _unitOfWork.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted); // Specify isolation level
 
             try
@@ -77,6 +80,9 @@ namespace TaskForge.Application.Services
 
         public async Task UpdateProjectAsync(Project dto)
         {
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto), "Project cannot be null.");
+
             var project = new Project
             {
                 Title = dto.Title,
