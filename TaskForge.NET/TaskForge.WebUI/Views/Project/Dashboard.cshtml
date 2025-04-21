@@ -206,7 +206,7 @@
                 <div class="col-12">
                     <div class="card shadow-sm border">
                         <div class="card-body">
-                            <div class="d-flex justify-content-between bg-light p-2 mb-3">
+                            <div class="d-flex justify-content-between border rounded bg-light p-2 mb-3">
                                 <!-- Custom Styles for Nav Pills -->
                                 <style>
                                     .nav-pills .nav-link {
@@ -284,31 +284,51 @@
                             <div class="tab-content">
                                 <!-- To Do Tab -->
                                 <div class="tab-pane fade" id="todo">
-                                    <div class="row">
+                                    <div class="row g-3">
                                         @foreach (var taskSequence in Model.SortedTodoTasks)
                                         {
-                                            <div class="d-flex justify-content-start mb-3" style="overflow-x: auto; overflow-y: visible;">
-                                                @foreach (var taskPhase in taskSequence)
-                                                {
-                                                    <div class="d-flex flex-column me-3">
-                                                        @foreach (var taskId in taskPhase)
+                                            <div class="col-12">
+                                                <div class="p-3 py-2 border rounded bg-light">
+                                                    <div class="d-flex overflow-auto py-2" style="gap: 1rem;">
+                                                        @foreach (var taskPhase in taskSequence)
                                                         {
-                                                            var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
-                                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                                            <div class="d-flex flex-column">
+                                                                @foreach (var taskId in taskPhase)
+                                                                {
+                                                                    var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
+                                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                                                }
+                                                            </div>
                                                         }
                                                     </div>
-                                                }
+                                                </div>
                                             </div>
                                         }
                                     </div>
                                 </div>
 
+
                                 <!-- In Progress Tab -->
                                 <div class="tab-pane fade" id="inprogress">
                                     <div class="row">
-                                        @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.InProgress))
+                                        @foreach (var taskSequence in Model.SortedInProgressTasks)
                                         {
-                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                            <div class="col-12">
+                                                <div class="p-3 py-2 border rounded bg-light">
+                                                    <div class="d-flex overflow-auto py-2" style="gap: 1rem;">
+                                                        @foreach (var taskPhase in taskSequence)
+                                                        {
+                                                            <div class="d-flex flex-column">
+                                                                @foreach (var taskId in taskPhase)
+                                                                {
+                                                                    var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
+                                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                                                }
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
                                         }
                                     </div>
                                 </div>
@@ -316,9 +336,24 @@
                                 <!-- Completed Tab -->
                                 <div class="tab-pane fade" id="completed">
                                     <div class="row">
-                                        @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Done))
+                                        @foreach (var taskSequence in Model.SortedCompletedTasks)
                                         {
-                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                            <div class="col-12">
+                                                <div class="p-3 py-2 border rounded bg-light">
+                                                    <div class="d-flex overflow-auto py-2" style="gap: 1rem;">
+                                                        @foreach (var taskPhase in taskSequence)
+                                                        {
+                                                            <div class="d-flex flex-column">
+                                                                @foreach (var taskId in taskPhase)
+                                                                {
+                                                                    var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
+                                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                                                }
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
                                         }
                                     </div>
                                 </div>
@@ -326,9 +361,24 @@
                                 <!-- Blocked Tab -->
                                 <div class="tab-pane fade" id="blocked">
                                     <div class="row">
-                                        @foreach (var task in Model.TaskItems.Where(t => t.Status == TaskWorkflowStatus.Blocked))
+                                        @foreach (var taskSequence in Model.SortedBlockedTasks)
                                         {
-                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                            <div class="col-12">
+                                                <div class="p-3 py-2 border rounded bg-light">
+                                                    <div class="d-flex overflow-auto py-2" style="gap: 1rem;">
+                                                        @foreach (var taskPhase in taskSequence)
+                                                        {
+                                                            <div class="d-flex flex-column">
+                                                                @foreach (var taskId in taskPhase)
+                                                                {
+                                                                    var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
+                                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
+                                                                }
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
                                         }
                                     </div>
                                 </div>
