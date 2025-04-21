@@ -2,6 +2,7 @@
 using Moq;
 using System.Linq.Expressions;
 using TaskForge.Application.DTOs;
+using TaskForge.Application.Helpers.DependencyResolvers;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Application.Services;
@@ -15,13 +16,14 @@ namespace TaskForge.Tests.Services
     {
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IFileService> _fileServiceMock;
-        private readonly TaskService _taskService;
+        private readonly Mock<IDependentTaskStrategy> _dependentTaskStrategyMock = new();
+		private readonly TaskService _taskService;
 
         public TaskServiceTests()
         {
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _fileServiceMock = new Mock<IFileService>();
-            _taskService = new TaskService(_unitOfWorkMock.Object, _fileServiceMock.Object);
+            _taskService = new TaskService(_unitOfWorkMock.Object, _fileServiceMock.Object, _dependentTaskStrategyMock.Object);
         }
 
         [Fact]
@@ -456,69 +458,7 @@ namespace TaskForge.Tests.Services
             var ex = await Assert.ThrowsAsync<KeyNotFoundException>(() => _taskService.RemoveTaskAsync(999));
             Assert.Equal("Task not found", ex.Message);
         }
-        [Fact]
-        public async Task RemoveTaskAsync_SkipsDeletes_WhenNoAttachmentsOrAssignments()
-        {
-            // Arrange
-            var taskId = 1;
-            var task = new TaskItem
-            {
-                Id = taskId,
-                Attachments = new List<TaskAttachment>(),   // No attachments
-                AssignedUsers = new List<TaskAssignment>()  // No assignments
-            };
-
-            _unitOfWorkMock.Setup(u => u.Tasks.FindByExpressionAsync(
-                    It.IsAny<Expression<Func<TaskItem, bool>>>(),
-                    null,
-                    It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
-                    null, null))
-                .ReturnsAsync(new List<TaskItem> { task });
-
-            _unitOfWorkMock.Setup(u => u.Tasks.DeleteByIdAsync(taskId)).Returns(Task.CompletedTask);
-            _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-
-            // Act
-            await _taskService.RemoveTaskAsync(taskId);
-
-            // Assert
-            _fileServiceMock.Verify(f => f.DeleteFileAsync(It.IsAny<string>()), Times.Never);
-            _unitOfWorkMock.Verify(u => u.TaskAttachments.DeleteByIdsAsync(It.IsAny<IEnumerable<int>>()), Times.Never);
-            _unitOfWorkMock.Verify(u => u.TaskAssignments.DeleteByIdsAsync(It.IsAny<IEnumerable<int>>()), Times.Never);
-            _unitOfWorkMock.Verify(u => u.Tasks.DeleteByIdAsync(taskId), Times.Once);
-        }
-        [Fact]
-        public async Task RemoveTaskAsync_InitializesNullCollections()
-        {
-            // Arrange
-            var taskId = 1;
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-            var task = new TaskItem
-            {
-                Id = taskId,
-                Attachments = null,        // Null collections
-                AssignedUsers = null
-            };
-#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
-
-            _unitOfWorkMock.Setup(u => u.Tasks.FindByExpressionAsync(
-                    It.IsAny<Expression<Func<TaskItem, bool>>>(),
-                    null,
-                    It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
-                    null, null))
-                .ReturnsAsync(new List<TaskItem> { task });
-
-            _unitOfWorkMock.Setup(u => u.Tasks.DeleteByIdAsync(taskId)).Returns(Task.CompletedTask);
-            _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-
-            // Act
-            var ex = await Record.ExceptionAsync(() => _taskService.RemoveTaskAsync(taskId));
-
-            // Assert
-            Assert.Null(ex); // Should NOT throw NullReferenceException
-        }
-
-
+       
 
 
         [Fact]

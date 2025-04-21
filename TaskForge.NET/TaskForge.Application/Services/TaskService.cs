@@ -1,7 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
+using TaskForge.Application.Helpers.DependencyResolvers;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
@@ -17,10 +18,12 @@ namespace TaskForge.Application.Services
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileService _fileService;
-        public TaskService(IUnitOfWork unitOfWork, IFileService fileService)
+        private readonly IDependentTaskStrategy _dependentTaskStrategy;
+        public TaskService(IUnitOfWork unitOfWork, IFileService fileService, IDependentTaskStrategy dependentTaskStrategy)
         {
             _unitOfWork = unitOfWork;
             _fileService = fileService;
+            _dependentTaskStrategy = dependentTaskStrategy;
         }
 
         public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
@@ -39,11 +42,68 @@ namespace TaskForge.Application.Services
             Func<IQueryable<TaskItem>, IQueryable<TaskItem>> includes = query =>
                 query.Include(t => t.Attachments.Where(a => !a.IsDeleted))
                      .Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile)
+                     .Include(t => t.Dependencies)
                      .Include(t => t.Project);
 
             var result = await _unitOfWork.Tasks.FindByExpressionAsync(predicate, includes: includes);
 
             return result.FirstOrDefault();
+        }
+
+        public async Task<List<int>> GetDependentTaskIdsAsync(int id, TaskWorkflowStatus status)
+        {
+            await _dependentTaskStrategy.InitializeAsync(status);
+
+            var result = await _dependentTaskStrategy.GetDependentTaskIdsAsync(id);
+
+            return result;
+        }
+
+        public async Task CreateTaskAsync(TaskDto taskDto)
+        {
+            if (taskDto.Attachments != null && taskDto.Attachments.Count > 10)
+                throw new InvalidOperationException("You can only attach up to 10 files.");
+
+            var taskItem = new TaskItem
+            {
+                ProjectId = taskDto.ProjectId,
+                Title = taskDto.Title,
+                Description = taskDto.Description,
+                StartDate = taskDto.StartDate,
+                Status = taskDto.Status,
+                Priority = taskDto.Priority,
+            };
+            if (taskDto.DueDate != null) taskItem.SetDueDate(taskDto.DueDate);
+
+            // Save attachments if any
+            if (taskDto.Attachments != null && taskDto.Attachments.Count > 0)
+            {
+                foreach (var file in taskDto.Attachments)
+                {
+	                if (file.Length <= 0) continue;
+	                var uploadsFolder = Path.Combine(RootFolder, UploadsFolder, TaskFolder);
+	                Directory.CreateDirectory(uploadsFolder);
+
+	                var storedFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+	                var filePath = Path.Combine(uploadsFolder, storedFileName);
+
+	                await using (var stream = new FileStream(filePath, FileMode.Create))
+	                {
+		                await file.CopyToAsync(stream);
+	                }
+
+	                taskItem.Attachments.Add(new TaskAttachment
+	                {
+		                FileName = file.FileName,
+		                StoredFileName = storedFileName,
+		                FilePath = Path.Combine(UploadsFolder, TaskFolder, storedFileName).Replace("\\", "/"),
+		                ContentType = file.ContentType
+	                });
+                }
+            }
+
+            await _unitOfWork.Tasks.AddAsync(taskItem);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<PaginatedList<TaskDto>> GetUserTaskAsync(int? userProfileId, int pageIndex, int pageSize)
@@ -80,56 +140,7 @@ namespace TaskForge.Application.Services
             return new PaginatedList<TaskDto>(taskListDto, totalCount, pageIndex, pageSize);
         }
 
-        public async Task CreateTaskAsync(TaskDto taskDto)
-        {
-	        if (taskDto.Attachments != null && taskDto.Attachments.Count > 10)
-		        throw new InvalidOperationException("You can only attach up to 10 files.");
-
-	        var taskItem = new TaskItem
-	        {
-		        ProjectId = taskDto.ProjectId,
-		        Title = taskDto.Title,
-		        Description = taskDto.Description,
-		        StartDate = taskDto.StartDate,
-		        Status = taskDto.Status,
-		        Priority = taskDto.Priority,
-	        };
-	        if (taskDto.DueDate != null) taskItem.SetDueDate(taskDto.DueDate);
-
-	        // Save attachments if any
-	        if (taskDto.Attachments != null && taskDto.Attachments.Count > 0)
-	        {
-		        foreach (var file in taskDto.Attachments)
-		        {
-			        if (file.Length > 0)
-			        {
-				        var uploadsFolder = Path.Combine(RootFolder, UploadsFolder, TaskFolder);
-				        Directory.CreateDirectory(uploadsFolder);
-
-				        var StoredFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-				        var filePath = Path.Combine(uploadsFolder, StoredFileName);
-
-				        await using (var stream = new FileStream(filePath, FileMode.Create))
-				        {
-					        await file.CopyToAsync(stream);
-				        }
-
-				        taskItem.Attachments.Add(new TaskAttachment
-				        {
-					        FileName = file.FileName,
-					        StoredFileName = StoredFileName,
-					        FilePath = Path.Combine(UploadsFolder, TaskFolder, StoredFileName).Replace("\\", "/"),
-					        ContentType = file.ContentType
-				        });
-			        }
-		        }
-	        }
-
-	        await _unitOfWork.Tasks.AddAsync(taskItem);
-	        await _unitOfWork.SaveChangesAsync();
-        }
-
-		public async Task UpdateTaskAsync(TaskUpdateDto dto)
+        public async Task UpdateTaskAsync(TaskUpdateDto dto)
         {
             // Step 1: Retrieve the task with its related data (e.g., AssignedUsers, Attachments, etc.)
             var taskList = await _unitOfWork.Tasks.FindByExpressionAsync(
@@ -138,6 +149,7 @@ namespace TaskForge.Application.Services
                     .Include(t => t.Attachments.Where(a => !a.IsDeleted))
                     .Include(t => t.AssignedUsers)
                     .ThenInclude(au => au.UserProfile)
+                    .Include(t => t.Dependencies)
             );
 
             var task = taskList.FirstOrDefault();
@@ -160,7 +172,7 @@ namespace TaskForge.Application.Services
 
             // Step 3: Update assigned members if any
             task.AssignedUsers.Clear();
-            if (dto.AssignedUserIds != null && dto.AssignedUserIds.Count > 0)
+            if (dto.AssignedUserIds != null && dto.AssignedUserIds.Any())
             {
                 var users = await _unitOfWork.UserProfiles.FindByExpressionAsync(u => dto.AssignedUserIds.Contains(u.Id));
                 foreach (var user in users)
@@ -169,9 +181,18 @@ namespace TaskForge.Application.Services
                 }
             }
 
+            // Step 4: Update dependent tasks if any
+            task.Dependencies.Clear();
+            if (dto.DependsOnTaskIds != null && dto.DependsOnTaskIds.Any())
+            {
+                foreach (var dependsOnTaskId in dto.DependsOnTaskIds)
+                {
+                    task.Dependencies.Add(new TaskDependency { DependsOnTaskId = dependsOnTaskId });
+                }
+            }
 
-            // Step 4: Handle attachments (if any)
-            if (dto.Attachments != null && dto.Attachments.Count > 0)
+            // Step 5: Handle attachments (if any)
+            if (dto.Attachments != null && dto.Attachments.Any())
             {
                 foreach (var file in dto.Attachments)
                 {
@@ -200,53 +221,48 @@ namespace TaskForge.Application.Services
                 }
             }
 
-            // Step 5: Update the task in the repository
+            // Step 6: Update the task in the repository
             await _unitOfWork.Tasks.UpdateAsync(task);
 
-            // Step 6: Commit changes
+            // Step 7: Commit changes
             await _unitOfWork.SaveChangesAsync();
         }
 
-		public async Task RemoveTaskAsync(int id)
-		{
-			// Get the task with related data
-			var task = await _unitOfWork.Tasks.FindByExpressionAsync(
-				t => t.Id == id,
-				includes: query => query
-					.Include(t => t.Attachments)
-					.Include(t => t.AssignedUsers)
-			);
+        public async Task RemoveTaskAsync(int id)
+        {
+            // Get the task with related data
+            var task = await _unitOfWork.Tasks.FindByExpressionAsync(
+                t => t.Id == id,
+                includes: query => query
+                    .Include(t => t.Attachments)
+                    .Include(t => t.AssignedUsers)
+            );
 
-			var taskItem = task.FirstOrDefault();
-			if (taskItem == null)
-				throw new KeyNotFoundException("Task not found");
+            var taskItem = task.FirstOrDefault();
+            if (taskItem == null)
+                throw new KeyNotFoundException("Task not found");
 
-			// Delete media files associated with attachments (if any)
-			if (taskItem.Attachments != null && taskItem.Attachments.Count > 0)
-			{
-				foreach (var attachment in taskItem.Attachments)
-				{
-					await _fileService.DeleteFileAsync(attachment.FilePath);
-				}
+            // Delete media files associated with attachments
+            foreach (var attachment in taskItem.Attachments)
+            {
+                await _fileService.DeleteFileAsync(attachment.FilePath);
+            }
 
-				var attachmentIds = taskItem.Attachments.Select(a => a.Id);
-				await _unitOfWork.TaskAttachments.DeleteByIdsAsync(attachmentIds);
-			}
+            // Soft delete the main task
+            await _unitOfWork.Tasks.DeleteByIdAsync(id);
 
-			// Soft delete assignments (if any)
-			if (taskItem.AssignedUsers != null && taskItem.AssignedUsers.Count > 0)
-			{
-				var assignmentIds = taskItem.AssignedUsers.Select(a => a.Id);
-				await _unitOfWork.TaskAssignments.DeleteByIdsAsync(assignmentIds);
-			}
+            // Soft delete attachments
+            var attachmentIds = taskItem.Attachments.Select(a => a.Id);
+            await _unitOfWork.TaskAttachments.DeleteByIdsAsync(attachmentIds);
 
-			// Soft delete the main task
-			await _unitOfWork.Tasks.DeleteByIdAsync(id);
+            // Soft delete assignments
+            var assignmentIds = taskItem.AssignedUsers.Select(a => a.Id);
+            await _unitOfWork.TaskAssignments.DeleteByIdsAsync(assignmentIds);
 
-			await _unitOfWork.SaveChangesAsync();
-		}
+            await _unitOfWork.SaveChangesAsync();
+        }
 
-		public async Task DeleteAttachmentAsync(int attachmentId)
+        public async Task DeleteAttachmentAsync(int attachmentId)
         {
             var attachment = await _unitOfWork.TaskAttachments.GetByIdAsync(attachmentId);
             if (attachment == null)

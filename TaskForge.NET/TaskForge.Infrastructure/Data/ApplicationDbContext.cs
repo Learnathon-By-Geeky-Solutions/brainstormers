@@ -75,7 +75,7 @@ namespace TaskForge.Infrastructure.Data
                 .HasOne(td => td.DependsOnTask)
                 .WithMany(t => t.DependentOnThis)
                 .HasForeignKey(td => td.DependsOnTaskId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent circular delete
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
     }
