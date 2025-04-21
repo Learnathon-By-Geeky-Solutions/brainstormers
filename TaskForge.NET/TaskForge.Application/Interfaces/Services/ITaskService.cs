@@ -9,7 +9,8 @@ namespace TaskForge.Application.Interfaces.Services
     {
         Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId);
         Task<TaskItem?> GetTaskByIdAsync(int id);
-        Task<List<int>> GetDependentTaskIdsAsync(int id, TaskWorkflowStatus status);
+        Task<List<List<List<int>>>> GetSortedTasksAsync(TaskWorkflowStatus status, int projectId);
+		Task<List<int>> GetDependentTaskIdsAsync(int id, TaskWorkflowStatus status);
         Task<PaginatedList<TaskDto>> GetUserTaskAsync(int? userProfileId, int pageIndex, int pageSize);
         Task CreateTaskAsync(TaskDto taskDto);
         Task UpdateTaskAsync(TaskUpdateDto dto);

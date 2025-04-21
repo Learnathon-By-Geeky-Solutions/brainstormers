@@ -8,7 +8,6 @@ using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Enums;
 using TaskForge.Web.Models;
 using TaskForge.WebUI.Models;
-using TaskForge.Application.Helpers.TaskSorters;
 
 namespace TaskForge.WebUI.Controllers
 {
@@ -17,7 +16,6 @@ namespace TaskForge.WebUI.Controllers
     {
         private readonly IProjectService _projectService;
         private readonly ITaskService _taskService;
-        private readonly ITaskSorter _taskSorter;
         private readonly IProjectMemberService _projectMemberService;
         private readonly IProjectInvitationService _invitationService;
         private readonly UserManager<IdentityUser> _userManager;
@@ -26,14 +24,12 @@ namespace TaskForge.WebUI.Controllers
             IProjectMemberService projectMemberService,
             IProjectService projectService,
             ITaskService taskService,
-            ITaskSorter taskSorter,
             IProjectInvitationService invitationService,
             UserManager<IdentityUser> userManager)
         {
             _projectMemberService = projectMemberService;
             _projectService = projectService;
             _taskService = taskService;
-            _taskSorter = taskSorter;
             _invitationService = invitationService;
             _userManager = userManager;
         }
@@ -232,10 +228,10 @@ namespace TaskForge.WebUI.Controllers
 
             var taskList = (await _taskService.GetTaskListAsync(project.Id)).ToList();
 
-            var sortedTodoTasks = await _taskSorter.GetTopologicalOrderingsAsync(TaskWorkflowStatus.ToDo) ?? [];
-            var sortedInProgressTasks = await _taskSorter.GetTopologicalOrderingsAsync(TaskWorkflowStatus.InProgress) ?? [];
-            var sortedCompletedTasks = await _taskSorter.GetTopologicalOrderingsAsync(TaskWorkflowStatus.Done) ?? [];
-            var sortedBlockedTasks = await _taskSorter.GetTopologicalOrderingsAsync(TaskWorkflowStatus.Blocked) ?? [];
+            var sortedTodoTasks = await _taskService.GetSortedTasksAsync(TaskWorkflowStatus.ToDo, id) ?? [];
+            var sortedInProgressTasks = await _taskService.GetSortedTasksAsync(TaskWorkflowStatus.InProgress, id) ?? [];
+			var sortedCompletedTasks = await _taskService.GetSortedTasksAsync(TaskWorkflowStatus.Done, id) ?? [];
+			var sortedBlockedTasks = await _taskService.GetSortedTasksAsync(TaskWorkflowStatus.Blocked, id) ?? [];
 
 
 
