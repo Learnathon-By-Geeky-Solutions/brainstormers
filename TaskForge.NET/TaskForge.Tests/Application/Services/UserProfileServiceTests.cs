@@ -18,10 +18,7 @@ namespace TaskForge.Tests.Application.Services
         {
             _mockUnitOfWork = new Mock<IUnitOfWork>();
             _mockUserProfileRepo = new Mock<IUserProfileRepository>();
-
-            _mockUnitOfWork.Setup(u => u.UserProfiles).Returns(_mockUserProfileRepo.Object);
-
-            _service = new UserProfileService(_mockUnitOfWork.Object);
+            _service = new UserProfileService(_mockUnitOfWork.Object, _mockUserProfileRepo.Object);
         }
 
         [Fact]

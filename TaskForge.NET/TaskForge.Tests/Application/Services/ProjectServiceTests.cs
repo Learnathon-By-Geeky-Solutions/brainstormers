@@ -4,6 +4,7 @@ using Moq;
 using System.Data;
 using System.Linq.Expressions;
 using TaskForge.Application.DTOs;
+using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Application.Services;
@@ -16,6 +17,9 @@ namespace TaskForge.Tests.Application.Services
     public class ProjectServiceTests
     {
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
+        private readonly Mock<IProjectRepository> _projectRepositoryMock;
+        private readonly Mock<IProjectMemberRepository> _projectMemberRepositoryMock;
+        private readonly Mock<IUserProfileRepository> _userProfileRepositoryMock;
         private readonly Mock<IUserProfileService> _userProfileServiceMock;
         private readonly Mock<IDbContextTransaction> _transactionMock;
 
@@ -25,10 +29,19 @@ namespace TaskForge.Tests.Application.Services
         {
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _userProfileServiceMock = new Mock<IUserProfileService>();
+            _projectRepositoryMock = new Mock<IProjectRepository>();
+            _projectMemberRepositoryMock = new Mock<IProjectMemberRepository>();
+            _userProfileRepositoryMock = new Mock<IUserProfileRepository>();
             _transactionMock = new Mock<IDbContextTransaction>();
 
-            _projectService = new ProjectService(_unitOfWorkMock.Object, _userProfileServiceMock.Object);
-        }
+			_projectService = new ProjectService(
+				_unitOfWorkMock.Object,
+				_projectRepositoryMock.Object,
+				_projectMemberRepositoryMock.Object,
+				_userProfileRepositoryMock.Object,
+				_userProfileServiceMock.Object
+			);
+		}
 
         [Fact]
         public async Task CreateProjectAsync_CreatesProjectAndAddsCreatorAsAdmin()
@@ -55,14 +68,14 @@ namespace TaskForge.Tests.Application.Services
             _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
                 .ReturnsAsync(_transactionMock.Object);
 
-            _unitOfWorkMock.Setup(u => u.Projects.AddAsync(It.IsAny<Project>()))
+            _projectRepositoryMock.Setup(u => u.AddAsync(It.IsAny<Project>()))
                 .Callback<Project>(p => p.Id = projectId)
                 .Returns(Task.CompletedTask);
 
             _unitOfWorkMock.Setup(u => u.SaveChangesAsync())
                 .ReturnsAsync(1);
 
-            _unitOfWorkMock.Setup(u => u.UserProfiles.FindByExpressionAsync(
+            _userProfileRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<UserProfile, bool>>>(),
                     null,
                     null,
@@ -70,20 +83,20 @@ namespace TaskForge.Tests.Application.Services
                     null))
                 .ReturnsAsync(userProfiles);
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.AddAsync(It.IsAny<ProjectMember>()))
+            _projectMemberRepositoryMock.Setup(u => u.AddAsync(It.IsAny<ProjectMember>()))
                 .Returns(Task.CompletedTask);
 
             // Act
             await _projectService.CreateProjectAsync(createProjectDto);
 
             // Assert
-            _unitOfWorkMock.Verify(u => u.Projects.AddAsync(It.Is<Project>(p => p.Title == createProjectDto.Title)), Times.Once);
+            _projectRepositoryMock.Verify(u => u.AddAsync(It.Is<Project>(p => p.Title == createProjectDto.Title)), Times.Once);
 
-            _unitOfWorkMock.Verify(u => u.UserProfiles.FindByExpressionAsync(
+            _userProfileRepositoryMock.Verify(u => u.FindByExpressionAsync(
                 It.IsAny<Expression<Func<UserProfile, bool>>>(),
                 null, null, null, null), Times.Once);
 
-            _unitOfWorkMock.Verify(u => u.ProjectMembers.AddAsync(It.Is<ProjectMember>(pm =>
+            _projectMemberRepositoryMock.Verify(u => u.AddAsync(It.Is<ProjectMember>(pm =>
                 pm.ProjectId == projectId &&
                 pm.UserProfileId == userProfileId &&
                 pm.Role == ProjectRole.Admin)), Times.Once);
@@ -105,7 +118,7 @@ namespace TaskForge.Tests.Application.Services
             };
 
             projectDto.SetEndDate(DateTime.UtcNow.AddDays(5));
-            _unitOfWorkMock.Setup(u => u.Projects.UpdateAsync(It.IsAny<Project>()))
+            _projectRepositoryMock.Setup(u => u.UpdateAsync(It.IsAny<Project>()))
                 .Returns(Task.CompletedTask);
 
             _unitOfWorkMock.Setup(u => u.SaveChangesAsync())
@@ -115,7 +128,7 @@ namespace TaskForge.Tests.Application.Services
             await _projectService.UpdateProjectAsync(projectDto);
 
             // Assert
-            _unitOfWorkMock.Verify(u => u.Projects.UpdateAsync(It.Is<Project>(p =>
+            _projectRepositoryMock.Verify(u => u.UpdateAsync(It.Is<Project>(p =>
                 p.Title == projectDto.Title &&
                 p.Description == projectDto.Description &&
                 p.Status == projectDto.Status &&
@@ -215,7 +228,7 @@ namespace TaskForge.Tests.Application.Services
                 Invitations = new List<ProjectInvitation> { invitation }
             };
 
-            _unitOfWorkMock.Setup(u => u.Projects.FindByExpressionAsync(
+            _projectRepositoryMock.Setup(u => u.FindByExpressionAsync(
                 It.IsAny<Expression<Func<Project, bool>>>(),
                 null,
                 It.IsAny<Func<IQueryable<Project>, IQueryable<Project>>>(),
@@ -239,7 +252,7 @@ namespace TaskForge.Tests.Application.Services
         [Fact]
         public async Task GetProjectByIdAsync_ReturnsNull_WhenProjectDoesNotExist()
         {
-            _unitOfWorkMock.Setup(u => u.Projects.FindByExpressionAsync(
+            _projectRepositoryMock.Setup(u => u.FindByExpressionAsync(
                 It.IsAny<Expression<Func<Project, bool>>>(),
                 null,
                 It.IsAny<Func<IQueryable<Project>, IQueryable<Project>>>(),
@@ -304,7 +317,7 @@ namespace TaskForge.Tests.Application.Services
             _userProfileServiceMock.Setup(u => u.GetByUserIdAsync(userId))
                 .ReturnsAsync(userProfileId);
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.GetPaginatedListAsync(
+            _projectMemberRepositoryMock.Setup(u => u.GetPaginatedListAsync(
                     It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                     It.IsAny<Func<IQueryable<ProjectMember>, IOrderedQueryable<ProjectMember>>>(),
                     It.IsAny<Func<IQueryable<ProjectMember>, IQueryable<ProjectMember>>>(),
@@ -387,7 +400,7 @@ namespace TaskForge.Tests.Application.Services
                 }
             };
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.GetPaginatedListAsync(
+            _projectMemberRepositoryMock.Setup(u => u.GetPaginatedListAsync(
                 It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                 It.IsAny<Func<IQueryable<ProjectMember>, IOrderedQueryable<ProjectMember>>>(),
                 It.IsAny<Func<IQueryable<ProjectMember>, IQueryable<ProjectMember>>>(),
