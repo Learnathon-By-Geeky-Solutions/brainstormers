@@ -1,13 +1,13 @@
-using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Helpers.DependencyResolvers;
+using TaskForge.Application.Helpers.TaskSorters;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
-using TaskForge.Application.Helpers.TaskSorters;
 
 namespace TaskForge.Application.Services
 {
@@ -19,14 +19,14 @@ namespace TaskForge.Application.Services
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileService _fileService;
-		private readonly ITaskSorter _taskSorter;
-		private readonly IDependentTaskStrategy _dependentTaskStrategy;
+        private readonly ITaskSorter _taskSorter;
+        private readonly IDependentTaskStrategy _dependentTaskStrategy;
         public TaskService(IUnitOfWork unitOfWork, IFileService fileService, IDependentTaskStrategy dependentTaskStrategy, ITaskSorter taskSorter)
         {
             _unitOfWork = unitOfWork;
             _fileService = fileService;
-			_taskSorter = taskSorter;
-			_dependentTaskStrategy = dependentTaskStrategy;
+            _taskSorter = taskSorter;
+            _dependentTaskStrategy = dependentTaskStrategy;
         }
 
         public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
@@ -53,15 +53,13 @@ namespace TaskForge.Application.Services
             return result.FirstOrDefault();
         }
 
-		public async Task<List<List<List<int>>>> GetSortedTasksAsync(TaskWorkflowStatus status, int projectId)
-		{
-			if (projectId <= 0)
-				throw new ArgumentException("Invalid project ID", nameof(projectId));
+        public async Task<List<List<List<int>>>> GetSortedTasksAsync(TaskWorkflowStatus status, int projectId)
+        {
+            var sortedTasks = await _taskSorter.GetTopologicalOrderingsAsync(status, projectId);
+            return sortedTasks ?? new List<List<List<int>>>();
+        }
 
-			var sortedTasks = await _taskSorter.GetTopologicalOrderingsAsync(status, projectId);
-			return sortedTasks ?? new List<List<List<int>>>();
-		}
-		public async Task<List<int>> GetDependentTaskIdsAsync(int id, TaskWorkflowStatus status)
+        public async Task<List<int>> GetDependentTaskIdsAsync(int id, TaskWorkflowStatus status)
         {
             await _dependentTaskStrategy.InitializeAsync(status);
 
@@ -91,25 +89,25 @@ namespace TaskForge.Application.Services
             {
                 foreach (var file in taskDto.Attachments)
                 {
-	                if (file.Length <= 0) continue;
-	                var uploadsFolder = Path.Combine(RootFolder, UploadsFolder, TaskFolder);
-	                Directory.CreateDirectory(uploadsFolder);
+                    if (file.Length <= 0) continue;
+                    var uploadsFolder = Path.Combine(RootFolder, UploadsFolder, TaskFolder);
+                    Directory.CreateDirectory(uploadsFolder);
 
-	                var storedFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-	                var filePath = Path.Combine(uploadsFolder, storedFileName);
+                    var storedFileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+                    var filePath = Path.Combine(uploadsFolder, storedFileName);
 
-	                await using (var stream = new FileStream(filePath, FileMode.Create))
-	                {
-		                await file.CopyToAsync(stream);
-	                }
+                    await using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
 
-	                taskItem.Attachments.Add(new TaskAttachment
-	                {
-		                FileName = file.FileName,
-		                StoredFileName = storedFileName,
-		                FilePath = Path.Combine(UploadsFolder, TaskFolder, storedFileName).Replace("\\", "/"),
-		                ContentType = file.ContentType
-	                });
+                    taskItem.Attachments.Add(new TaskAttachment
+                    {
+                        FileName = file.FileName,
+                        StoredFileName = storedFileName,
+                        FilePath = Path.Combine(UploadsFolder, TaskFolder, storedFileName).Replace("\\", "/"),
+                        ContentType = file.ContentType
+                    });
                 }
             }
 
@@ -270,7 +268,7 @@ namespace TaskForge.Application.Services
             var assignmentIds = taskItem.AssignedUsers.Select(a => a.Id);
             await _unitOfWork.TaskAssignments.DeleteByIdsAsync(assignmentIds);
 
-			await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DeleteAttachmentAsync(int attachmentId)
