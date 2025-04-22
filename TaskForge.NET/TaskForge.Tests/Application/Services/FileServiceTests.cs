@@ -1,9 +1,8 @@
-using Microsoft.AspNetCore.Hosting;
 using Moq;
 using TaskForge.Application.Interfaces.Services;
 using Xunit;
 
-namespace TaskForge.Tests.Services
+namespace TaskForge.Tests.Application.Services
 {
 #pragma warning disable S3881 // "IDisposable" should be implemented correctly
     public class FileServiceTests : IDisposable
@@ -54,9 +53,9 @@ namespace TaskForge.Tests.Services
         [InlineData("")]
         [InlineData("../evil.txt")]
         [InlineData("/absolute/path/to/file.txt")]
-        public async Task DeleteFileAsync_ThrowsArgumentException_OnInvalidPaths(string badPath)
+        public async Task DeleteFileAsync_ThrowsArgumentException_OnInvalidPaths(string? badPath)
         {
-            var ex = await Assert.ThrowsAsync<ArgumentException>(() => _service.DeleteFileAsync(badPath));
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() => _service.DeleteFileAsync(badPath!));
             Assert.Equal("relativePath", ex.ParamName);
         }
 

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Moq;
@@ -13,7 +12,7 @@ using TaskForge.WebUI.Controllers;
 using TaskForge.WebUI.Models;
 using Xunit;
 
-namespace TaskForge.Tests.WebUILayer
+namespace TaskForge.Tests.WebUI.Controllers
 {
     public class ProjectInvitationControllerTests
     {
@@ -370,5 +369,6 @@ namespace TaskForge.Tests.WebUILayer
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect.ActionName);
         }
+
     }
 }

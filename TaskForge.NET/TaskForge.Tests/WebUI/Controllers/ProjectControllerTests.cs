@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Moq;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
-using TaskForge.Application.Helpers.TaskSorters;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
@@ -15,35 +15,40 @@ using TaskForge.WebUI.Controllers;
 using TaskForge.WebUI.Models;
 using Xunit;
 
-namespace TaskForge.Tests.Controllers
+namespace TaskForge.Tests.WebUI.Controllers
 {
     public class ProjectControllerTests
     {
-		private readonly Mock<IProjectService> _projectServiceMock = new();
-		private readonly Mock<IProjectMemberService> _projectMemberServiceMock = new();
-		private readonly Mock<ITaskService> _taskServiceMock = new();
-		private readonly Mock<IProjectInvitationService> _invitationServiceMock = new();
-		private readonly Mock<ITaskSorter> _taskSorterMock = new();
-		private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
+        private readonly Mock<IProjectService> _projectServiceMock = new();
+        private readonly Mock<IProjectMemberService> _projectMemberServiceMock = new();
+        private readonly Mock<ITaskService> _taskServiceMock = new();
+        private readonly Mock<IProjectInvitationService> _invitationServiceMock = new();
+        private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
+        private readonly ProjectController _controller;
 
-		public ProjectControllerTests()
-		{
-			_userManagerMock = new Mock<UserManager<IdentityUser>>(
-				Mock.Of<IUserStore<IdentityUser>>(),
-				null, null, null, null, null, null, null, null);
-		}
+        public ProjectControllerTests()
+        {
+            var store = new Mock<IUserStore<IdentityUser>>();
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+            _userManagerMock = new Mock<UserManager<IdentityUser>>(store.Object,
+                null, null, null, null, null, null, null, null);
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
 
-		private ProjectController CreateController() =>
-			new(
-				_projectMemberServiceMock.Object,
-				_projectServiceMock.Object,
-				_taskServiceMock.Object,
-				_taskSorterMock.Object, 
-				_invitationServiceMock.Object,
-				_userManagerMock.Object
-			);
+            _controller = new ProjectController
+            (
+                _projectMemberServiceMock.Object,
+                _projectServiceMock.Object,
+                _taskServiceMock.Object,
+                _invitationServiceMock.Object,
+                _userManagerMock.Object
+            );
 
-		[Fact]
+            var tempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
+            _controller.TempData = tempData;
+        }
+
+
+        [Fact]
         public async Task Index_ValidRequest_ReturnsViewWithProjectList()
         {
             var userId = "test-123";
@@ -90,9 +95,7 @@ namespace TaskForge.Tests.Controllers
                     It.Is<ProjectFilterDto>(f => f.UserId == userId), 1, 10))
                 .ReturnsAsync(paginatedList);
 
-            var controller = CreateController();
-
-            var result = await controller.Index(filter, 1, 10);
+            var result = await _controller.Index(filter, 1, 10);
 
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<ProjectListViewModel>(viewResult.Model);
@@ -102,12 +105,11 @@ namespace TaskForge.Tests.Controllers
         [Fact]
         public async Task Index_ModelStateInvalid_ReturnsRedirectToIndex()
         {
-            var controller = CreateController();
-            controller.ModelState.AddModelError("AnyKey", "Some error");
+            _controller.ModelState.AddModelError("AnyKey", "Some error");
 
             var filter = new ProjectFilterDto();
 
-            var result = await controller.Index(filter);
+            var result = await _controller.Index(filter);
 
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect.ActionName);
@@ -118,15 +120,14 @@ namespace TaskForge.Tests.Controllers
             _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
                             .ReturnsAsync((IdentityUser?)null);
 
-            var controller = CreateController();
             var filter = new ProjectFilterDto();
 
-            var result = await controller.Index(filter);
+            var result = await _controller.Index(filter);
 
             Assert.IsType<UnauthorizedResult>(result);
         }
-        
-        
+
+
         [Fact]
         public async Task Update_Get_ReturnsPartialView_WhenProjectExists()
         {
@@ -175,7 +176,7 @@ namespace TaskForge.Tests.Controllers
 
             _projectServiceMock.Setup(s => s.GetProjectByIdAsync(1)).ReturnsAsync(project);
 
-            var result = await CreateController().Update(1);
+            var result = await _controller.Update(1);
 
             var viewResult = Assert.IsType<PartialViewResult>(result);
             Assert.Equal("_EditProjectForm", viewResult.ViewName);
@@ -190,10 +191,9 @@ namespace TaskForge.Tests.Controllers
         [Fact]
         public async Task Update_ModelStateInvalid_ReturnsView()
         {
-            var controller = CreateController();
-            controller.ModelState.AddModelError("Id", "Invalid");
+            _controller.ModelState.AddModelError("Id", "Invalid");
 
-            var result = await controller.Update(1);
+            var result = await _controller.Update(1);
 
             var viewResult = Assert.IsType<ViewResult>(result);
             Assert.Null(viewResult.ViewName);
@@ -204,17 +204,14 @@ namespace TaskForge.Tests.Controllers
             _projectServiceMock.Setup(p => p.GetProjectByIdAsync(1))
                 .ReturnsAsync((Project?)null);
 
-            var controller = CreateController();
-
-            var result = await controller.Update(1);
+            var result = await _controller.Update(1);
 
             Assert.IsType<NotFoundResult>(result);
         }
         [Fact]
         public async Task Update_InvalidModelState_ReturnsPartialViewWithViewModel()
         {
-            var controller = CreateController();
-            controller.ModelState.AddModelError("Title", "Required");
+            _controller.ModelState.AddModelError("Title", "Required");
 
             var viewModel = new ProjectUpdateViewModel { Title = "", Id = 1 };
 
@@ -224,7 +221,7 @@ namespace TaskForge.Tests.Controllers
 
             try
             {
-                var result = await controller.Update(viewModel);
+                var result = await _controller.Update(viewModel);
 
                 var partialView = Assert.IsType<PartialViewResult>(result);
                 Assert.Equal("_EditProjectForm", partialView.ViewName);
@@ -239,22 +236,18 @@ namespace TaskForge.Tests.Controllers
         [Fact]
         public async Task Update_UserIsNull_ReturnsUnauthorized()
         {
-            var controller = CreateController();
-
             _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync((IdentityUser?)null);
 
             var viewModel = new ProjectUpdateViewModel { Id = 1 };
 
-            var result = await controller.Update(viewModel);
+            var result = await _controller.Update(viewModel);
 
             Assert.IsType<UnauthorizedResult>(result);
         }
         [Fact]
         public async Task Update_ProjectIsNull_ReturnsNotFound()
         {
-            var controller = CreateController();
-
             _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(new IdentityUser { Id = "user1" });
 
@@ -263,14 +256,13 @@ namespace TaskForge.Tests.Controllers
 
             var viewModel = new ProjectUpdateViewModel { Id = 1 };
 
-            var result = await controller.Update(viewModel);
+            var result = await _controller.Update(viewModel);
 
             Assert.IsType<NotFoundResult>(result);
         }
         [Fact]
         public async Task Update_ValidRequest_UpdatesProjectAndRedirects()
         {
-            var controller = CreateController();
             var user = new IdentityUser { Id = "user1" };
 
             var existingProject = new Project
@@ -304,7 +296,7 @@ namespace TaskForge.Tests.Controllers
                 .Returns(Task.CompletedTask)
                 .Verifiable();
 
-            var result = await controller.Update(viewModel);
+            var result = await _controller.Update(viewModel);
 
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Dashboard", redirect.ActionName);
@@ -314,6 +306,7 @@ namespace TaskForge.Tests.Controllers
 
             _projectServiceMock.Verify();
         }
+
 
 
         [Fact]
@@ -331,9 +324,7 @@ namespace TaskForge.Tests.Controllers
             _projectServiceMock.Setup(s => s.GetProjectStatusOptions())
                 .ReturnsAsync(expectedStatusOptions);
 
-            var controller = CreateController();
-
-            var result = await controller.Create();
+            var result = await _controller.Create();
 
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<CreateProjectViewModel>(viewResult.Model);
@@ -368,11 +359,10 @@ namespace TaskForge.Tests.Controllers
             _projectServiceMock.Setup(p => p.GetProjectStatusOptions())
                 .ReturnsAsync(expectedOptions);
 
-            var controller = CreateController();
-            controller.ModelState.AddModelError("Title", "Required");
+            _controller.ModelState.AddModelError("Title", "Required");
 
             // Act
-            var result = await controller.Create(viewModel);
+            var result = await _controller.Create(viewModel);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -407,10 +397,8 @@ namespace TaskForge.Tests.Controllers
             _projectServiceMock.Setup(s => s.CreateProjectAsync(It.IsAny<CreateProjectDto>()))
                 .Returns(Task.CompletedTask);
 
-            var controller = CreateController();
-
             // Act
-            var result = await controller.Create(model);
+            var result = await _controller.Create(model);
 
             // Assert
             var redirect = Assert.IsType<RedirectToActionResult>(result);
@@ -427,13 +415,13 @@ namespace TaskForge.Tests.Controllers
         }
 
 
+
         [Fact]
         public async Task Details_InvalidModelState_ReturnsView()
         {
-            var controller = CreateController(); // Assumes CreateController sets up mocks
-            controller.ModelState.AddModelError("AnyKey", "Any error");
+            _controller.ModelState.AddModelError("AnyKey", "Any error");
 
-            var result = await controller.Details(1);
+            var result = await _controller.Details(1);
 
             var viewResult = Assert.IsType<ViewResult>(result);
             Assert.Null(viewResult.ViewName);
@@ -478,10 +466,8 @@ namespace TaskForge.Tests.Controllers
             _taskServiceMock.Setup(t => t.GetTaskListAsync(projectId))
                 .ReturnsAsync(taskList);
 
-            var controller = CreateController();
-
             // Act
-            var result = await controller.Details(projectId);
+            var result = await _controller.Details(projectId);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -496,10 +482,8 @@ namespace TaskForge.Tests.Controllers
             _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync((IdentityUser?)null);
 
-            var controller = CreateController();
-
             // Act
-            var result = await controller.Details(1);
+            var result = await _controller.Details(1);
 
             // Assert
             Assert.IsType<UnauthorizedResult>(result);
@@ -515,10 +499,8 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(p => p.GetUserProjectRoleAsync(user.Id, 1))
                 .ReturnsAsync((ProjectMemberDto?)null);
 
-            var controller = CreateController();
-
             // Act
-            var result = await controller.Details(1);
+            var result = await _controller.Details(1);
 
             // Assert
             Assert.IsType<ForbidResult>(result);
@@ -537,14 +519,13 @@ namespace TaskForge.Tests.Controllers
             _projectServiceMock.Setup(p => p.GetProjectByIdAsync(1))
                 .ReturnsAsync((Project?)null);
 
-            var controller = CreateController();
-
             // Act
-            var result = await controller.Details(1);
+            var result = await _controller.Details(1);
 
             // Assert
             Assert.IsType<NotFoundResult>(result);
         }
+
 
 
         [Fact]
@@ -555,10 +536,8 @@ namespace TaskForge.Tests.Controllers
 
             _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync((IdentityUser?)null);
 
-            var controller = CreateController();
-
             // Act
-            var result = await controller.Dashboard(projectId);
+            var result = await _controller.Dashboard(projectId);
 
             // Assert
             Assert.IsType<UnauthorizedResult>(result);
@@ -573,10 +552,8 @@ namespace TaskForge.Tests.Controllers
             _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
             _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, projectId)).ReturnsAsync((ProjectMemberDto?)null);
 
-            var controller = CreateController();
-
             // Act
-            var result = await controller.Dashboard(projectId);
+            var result = await _controller.Dashboard(projectId);
 
             // Assert
             Assert.IsType<ForbidResult>(result);
@@ -593,10 +570,8 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, projectId)).ReturnsAsync(member);
             _projectServiceMock.Setup(x => x.GetProjectByIdAsync(projectId)).ReturnsAsync((Project?)null);
 
-            var controller = CreateController();
-
             // Act
-            var result = await controller.Dashboard(projectId);
+            var result = await _controller.Dashboard(projectId);
 
             // Assert
             Assert.IsType<NotFoundResult>(result);
@@ -606,11 +581,10 @@ namespace TaskForge.Tests.Controllers
         {
             // Arrange
             int projectId = 1;
-            var controller = CreateController();
-            controller.ModelState.AddModelError("Test", "Invalid");
+            _controller.ModelState.AddModelError("Test", "Invalid");
 
             // Act
-            var result = await controller.Dashboard(projectId);
+            var result = await _controller.Dashboard(projectId);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -732,10 +706,8 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(x => x.GetProjectMembersAsync(projectId)).ReturnsAsync(members);
             _invitationServiceMock.Setup(x => x.GetInvitationListAsync(projectId, 1, 10)).ReturnsAsync(invites);
 
-            var controller = CreateController();
-
             // Act
-            var result = await controller.Dashboard(projectId);
+            var result = await _controller.Dashboard(projectId);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -812,7 +784,7 @@ namespace TaskForge.Tests.Controllers
             };
             project.SetEndDate(null);
 
-            var tasks = new List<TaskItem>(); 
+            var tasks = new List<TaskItem>();
 
             var members = new List<ProjectMemberDto>
             {
@@ -841,10 +813,8 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(x => x.GetProjectMembersAsync(projectId)).ReturnsAsync(members);
             _invitationServiceMock.Setup(x => x.GetInvitationListAsync(projectId, 1, 10)).ReturnsAsync(invites);
 
-            var controller = CreateController();
-
             // Act
-            var result = await controller.Dashboard(projectId);
+            var result = await _controller.Dashboard(projectId);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -852,13 +822,14 @@ namespace TaskForge.Tests.Controllers
 
             var memberVm = model.Members.FirstOrDefault();
             Assert.NotNull(memberVm);
-            Assert.Equal("", memberVm.Name);   
-            Assert.Equal("", memberVm.Email);  
+            Assert.Equal("", memberVm.Name);
+            Assert.Equal("", memberVm.Email);
 
             var inviteVm = model.Invitations.FirstOrDefault();
             Assert.NotNull(inviteVm);
-            Assert.Equal("No User", inviteVm.InvitedUserEmail); 
+            Assert.Equal("No User", inviteVm.InvitedUserEmail);
         }
+
 
 
         [Fact]
@@ -924,8 +895,6 @@ namespace TaskForge.Tests.Controllers
             _invitationServiceMock.Setup(s => s.GetInvitationListAsync(projectId, 1, 10))
                 .ReturnsAsync(paginatedInvites);
 
-            var _controller = CreateController();
-
             var result = await _controller.ManageMembers(projectId) as ViewResult;
 
             Assert.NotNull(result);
@@ -950,19 +919,18 @@ namespace TaskForge.Tests.Controllers
 
 
             Assert.Equal(string.Empty, model.InvitedUserEmail);
-            Assert.Equal(default(ProjectRole), model.AssignedRole);
+            Assert.Equal(default, model.AssignedRole);
         }
         [Fact]
         public async Task ManageMembers_ModelStateInvalid_ReturnsView()
         {
             int projectId = 1;
-            var controller = CreateController();
-            controller.ModelState.AddModelError("Test", "Invalid");
+            _controller.ModelState.AddModelError("Test", "Invalid");
 
-            var result = await controller.ManageMembers(projectId);
+            var result = await _controller.ManageMembers(projectId);
 
             var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.Null(viewResult.Model); 
+            Assert.Null(viewResult.Model);
         }
         [Fact]
         public async Task ManageMembers_UserIsNull_ReturnsUnauthorized()
@@ -970,9 +938,7 @@ namespace TaskForge.Tests.Controllers
             int projectId = 1;
             _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync((IdentityUser?)null);
 
-            var controller = CreateController();
-
-            var result = await controller.ManageMembers(projectId);
+            var result = await _controller.ManageMembers(projectId);
 
             Assert.IsType<UnauthorizedResult>(result);
         }
@@ -985,9 +951,7 @@ namespace TaskForge.Tests.Controllers
             _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
             _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, projectId)).ReturnsAsync(new ProjectMemberDto { Role = ProjectRole.Contributor });
 
-            var controller = CreateController();
-
-            var result = await controller.ManageMembers(projectId);
+            var result = await _controller.ManageMembers(projectId);
 
             Assert.IsType<ForbidResult>(result);
         }
@@ -1002,9 +966,7 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, projectId)).ReturnsAsync(memberDto);
             _projectServiceMock.Setup(x => x.GetProjectByIdAsync(projectId)).ReturnsAsync((Project?)null);
 
-            var controller = CreateController();
-
-            var result = await controller.ManageMembers(projectId);
+            var result = await _controller.ManageMembers(projectId);
 
             Assert.IsType<NotFoundResult>(result);
         }
@@ -1022,14 +984,13 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(x => x.GetProjectMembersAsync(projectId)).ReturnsAsync(new List<ProjectMemberDto>());
             _invitationServiceMock.Setup(x => x.GetInvitationListAsync(projectId, 1, 10)).ReturnsAsync(new PaginatedList<ProjectInvitation>(new List<ProjectInvitation>(), 0, 1, 10));
 
-            var controller = CreateController();
-
-            var result = await controller.ManageMembers(projectId) as ViewResult;
+            var result = await _controller.ManageMembers(projectId) as ViewResult;
 
             var model = Assert.IsType<ManageMembersViewModel>(result?.Model);
             Assert.Empty(model.ProjectMembers);
             Assert.Empty(model.ProjectInvitations.Items);
         }
+
 
 
         [Fact]
@@ -1068,10 +1029,8 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(s => s.RemoveAsync(memberId))
                 .Returns(Task.CompletedTask);
 
-            var controller = CreateController();
-
             // Act
-            var result = await controller.RemoveMember(memberId);
+            var result = await _controller.RemoveMember(memberId);
 
             // Assert
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
@@ -1083,10 +1042,9 @@ namespace TaskForge.Tests.Controllers
         [Fact]
         public async Task RemoveMember_ModelStateInvalid_ReturnsView()
         {
-            var controller = CreateController();
-            controller.ModelState.AddModelError("FakeError", "Invalid");
+            _controller.ModelState.AddModelError("FakeError", "Invalid");
 
-            var result = await controller.RemoveMember(1);
+            var result = await _controller.RemoveMember(1);
 
             var view = Assert.IsType<ViewResult>(result);
             Assert.Null(view.Model);
@@ -1097,8 +1055,7 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(s => s.GetByIdAsync(It.IsAny<int>()))
                 .ReturnsAsync((ProjectMember?)null);
 
-            var controller = CreateController();
-            var result = await controller.RemoveMember(999);
+            var result = await _controller.RemoveMember(999);
 
             var notFound = Assert.IsType<NotFoundObjectResult>(result);
             Assert.Equal("Member not found.", notFound.Value);
@@ -1112,8 +1069,7 @@ namespace TaskForge.Tests.Controllers
             _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync((IdentityUser?)null);
 
-            var controller = CreateController();
-            var result = await controller.RemoveMember(1);
+            var result = await _controller.RemoveMember(1);
 
             Assert.IsType<UnauthorizedResult>(result);
         }
@@ -1129,8 +1085,7 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(s => s.GetUserProjectRoleAsync("user1", 1))
                 .ReturnsAsync((ProjectMemberDto?)null);
 
-            var controller = CreateController();
-            var result = await controller.RemoveMember(1);
+            var result = await _controller.RemoveMember(1);
 
             Assert.IsType<ForbidResult>(result);
         }
@@ -1146,8 +1101,7 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(s => s.GetUserProjectRoleAsync("user1", 1))
                 .ReturnsAsync(new ProjectMemberDto { Id = 2, ProjectId = 1, Role = ProjectRole.Contributor });
 
-            var controller = CreateController();
-            var result = await controller.RemoveMember(1);
+            var result = await _controller.RemoveMember(1);
 
             Assert.IsType<ForbidResult>(result);
         }
@@ -1171,22 +1125,20 @@ namespace TaskForge.Tests.Controllers
                     Role = ProjectRole.Admin
                 });
 
-            var controller = CreateController();
-
-            var result = await controller.RemoveMember(1);
+            var result = await _controller.RemoveMember(1);
 
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             Assert.Equal("Invalid request.", badRequest.Value);
         }
 
 
+
         [Fact]
         public async Task CancelInvitation_ModelStateInvalid_ReturnsBadRequest()
         {
-            var controller = CreateController();
-            controller.ModelState.AddModelError("Id", "Required");
+            _controller.ModelState.AddModelError("Id", "Required");
 
-            var result = await controller.CancelInvitation(1);
+            var result = await _controller.CancelInvitation(1);
 
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             Assert.IsType<SerializableError>(badRequest.Value);
@@ -1197,9 +1149,7 @@ namespace TaskForge.Tests.Controllers
             _invitationServiceMock.Setup(x => x.GetByIdAsync(1))
                 .ReturnsAsync((ProjectInvitation?)null);
 
-            var controller = CreateController();
-
-            var result = await controller.CancelInvitation(1);
+            var result = await _controller.CancelInvitation(1);
 
             var notFound = Assert.IsType<NotFoundObjectResult>(result);
             Assert.Equal("Invitation not found.", notFound.Value);
@@ -1213,9 +1163,7 @@ namespace TaskForge.Tests.Controllers
             _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync((IdentityUser?)null);
 
-            var controller = CreateController();
-
-            var result = await controller.CancelInvitation(1);
+            var result = await _controller.CancelInvitation(1);
 
             Assert.IsType<UnauthorizedResult>(result);
         }
@@ -1232,9 +1180,7 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync("user1", 99))
                 .ReturnsAsync(new ProjectMemberDto { Role = ProjectRole.Contributor });
 
-            var controller = CreateController();
-
-            var result = await controller.CancelInvitation(1);
+            var result = await _controller.CancelInvitation(1);
 
             Assert.IsType<ForbidResult>(result);
         }
@@ -1254,9 +1200,7 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync("user1", 101))
                 .ReturnsAsync(new ProjectMemberDto { Role = ProjectRole.Admin });
 
-            var controller = CreateController();
-
-            var result = await controller.CancelInvitation(1);
+            var result = await _controller.CancelInvitation(1);
 
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             Assert.Equal($"Cannot cancel an invitation that is already {status.ToString().ToLower()}.", badRequest.Value);
@@ -1282,9 +1226,7 @@ namespace TaskForge.Tests.Controllers
             _invitationServiceMock.Setup(x => x.UpdateInvitationStatusAsync(1, InvitationStatus.Canceled))
                 .Returns(Task.CompletedTask);
 
-            var controller = CreateController();
-
-            var result = await controller.CancelInvitation(1);
+            var result = await _controller.CancelInvitation(1);
 
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("ManageMembers", redirect.ActionName);
@@ -1309,9 +1251,7 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, invitation.ProjectId))
                 .ReturnsAsync((ProjectMemberDto?)null);
 
-            var controller = CreateController();
-
-            var result = await controller.CancelInvitation(invitationId);
+            var result = await _controller.CancelInvitation(invitationId);
 
             Assert.IsType<ForbidResult>(result);
         }
@@ -1330,7 +1270,7 @@ namespace TaskForge.Tests.Controllers
             var nonAdminMember = new ProjectMemberDto
             {
                 Id = 1,
-                Role = ProjectRole.Contributor 
+                Role = ProjectRole.Contributor
             };
 
             _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
@@ -1338,11 +1278,10 @@ namespace TaskForge.Tests.Controllers
             _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, invitation.ProjectId))
                 .ReturnsAsync(nonAdminMember);
 
-            var controller = CreateController();
-
-            var result = await controller.CancelInvitation(invitationId);
+            var result = await _controller.CancelInvitation(invitationId);
 
             Assert.IsType<ForbidResult>(result);
         }
+
     }
 }

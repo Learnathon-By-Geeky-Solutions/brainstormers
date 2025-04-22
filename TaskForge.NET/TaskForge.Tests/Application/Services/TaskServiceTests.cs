@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Moq;
+﻿using Moq;
 using System.Linq.Expressions;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Helpers.DependencyResolvers;
+using TaskForge.Application.Helpers.TaskSorters;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Application.Services;
@@ -10,20 +10,21 @@ using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
 using Xunit;
 
-namespace TaskForge.Tests.Services
+namespace TaskForge.Tests.Application.Services
 {
     public class TaskServiceTests
     {
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IFileService> _fileServiceMock;
         private readonly Mock<IDependentTaskStrategy> _dependentTaskStrategyMock = new();
+        private readonly Mock<ITaskSorter> _taskSorterMock = new();
 		private readonly TaskService _taskService;
 
         public TaskServiceTests()
         {
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _fileServiceMock = new Mock<IFileService>();
-            _taskService = new TaskService(_unitOfWorkMock.Object, _fileServiceMock.Object, _dependentTaskStrategyMock.Object);
+            _taskService = new TaskService(_unitOfWorkMock.Object, _fileServiceMock.Object, _dependentTaskStrategyMock.Object, _taskSorterMock.Object);
         }
 
         [Fact]
@@ -458,7 +459,7 @@ namespace TaskForge.Tests.Services
             var ex = await Assert.ThrowsAsync<KeyNotFoundException>(() => _taskService.RemoveTaskAsync(999));
             Assert.Equal("Task not found", ex.Message);
         }
-       
+
 
 
         [Fact]
