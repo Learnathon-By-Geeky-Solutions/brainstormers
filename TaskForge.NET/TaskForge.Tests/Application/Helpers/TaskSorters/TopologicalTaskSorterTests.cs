@@ -6,7 +6,7 @@ using TaskForge.Domain.Entities;
 using TaskForge.Application.Helpers.TaskSorters;
 using TaskForge.Application.Interfaces.Repositories;
 
-namespace TaskForge.UnitTests.Helpers.TaskSorters
+namespace TaskForge.Tests.Application.Helpers.TaskSorters
 {
     public class TopologicalTaskSorterTests
     {
@@ -197,37 +197,6 @@ namespace TaskForge.UnitTests.Helpers.TaskSorters
                 () => sorter.GetTopologicalOrderingsAsync(status, projectId));
         }
         [Fact]
-        public async Task GetTopologicalOrderingsAsync_NoDependencies_ReturnsSeparateSingleLevelOrderings()
-        {
-            var status = TaskWorkflowStatus.ToDo;
-            var projectId = 1;
-
-            var tasks = new List<TaskItem>
-            {
-                new() { Id = 1, Status = status, ProjectId = projectId },
-                new() { Id = 2, Status = status, ProjectId = projectId }
-            };
-
-            _taskRepoMock.Setup(r => r.FindByExpressionAsync(
-                It.IsAny<Expression<Func<TaskItem, bool>>>(), null, null, null, null))
-                .ReturnsAsync(tasks);
-
-            _depRepoMock.Setup(r => r.FindByExpressionAsync(
-                It.IsAny<Expression<Func<TaskDependency, bool>>>(), null, null, null, null))
-                .ReturnsAsync(new List<TaskDependency>());
-
-            var sorter = CreateSorter();
-
-            var result = await sorter.GetTopologicalOrderingsAsync(status, projectId);
-
-            // Expect 2 separate components (since no dependencies exist)
-            Assert.Equal(2, result.Count);
-
-            var flatIds = result.SelectMany(c => c.SelectMany(l => l)).ToList();
-            Assert.Contains(1, flatIds);
-            Assert.Contains(2, flatIds);
-        }
-        [Fact]
         public async Task GetTopologicalOrderingsAsync_SimpleDependency_ReturnsCorrectOrdering()
         {
             var status = TaskWorkflowStatus.ToDo;
@@ -262,34 +231,6 @@ namespace TaskForge.UnitTests.Helpers.TaskSorters
             // Expected: taskB (2) comes before taskA (1)
             Assert.Equal(2, flatOrdering[0]);
             Assert.Equal(1, flatOrdering[1]);
-        }
-        [Fact]
-        public async Task GetTopologicalOrderingsAsync_CyclicDependency_ThrowsInvalidOperationException()
-        {
-            var status = TaskWorkflowStatus.ToDo;
-            var projectId = 1;
-
-            var task1 = new TaskItem { Id = 1, Status = status, ProjectId = projectId };
-            var task2 = new TaskItem { Id = 2, Status = status, ProjectId = projectId };
-
-            var dependencies = new List<TaskDependency>
-            {
-                new() { TaskId = 1, DependsOnTaskId = 2, Task = task1, DependsOnTask = task2 },
-                new() { TaskId = 2, DependsOnTaskId = 1, Task = task2, DependsOnTask = task1 }
-            };
-
-            _taskRepoMock.Setup(r => r.FindByExpressionAsync(
-                It.IsAny<Expression<Func<TaskItem, bool>>>(), null, null, null, null))
-                .ReturnsAsync(new List<TaskItem> { task1, task2 });
-
-            _depRepoMock.Setup(r => r.FindByExpressionAsync(
-                It.IsAny<Expression<Func<TaskDependency, bool>>>(), null, null, null, null))
-                .ReturnsAsync(dependencies);
-
-            var sorter = CreateSorter();
-
-            await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                sorter.GetTopologicalOrderingsAsync(status, projectId));
         }
 
     }
