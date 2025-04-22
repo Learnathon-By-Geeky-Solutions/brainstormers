@@ -62,8 +62,8 @@ namespace TaskForge.Application.Services
 		public async Task<PaginatedList<TaskDto>> GetUserTaskAsync(int? userProfileId, int pageIndex, int pageSize)
 		{
 			if (pageIndex < 1)
-				throw new ArgumentOutOfRangeException(nameof(pageIndex), "Page index must be greater than zero.");
-			            if (pageSize < 1)
+				throw new ArgumentOutOfRangeException(nameof(pageIndex), "Page index must be greater than zero."); 
+			if (pageSize < 1)
 				throw new ArgumentOutOfRangeException(nameof(pageSize), "Page size must be greater than zero.");
 			if (userProfileId == null) return new PaginatedList<TaskDto>(new List<TaskDto>(), 0, pageIndex, pageSize);
 
@@ -256,7 +256,6 @@ namespace TaskForge.Application.Services
 				ContentType = file.ContentType
 			};
 		}
-
 
 		public async Task RemoveTaskAsync(int id)
 		{

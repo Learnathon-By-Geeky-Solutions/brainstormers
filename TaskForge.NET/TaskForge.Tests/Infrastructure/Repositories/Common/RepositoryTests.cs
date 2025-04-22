@@ -200,9 +200,8 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
             await _repository.RestoreByIdAsync(notDeleted.Id);
 
             var entity = await _dbContext.Set<FakeEntity>().FindAsync(notDeleted.Id);
-            Assert.False(entity!.IsDeleted);
-            Assert.False(entity == null);
             Assert.NotNull(entity);
+            Assert.False(entity!.IsDeleted);
             Assert.Null(entity.UpdatedBy);
             Assert.Null(entity.UpdatedDate);
         }
@@ -238,14 +237,13 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
             {
                 var entity = await _dbContext.Set<FakeEntity>().FindAsync(id);
                 Assert.False(entity!.IsDeleted);
-                Assert.False(entity == null);
                 Assert.NotNull(entity);
                 Assert.Null(entity.UpdatedBy);
                 Assert.Null(entity.UpdatedDate);
             }
         }
         [Fact]
-        public async Task RestoreByIdsAsync_DoesNothing_WhenIdsNotFound()
+        public async Task RestoreByIdsAsync_DoesNothing_WhenIdsExistButNotDeleted()
         {
             var idsNotDeleted = await _dbContext.Set<FakeEntity>()
                 .Where(e => !e.IsDeleted)
@@ -254,15 +252,14 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
 
             await _repository.RestoreByIdsAsync(idsNotDeleted);
 
-            Assert.Equal(idsNotDeleted.Count, idsNotDeleted.Count);
+            Assert.NotEmpty(idsNotDeleted);
             Assert.NotNull(idsNotDeleted);
 
             foreach (var id in idsNotDeleted)
             {
                 var entity = await _dbContext.Set<FakeEntity>().FindAsync(id);
-                Assert.False(entity!.IsDeleted);
-                Assert.False(entity == null);
                 Assert.NotNull(entity);
+                Assert.False(entity!.IsDeleted);
                 Assert.Null(entity.UpdatedBy);
                 Assert.Null(entity.UpdatedDate);
                 Assert.Equal(id, entity.Id);
@@ -290,7 +287,7 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
         public async Task RestoreByIdsAsync_SetsIsDeletedToFalseForAll()
         {
             var deletedIds = await _dbContext.Set<FakeEntity>()
-                .Where(e => !e.IsDeleted)
+                .Where(e => e.IsDeleted)
                 .Select(e => e.Id)
                 .ToListAsync();
             await _repository.RestoreByIdsAsync(deletedIds);

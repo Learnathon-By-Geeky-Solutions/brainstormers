@@ -42,24 +42,46 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
         [Fact]
         public void Dispose_CallsContextDispose()
         {
-            _unitOfWork.Dispose();
-            Assert.True(_unitOfWork is IDisposable); 
+            // Arrange
+            var mockContext = new Mock<ApplicationDbContext>(new DbContextOptions<ApplicationDbContext>());
+            var unitOfWork = new UnitOfWork(mockContext.Object, _mockUserContextService.Object);
+
+            // Act
+            unitOfWork.Dispose();
+
+            // Assert
+            mockContext.Verify(c => c.Dispose(), Times.Once);
         }
 
         [Fact]
         public void Dispose_CanBeCalledMultipleTimesSafely()
         {
-            _unitOfWork.Dispose();
-            _unitOfWork.Dispose();
-            Assert.True(_unitOfWork is IDisposable);
+            // Arrange
+            var mockContext = new Mock<ApplicationDbContext>(new DbContextOptions<ApplicationDbContext>());
+            var unitOfWork = new UnitOfWork(mockContext.Object, _mockUserContextService.Object);
+
+            // Act
+            unitOfWork.Dispose();
+            unitOfWork.Dispose(); // Call again to check for exceptions
+
+            // Assert
+            mockContext.Verify(c => c.Dispose(), Times.Once);
         }
 
         [Fact]
         public async Task SaveChangesAsync_CallsContextSaveChangesAsync()
         {
-            var result = await _unitOfWork.SaveChangesAsync();
-            Assert.Equal(0, result);
-        }
+            // Arrange
+            var mockContext = new Mock<ApplicationDbContext>(new DbContextOptions<ApplicationDbContext>());
+            mockContext.Setup(m => m.SaveChangesAsync(default)).ReturnsAsync(42);
+            var unitOfWork = new UnitOfWork(mockContext.Object, _mockUserContextService.Object);
 
+            // Act
+            var result = await unitOfWork.SaveChangesAsync();
+
+            // Assert
+            mockContext.Verify(m => m.SaveChangesAsync(default), Times.Once);
+            Assert.Equal(42, result);
+        }
     }
 }
