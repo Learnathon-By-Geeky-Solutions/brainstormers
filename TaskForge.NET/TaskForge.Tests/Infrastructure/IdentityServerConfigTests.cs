@@ -3,6 +3,7 @@ using FluentAssertions;
 using TaskForge.Infrastructure;
 using Xunit;
 
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
 namespace TaskForge.Tests.Infrastructure
 {
     public class IdentityServerConfigTests

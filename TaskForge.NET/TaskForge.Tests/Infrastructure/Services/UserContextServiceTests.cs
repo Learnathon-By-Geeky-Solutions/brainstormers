@@ -18,7 +18,6 @@ namespace TaskForge.Tests.Infrastructure.Services
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _userManagerMock = new Mock<UserManager<IdentityUser>>(
                 store.Object, null, null, null, null, null, null, null, null);
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _httpContextAccessorMock = new Mock<IHttpContextAccessor>();
             _userContextService = new UserContextService(_userManagerMock.Object, _httpContextAccessorMock.Object);
