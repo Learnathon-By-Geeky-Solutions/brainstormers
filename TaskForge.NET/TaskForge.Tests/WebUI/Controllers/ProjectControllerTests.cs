@@ -10,9 +10,8 @@ using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
-using TaskForge.Web.Models;
-using TaskForge.WebUI.Controllers;
 using TaskForge.WebUI.Models;
+using TaskForge.WebUI.Controllers;
 using Xunit;
 
 namespace TaskForge.Tests.WebUI.Controllers
