@@ -98,9 +98,11 @@ namespace TaskForge.Tests.Application.Services
             Assert.NotNull(result);
             Assert.Equal(taskId, result!.Id);
             Assert.Equal("Sample Task", result.Title);
-            Assert.Single(result.Attachments.Where(a => !a.IsDeleted));
+            Assert.Single(result.Attachments, a => !a.IsDeleted);
             Assert.Single(result.AssignedUsers);
-            Assert.Equal("John Doe", result.AssignedUsers.First().UserProfile.FullName);
+            var assignedUser = result.AssignedUsers.FirstOrDefault();
+            Assert.NotNull(assignedUser);
+            Assert.Equal("John Doe", assignedUser.UserProfile.FullName);
             Assert.Equal("Project Alpha", result.Project.Title);
         }
         [Fact]
@@ -243,7 +245,9 @@ namespace TaskForge.Tests.Application.Services
                 StartDate = DateTime.UtcNow,
                 DueDate = DateTime.UtcNow.AddDays(5),
                 AssignedUserIds = new List<int> { userId },
-                Attachments = attachments
+                Attachments = attachments,
+                DependsOnTaskIds = new List<int> { 2, 3 },
+                DependentTaskIds = new List<int> { 4, 5 }
             };
 
             var existingTask = new TaskItem
@@ -346,7 +350,9 @@ namespace TaskForge.Tests.Application.Services
                 StartDate = DateTime.UtcNow,
                 DueDate = DateTime.UtcNow.AddDays(3),
                 Status = (int)TaskWorkflowStatus.InProgress,
-                Priority = (int)TaskPriority.Medium
+                Priority = (int)TaskPriority.Medium,
+                DependsOnTaskIds = new List<int> { 2, 3 },
+                DependentTaskIds = new List<int> { 4, 5 }
             };
 
             var existingTask = new TaskItem
@@ -390,7 +396,7 @@ namespace TaskForge.Tests.Application.Services
             // Assert
             _unitOfWorkMock.Verify(r => r.Tasks.UpdateAsync(It.Is<TaskItem>(
                 t => t.AssignedUsers.Count == 1 &&
-                     t.AssignedUsers.First().UserProfile.Id == userId
+                     t.AssignedUsers[0].UserProfile.Id == userId
             )), Times.Once);
         }
 
