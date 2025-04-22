@@ -98,8 +98,8 @@ namespace TaskForge.Application.Helpers.TaskSorters
 
 			foreach (var node in component)
 			{
-				subAdj[node] = fullAdj.ContainsKey(node)
-					? fullAdj[node].Where(component.Contains).ToList()
+				subAdj[node] = fullAdj.TryGetValue(node, out List<int>? value)
+					? value.Where(component.Contains).ToList()
 					: [];
 
 				subInDegree[node] = fullInDegree.GetValueOrDefault(node);

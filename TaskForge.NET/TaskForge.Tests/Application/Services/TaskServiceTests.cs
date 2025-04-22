@@ -18,13 +18,14 @@ namespace TaskForge.Tests.Application.Services
         private readonly Mock<IFileService> _fileServiceMock;
         private readonly Mock<IDependentTaskStrategy> _dependentTaskStrategyMock = new();
         private readonly Mock<ITaskSorter> _taskSorterMock = new();
+        private readonly Mock<ILogger<IdentitySeeder>> _loggerMock = new();
 		private readonly TaskService _taskService;
 
         public TaskServiceTests()
         {
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _fileServiceMock = new Mock<IFileService>();
-            _taskService = new TaskService(_unitOfWorkMock.Object, _fileServiceMock.Object, _dependentTaskStrategyMock.Object, _taskSorterMock.Object);
+            _taskService = new TaskService(_unitOfWorkMock.Object, _fileServiceMock.Object, _dependentTaskStrategyMock.Object, _taskSorterMock.Object, _loggerMock.Object);
         }
 
         [Fact]

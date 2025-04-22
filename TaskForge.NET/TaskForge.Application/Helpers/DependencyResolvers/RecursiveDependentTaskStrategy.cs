@@ -10,7 +10,7 @@ namespace TaskForge.Application.Helpers.DependencyResolvers
     public class RecursiveDependentTaskStrategy : IDependentTaskStrategy
     {
         private readonly ITaskDependencyRepository _taskDependencyRepository;
-        private Dictionary<int, List<int>> _adjacencyList;
+        private readonly Dictionary<int, List<int>> _adjacencyList;
 
         public RecursiveDependentTaskStrategy(ITaskDependencyRepository taskDependencyRepository)
         {
