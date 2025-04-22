@@ -32,7 +32,6 @@ namespace TaskForge.Tests.WebUI.Controllers
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _userManagerMock = new Mock<UserManager<IdentityUser>>(store.Object,
                 null, null, null, null, null, null, null, null);
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _controller = new ProjectController
             (
@@ -403,6 +402,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             // Assert
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect?.ActionName);
+            Assert.Empty(validationResults); // No validation errors should be present
 
             _projectServiceMock.Verify(s => s.CreateProjectAsync(It.Is<CreateProjectDto>(dto =>
                 dto.Title == model.Title &&
@@ -413,7 +413,26 @@ namespace TaskForge.Tests.WebUI.Controllers
                 dto.EndDate == model.EndDate
             )), Times.Once);
         }
+        [Fact]
+        public void Validate_EndDateBeforeStartDate_ReturnsValidationError()
+        {
+            // Arrange
+            var model = new CreateProjectViewModel
+            {
+                Title = "Test Project",
+                Status = ProjectStatus.Completed,
+                StartDate = DateTime.Now,
+                EndDate = DateTime.Now.AddHours(-1) // Invalid: EndDate before StartDate
+            };
 
+            // Act
+            var results = model.Validate(new ValidationContext(model)).ToList();
+
+            // Assert
+            Assert.Single(results); // Should return exactly 1 error
+            Assert.Equal("EndDate must be greater than StartDate", results[0].ErrorMessage);
+            Assert.Contains(nameof(CreateProjectViewModel.EndDate), results[0].MemberNames);
+        }
 
 
         [Fact]
