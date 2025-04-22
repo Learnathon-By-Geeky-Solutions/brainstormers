@@ -1,48 +1,42 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TaskForge.Application.Common.Utilities
+﻿namespace TaskForge.Application.Common.Utilities
 {
-	public class DisjointSetUnion
-	{
-		private readonly Dictionary<int, int> parent = new();
-		private readonly Dictionary<int, int> rank = new();
+    public class DisjointSetUnion
+    {
+        private readonly Dictionary<int, int> parent = new();
+        private readonly Dictionary<int, int> rank = new();
 
-		public void MakeSet(int x)
-		{
-			if (!parent.ContainsKey(x))
-			{
-				parent[x] = x;
-				rank[x] = 0;
-			}
-		}
+        public void MakeSet(int x)
+        {
+            if (!parent.ContainsKey(x))
+            {
+                parent[x] = x;
+                rank[x] = 0;
+            }
+        }
 
-		public int Find(int x)
-		{
-			if (parent[x] != x)
-				parent[x] = Find(parent[x]);
-			return parent[x];
-		}
+        public int Find(int x)
+        {
+            if (parent[x] != x)
+                parent[x] = Find(parent[x]);
+            return parent[x];
+        }
 
-		public void Union(int x, int y)
-		{
-			int rootX = Find(x);
-			int rootY = Find(y);
+        public void Union(int x, int y)
+        {
+            int rootX = Find(x);
+            int rootY = Find(y);
 
-			if (rootX == rootY) return;
+            if (rootX == rootY) return;
 
-			if (rank[rootX] < rank[rootY])
-				parent[rootX] = rootY;
-			else if (rank[rootX] > rank[rootY])
-				parent[rootY] = rootX;
-			else
-			{
-				parent[rootY] = rootX;
-				rank[rootX]++;
-			}
-		}
-	}
+            if (rank[rootX] < rank[rootY])
+                parent[rootX] = rootY;
+            else if (rank[rootX] > rank[rootY])
+                parent[rootY] = rootX;
+            else
+            {
+                parent[rootY] = rootX;
+                rank[rootX]++;
+            }
+        }
+    }
 }

@@ -1,9 +1,5 @@
 ﻿using TaskForge.Application.Interfaces.Repositories;
-using TaskForge.Application.Helpers.DependencyResolvers;
-using TaskForge.Domain.Entities;
-using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
 
 namespace TaskForge.Application.Helpers.DependencyResolvers
 {

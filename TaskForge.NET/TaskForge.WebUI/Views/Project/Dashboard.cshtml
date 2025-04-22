@@ -292,7 +292,7 @@
                                                     <div class="d-flex overflow-auto py-2" style="gap: 1rem;">
                                                         @foreach (var taskPhase in taskSequence)
                                                         {
-                                                            <div class="d-flex flex-column">
+                                                            <div class="d-flex flex-column border border-secondary rounded">
                                                                 @foreach (var taskId in taskPhase)
                                                                 {
                                                                     var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
@@ -310,7 +310,7 @@
 
                                 <!-- In Progress Tab -->
                                 <div class="tab-pane fade" id="inprogress">
-                                    <div class="row">
+                                    <div class="row g-3">
                                         @foreach (var taskSequence in Model.SortedInProgressTasks)
                                         {
                                             <div class="col-12">
@@ -318,7 +318,7 @@
                                                     <div class="d-flex overflow-auto py-2" style="gap: 1rem;">
                                                         @foreach (var taskPhase in taskSequence)
                                                         {
-                                                            <div class="d-flex flex-column">
+                                                            <div class="d-flex flex-column border border-secondary rounded">
                                                                 @foreach (var taskId in taskPhase)
                                                                 {
                                                                     var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
@@ -335,7 +335,7 @@
 
                                 <!-- Completed Tab -->
                                 <div class="tab-pane fade" id="completed">
-                                    <div class="row">
+                                    <div class="row g-3">
                                         @foreach (var taskSequence in Model.SortedCompletedTasks)
                                         {
                                             <div class="col-12">
@@ -343,7 +343,7 @@
                                                     <div class="d-flex overflow-auto py-2" style="gap: 1rem;">
                                                         @foreach (var taskPhase in taskSequence)
                                                         {
-                                                            <div class="d-flex flex-column">
+                                                            <div class="d-flex flex-column border border-secondary rounded">
                                                                 @foreach (var taskId in taskPhase)
                                                                 {
                                                                     var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
@@ -360,7 +360,7 @@
 
                                 <!-- Blocked Tab -->
                                 <div class="tab-pane fade" id="blocked">
-                                    <div class="row">
+                                    <div class="row g-3">
                                         @foreach (var taskSequence in Model.SortedBlockedTasks)
                                         {
                                             <div class="col-12">
@@ -368,7 +368,7 @@
                                                     <div class="d-flex overflow-auto py-2" style="gap: 1rem;">
                                                         @foreach (var taskPhase in taskSequence)
                                                         {
-                                                            <div class="d-flex flex-column">
+                                                            <div class="d-flex flex-column border border-secondary rounded">
                                                                 @foreach (var taskId in taskPhase)
                                                                 {
                                                                     var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
