@@ -12,7 +12,6 @@ using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
 using TaskForge.WebUI.Models;
 using TaskForge.WebUI.Controllers;
-using TaskForge.WebUI.Models;
 using Xunit;
 
 namespace TaskForge.Tests.WebUI.Controllers
