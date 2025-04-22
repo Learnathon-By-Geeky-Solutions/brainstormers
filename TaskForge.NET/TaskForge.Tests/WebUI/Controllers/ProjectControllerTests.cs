@@ -7,7 +7,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
-using TaskForge.Application.Helpers.TaskSorters;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
@@ -24,7 +23,6 @@ namespace TaskForge.Tests.WebUI.Controllers
         private readonly Mock<IProjectMemberService> _projectMemberServiceMock = new();
         private readonly Mock<ITaskService> _taskServiceMock = new();
         private readonly Mock<IProjectInvitationService> _invitationServiceMock = new();
-        private readonly Mock<ITaskSorter> _taskSorterMock = new();
         private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
         private readonly ProjectController _controller;
 
@@ -41,7 +39,6 @@ namespace TaskForge.Tests.WebUI.Controllers
                 _projectMemberServiceMock.Object,
                 _projectServiceMock.Object,
                 _taskServiceMock.Object,
-                _taskSorterMock.Object,
                 _invitationServiceMock.Object,
                 _userManagerMock.Object
             );
