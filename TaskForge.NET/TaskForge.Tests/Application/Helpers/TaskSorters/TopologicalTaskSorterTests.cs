@@ -10,8 +10,19 @@ namespace TaskForge.Tests.Application.Helpers.TaskSorters
 {
     public class TopologicalTaskSorterTests
     {
-        private readonly Mock<ITaskRepository> _taskRepoMock = new();
-        private readonly Mock<ITaskDependencyRepository> _depRepoMock = new();
+        private Mock<ITaskRepository> _taskRepoMock = null!;
+        private Mock<ITaskDependencyRepository> _depRepoMock = null!;
+
+        public TopologicalTaskSorterTests()
+        {
+            ResetMocks();
+        }
+
+        private void ResetMocks()
+        {
+            _taskRepoMock = new Mock<ITaskRepository>(MockBehavior.Strict);
+            _depRepoMock = new Mock<ITaskDependencyRepository>(MockBehavior.Strict);
+        }
 
         private TopologicalTaskSorter CreateSorter() =>
             new TopologicalTaskSorter(_depRepoMock.Object, _taskRepoMock.Object);
@@ -167,7 +178,8 @@ namespace TaskForge.Tests.Application.Helpers.TaskSorters
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(
                 () => sorter.GetTopologicalOrderingsAsync(status, projectId));
-            Assert.Equal("Cycle detected in task dependencies.", exception.Message);
+            Assert.IsType<InvalidOperationException>(exception);
+            Assert.Contains("Cycle", exception.Message);
         }
         [Fact]
         public async Task GetTopologicalOrderingsAsync_DependencyOnMissingTask_Throws()

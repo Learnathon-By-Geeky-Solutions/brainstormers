@@ -21,5 +21,19 @@ namespace TaskForge.Tests.Domain.Entities
             Assert.Equal(22, dependency.DependsOnTaskId);
             Assert.Equal("admin", dependency.CreatedBy);
         }
+
+        [Fact]
+        public void TaskDependency_Should_Handle_Null_CreatedBy()
+        {
+            var dependency = new TaskDependency
+            {
+                Id = 1,
+                TaskId = 11,
+                DependsOnTaskId = 22,
+                CreatedBy = null!
+            };
+
+            Assert.Null(dependency.CreatedBy);
+        }
     }
 }

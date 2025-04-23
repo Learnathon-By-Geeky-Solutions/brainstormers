@@ -4,6 +4,7 @@ using Xunit;
 
 namespace TaskForge.Tests.Application.Common.Utilities
 {
+    [Collection("Sequential")]
     public class DisjointSetUnionTests
     {
         [Fact]
@@ -46,7 +47,6 @@ namespace TaskForge.Tests.Application.Common.Utilities
             dsu.Union(2, 3);
 
             dsu.MakeSet(1);
-
             dsu.Union(1, 2);
 
             dsu.Find(2).Should().Be(dsu.Find(3));
@@ -64,7 +64,7 @@ namespace TaskForge.Tests.Application.Common.Utilities
             dsu.Union(1, 2);
 
             dsu.MakeSet(3);
-            dsu.Union(1, 3); 
+            dsu.Union(1, 3);
 
             dsu.Find(1).Should().Be(dsu.Find(3));
         }
@@ -75,7 +75,7 @@ namespace TaskForge.Tests.Application.Common.Utilities
             var dsu = new DisjointSetUnion();
 
             dsu.MakeSet(1);
-            dsu.Union(1, 1); 
+            dsu.Union(1, 1);
 
             dsu.Find(1).Should().Be(1);
         }

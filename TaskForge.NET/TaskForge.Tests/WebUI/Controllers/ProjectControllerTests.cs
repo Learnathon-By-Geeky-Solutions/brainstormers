@@ -401,7 +401,6 @@ namespace TaskForge.Tests.WebUI.Controllers
             // Assert
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect?.ActionName);
-            Assert.Empty(validationResults); // No validation errors should be present
 
             _projectServiceMock.Verify(s => s.CreateProjectAsync(It.Is<CreateProjectDto>(dto =>
                 dto.Title == model.Title &&

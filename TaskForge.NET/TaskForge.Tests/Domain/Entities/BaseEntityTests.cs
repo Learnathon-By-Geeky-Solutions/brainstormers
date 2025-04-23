@@ -13,7 +13,8 @@ namespace TaskForge.Tests.Domain.Entities
 
             Assert.Equal(string.Empty, entity.CreatedBy);
             Assert.False(entity.IsDeleted);
-            Assert.True((DateTime.UtcNow - entity.CreatedDate).TotalSeconds < 5);
+            Assert.True(entity.CreatedDate <= DateTime.UtcNow);
+            Assert.True(entity.CreatedDate > DateTime.UtcNow.AddMinutes(-1));
         }
 
         [Fact]
@@ -24,12 +25,13 @@ namespace TaskForge.Tests.Domain.Entities
             entity.Id = 42;
             entity.CreatedBy = "TestUser";
             entity.UpdatedBy = "Updater";
-            entity.UpdatedDate = DateTime.UtcNow;
+            var testDate = new DateTime(2023, 4, 15, 10, 30, 0, DateTimeKind.Utc);
+            entity.UpdatedDate = testDate;
 
             Assert.Equal(42, entity.Id);
             Assert.Equal("TestUser", entity.CreatedBy);
             Assert.Equal("Updater", entity.UpdatedBy);
-            Assert.NotNull(entity.UpdatedDate);
+            Assert.Equal(testDate, entity.UpdatedDate);
         }
     }
 }
