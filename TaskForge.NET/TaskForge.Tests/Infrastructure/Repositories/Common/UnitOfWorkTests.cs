@@ -25,11 +25,6 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
         }
 
         [Fact]
-        public void Constructor_InitializesRepositories()
-        {
-        }
-
-        [Fact]
         public void Dispose_CallsContextDispose()
         {
             // Arrange

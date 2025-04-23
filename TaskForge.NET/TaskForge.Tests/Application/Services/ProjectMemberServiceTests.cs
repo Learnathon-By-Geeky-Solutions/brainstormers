@@ -12,18 +12,14 @@ namespace TaskForge.Tests.Application.Services
 {
     public class ProjectMemberServiceTests
     {
-	    private readonly Mock<IProjectInvitationRepository> _projectInvitationRepositoryMock;
 	    private readonly Mock<IProjectMemberRepository> _projectMemberRepositoryMock;
-	    private readonly Mock<IUserProfileRepository> _userProfileRepositoryMock;
 		private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly ProjectMemberService _projectMemberService;
 
         public ProjectMemberServiceTests()
         {
             _unitOfWorkMock = new Mock<IUnitOfWork>();
-            _projectInvitationRepositoryMock = new Mock<IProjectInvitationRepository>();
             _projectMemberRepositoryMock = new Mock<IProjectMemberRepository>();
-            _userProfileRepositoryMock = new Mock<IUserProfileRepository>();
 			_projectMemberService = new ProjectMemberService(_projectMemberRepositoryMock.Object,_unitOfWorkMock.Object);
         }
 

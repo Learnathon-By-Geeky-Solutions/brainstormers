@@ -18,7 +18,6 @@ namespace TaskForge.Tests.Application.Services
 		private readonly Mock<IUserProfileRepository> _userProfileRepositoryMock;
 		private readonly Mock<IUnitOfWork> _unitOfWorkMock;
 		private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
-
 		private readonly ProjectInvitationService _projectInvitationService;
 
 		public ProjectInvitationServiceTests()
@@ -545,6 +544,8 @@ namespace TaskForge.Tests.Application.Services
 
 			_projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
 				.ReturnsAsync(invitation);
+			_projectMemberRepositoryMock.Setup(r => r.AddAsync(It.IsAny<ProjectMember>()))
+				.Returns(Task.CompletedTask);
 
 			// Act
 			await _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Accepted);
@@ -581,6 +582,8 @@ namespace TaskForge.Tests.Application.Services
 
 			_projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
 				.ReturnsAsync(invitation);
+			_projectInvitationRepositoryMock.Setup(r => r.UpdateAsync(invitation))
+				.Returns(Task.CompletedTask);
 
 			// Act
 			await _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Declined);
