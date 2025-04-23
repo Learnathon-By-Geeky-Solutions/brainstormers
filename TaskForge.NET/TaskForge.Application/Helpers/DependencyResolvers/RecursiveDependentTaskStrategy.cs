@@ -1,16 +1,12 @@
 ﻿using TaskForge.Application.Interfaces.Repositories;
-using TaskForge.Application.Helpers.DependencyResolvers;
-using TaskForge.Domain.Entities;
-using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
 
 namespace TaskForge.Application.Helpers.DependencyResolvers
 {
     public class RecursiveDependentTaskStrategy : IDependentTaskStrategy
     {
         private readonly ITaskDependencyRepository _taskDependencyRepository;
-        private Dictionary<int, List<int>> _adjacencyList;
+        private readonly Dictionary<int, List<int>> _adjacencyList;
 
         public RecursiveDependentTaskStrategy(ITaskDependencyRepository taskDependencyRepository)
         {

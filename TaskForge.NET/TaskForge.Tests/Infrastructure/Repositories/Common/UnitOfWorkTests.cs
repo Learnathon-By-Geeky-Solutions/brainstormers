@@ -10,7 +10,6 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
 {
     public class UnitOfWorkTests
     {
-        private readonly Mock<IUserContextService> _mockUserContextService;
         private readonly TestApplicationDbContext _realContext;
         private readonly UnitOfWork _unitOfWork;
 
@@ -22,21 +21,7 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
 
             _realContext = new TestApplicationDbContext(options);
 
-            _mockUserContextService = new Mock<IUserContextService>();
-
-            _unitOfWork = new UnitOfWork(_realContext, _mockUserContextService.Object);
-        }
-
-        [Fact]
-        public void Constructor_InitializesRepositories()
-        {
-            Assert.NotNull(_unitOfWork.Projects);
-            Assert.NotNull(_unitOfWork.Tasks);
-            Assert.NotNull(_unitOfWork.ProjectMembers);
-            Assert.NotNull(_unitOfWork.ProjectInvitations);
-            Assert.NotNull(_unitOfWork.UserProfiles);
-            Assert.NotNull(_unitOfWork.TaskAttachments);
-            Assert.NotNull(_unitOfWork.TaskAssignments);
+            _unitOfWork = new UnitOfWork(_realContext);
         }
 
         [Fact]
@@ -44,7 +29,7 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
         {
             // Arrange
             var mockContext = new Mock<ApplicationDbContext>(new DbContextOptions<ApplicationDbContext>());
-            var unitOfWork = new UnitOfWork(mockContext.Object, _mockUserContextService.Object);
+            var unitOfWork = new UnitOfWork(mockContext.Object);
 
             // Act
             unitOfWork.Dispose();
@@ -58,7 +43,7 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
         {
             // Arrange
             var mockContext = new Mock<ApplicationDbContext>(new DbContextOptions<ApplicationDbContext>());
-            var unitOfWork = new UnitOfWork(mockContext.Object, _mockUserContextService.Object);
+            var unitOfWork = new UnitOfWork(mockContext.Object);
 
             // Act
             unitOfWork.Dispose();
@@ -74,7 +59,7 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
             // Arrange
             var mockContext = new Mock<ApplicationDbContext>(new DbContextOptions<ApplicationDbContext>());
             mockContext.Setup(m => m.SaveChangesAsync(default)).ReturnsAsync(42);
-            var unitOfWork = new UnitOfWork(mockContext.Object, _mockUserContextService.Object);
+            var unitOfWork = new UnitOfWork(mockContext.Object);
 
             // Act
             var result = await unitOfWork.SaveChangesAsync();

@@ -96,3 +96,4 @@ packages/
 /TaskForge.NET/TaskForge.Tests/TestResults
 /TaskForge.NET/TaskForge.Tests/coveragereport
 /TaskForge.NET/TestResults
+/TaskForge.NET/TaskForge.WebUI/Properties/launchSettings.json

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Moq;
 using System.Linq.Expressions;
+using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Services;
 using TaskForge.Domain.Entities;
@@ -11,13 +12,15 @@ namespace TaskForge.Tests.Application.Services
 {
     public class ProjectMemberServiceTests
     {
-        private readonly Mock<IUnitOfWork> _unitOfWorkMock;
+	    private readonly Mock<IProjectMemberRepository> _projectMemberRepositoryMock;
+		private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly ProjectMemberService _projectMemberService;
 
         public ProjectMemberServiceTests()
         {
             _unitOfWorkMock = new Mock<IUnitOfWork>();
-            _projectMemberService = new ProjectMemberService(_unitOfWorkMock.Object);
+            _projectMemberRepositoryMock = new Mock<IProjectMemberRepository>();
+			_projectMemberService = new ProjectMemberService(_projectMemberRepositoryMock.Object,_unitOfWorkMock.Object);
         }
 
         [Fact]
@@ -27,7 +30,7 @@ namespace TaskForge.Tests.Application.Services
             var memberId = 1;
             var expectedMember = new ProjectMember { Id = memberId, IsDeleted = false };
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.GetByIdAsync(memberId))
+            _projectMemberRepositoryMock.Setup(u => u.GetByIdAsync(memberId))
                 .ReturnsAsync(expectedMember);
 
             // Act
@@ -44,7 +47,7 @@ namespace TaskForge.Tests.Application.Services
             // Arrange
             var invalidId = 999;
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.GetByIdAsync(invalidId))
+            _projectMemberRepositoryMock.Setup(u => u.GetByIdAsync(invalidId))
                 .ReturnsAsync((ProjectMember?)null);
 
             // Act
@@ -60,7 +63,7 @@ namespace TaskForge.Tests.Application.Services
             // Arrange
             var memberId = 2;
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.GetByIdAsync(memberId))
+            _projectMemberRepositoryMock.Setup(u => u.GetByIdAsync(memberId))
                 .ReturnsAsync((ProjectMember?)null); // Simulating soft-delete logic
 
             // Act
@@ -76,7 +79,7 @@ namespace TaskForge.Tests.Application.Services
             // Arrange
             var memberId = 3;
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.GetByIdAsync(memberId))
+            _projectMemberRepositoryMock.Setup(u => u.GetByIdAsync(memberId))
                 .ThrowsAsync(new Exception("Database failure"));
 
             // Act & Assert
@@ -115,7 +118,7 @@ namespace TaskForge.Tests.Application.Services
                 Role = ProjectRole.Admin
             };
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                     null,
                     It.IsAny<Func<IQueryable<ProjectMember>, IQueryable<ProjectMember>>>(),
@@ -140,7 +143,7 @@ namespace TaskForge.Tests.Application.Services
             string userId = "nonexistent-user";
             int projectId = 123;
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                     null,
                     It.IsAny<Func<IQueryable<ProjectMember>, IQueryable<ProjectMember>>>(),
@@ -175,7 +178,7 @@ namespace TaskForge.Tests.Application.Services
             };
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                     null,
                     It.IsAny<Func<IQueryable<ProjectMember>, IQueryable<ProjectMember>>>(),
@@ -199,7 +202,7 @@ namespace TaskForge.Tests.Application.Services
             string userId = "user-1";
             int projectId = 1;
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                     null,
                     It.IsAny<Func<IQueryable<ProjectMember>, IQueryable<ProjectMember>>>(),
@@ -231,7 +234,7 @@ namespace TaskForge.Tests.Application.Services
                 }
             };
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.Is<Expression<Func<ProjectMember, bool>>>(predicate =>
                         predicate.Compile()(matchingMember)),
                     null,
@@ -268,7 +271,7 @@ namespace TaskForge.Tests.Application.Services
                 Role = ProjectRole.Contributor
             };
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                     It.IsAny<Func<IQueryable<ProjectMember>, IOrderedQueryable<ProjectMember>>>(),
                     It.IsAny<Func<IQueryable<ProjectMember>, IQueryable<ProjectMember>>>(),
@@ -296,7 +299,7 @@ namespace TaskForge.Tests.Application.Services
             // Arrange
             int projectId = 999;
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                     It.IsAny<Func<IQueryable<ProjectMember>, IOrderedQueryable<ProjectMember>>>(),
                     It.IsAny<Func<IQueryable<ProjectMember>, IQueryable<ProjectMember>>>(),
@@ -333,7 +336,7 @@ namespace TaskForge.Tests.Application.Services
             };
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                     It.IsAny<Func<IQueryable<ProjectMember>, IOrderedQueryable<ProjectMember>>>(),
                     It.IsAny<Func<IQueryable<ProjectMember>, IQueryable<ProjectMember>>>(),
@@ -374,7 +377,7 @@ namespace TaskForge.Tests.Application.Services
                 }
             };
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                     It.IsAny<Func<IQueryable<ProjectMember>, IOrderedQueryable<ProjectMember>>>(),
                     It.IsAny<Func<IQueryable<ProjectMember>, IQueryable<ProjectMember>>>(),
@@ -399,7 +402,7 @@ namespace TaskForge.Tests.Application.Services
             // Arrange
             int projectId = 1;
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                     It.IsAny<Func<IQueryable<ProjectMember>, IOrderedQueryable<ProjectMember>>>(),
                     It.IsAny<Func<IQueryable<ProjectMember>, IQueryable<ProjectMember>>>(),
@@ -419,7 +422,7 @@ namespace TaskForge.Tests.Application.Services
             var memberId = 1;
             var mockMember = new ProjectMember { Id = memberId, IsDeleted = false };
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.DeleteByIdAsync(memberId))
+            _projectMemberRepositoryMock.Setup(u => u.DeleteByIdAsync(memberId))
                 .Returns(async () =>
                 {
                     mockMember.IsDeleted = true;
@@ -435,7 +438,7 @@ namespace TaskForge.Tests.Application.Services
 
             // Assert
             Assert.True(mockMember.IsDeleted);
-            _unitOfWorkMock.Verify(u => u.ProjectMembers.DeleteByIdAsync(memberId), Times.Once);
+            _projectMemberRepositoryMock.Verify(u => u.DeleteByIdAsync(memberId), Times.Once);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
 
@@ -445,7 +448,7 @@ namespace TaskForge.Tests.Application.Services
             // Arrange
             var memberId = 99;
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.DeleteByIdAsync(memberId))
+            _projectMemberRepositoryMock.Setup(u => u.DeleteByIdAsync(memberId))
                 .Returns(Task.CompletedTask);
 
             _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
@@ -453,7 +456,7 @@ namespace TaskForge.Tests.Application.Services
             // Act & Assert
             var exception = await Record.ExceptionAsync(() => _projectMemberService.RemoveAsync(memberId));
             Assert.Null(exception);
-            _unitOfWorkMock.Verify(u => u.ProjectMembers.DeleteByIdAsync(memberId), Times.Once);
+            _projectMemberRepositoryMock.Verify(u => u.DeleteByIdAsync(memberId), Times.Once);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
 
@@ -463,12 +466,12 @@ namespace TaskForge.Tests.Application.Services
             // Arrange
             var memberId = 1;
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.DeleteByIdAsync(memberId))
+            _projectMemberRepositoryMock.Setup(u => u.DeleteByIdAsync(memberId))
                 .ThrowsAsync(new Exception("Deletion failed"));
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _projectMemberService.RemoveAsync(memberId));
-            _unitOfWorkMock.Verify(u => u.ProjectMembers.DeleteByIdAsync(memberId), Times.Once);
+            _projectMemberRepositoryMock.Verify(u => u.DeleteByIdAsync(memberId), Times.Once);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
         }
 
@@ -478,7 +481,7 @@ namespace TaskForge.Tests.Application.Services
             // Arrange
             var memberId = 1;
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.DeleteByIdAsync(memberId))
+            _projectMemberRepositoryMock.Setup(u => u.DeleteByIdAsync(memberId))
                 .Returns(Task.CompletedTask);
 
             _unitOfWorkMock.Setup(u => u.SaveChangesAsync())
@@ -486,7 +489,7 @@ namespace TaskForge.Tests.Application.Services
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _projectMemberService.RemoveAsync(memberId));
-            _unitOfWorkMock.Verify(u => u.ProjectMembers.DeleteByIdAsync(memberId), Times.Once);
+            _projectMemberRepositoryMock.Verify(u => u.DeleteByIdAsync(memberId), Times.Once);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
 
@@ -503,7 +506,7 @@ namespace TaskForge.Tests.Application.Services
                 new ProjectMember { ProjectId = 1, UserProfileId = userProfileId } // duplicate project
             };
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                 It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                 null, null, null, null))
                 .ReturnsAsync(mockData);
@@ -522,7 +525,7 @@ namespace TaskForge.Tests.Application.Services
             int userProfileId = 10;
             var mockData = new List<ProjectMember>(); // empty list
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                 It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                 null, null, null, null))
                 .ReturnsAsync(mockData);
@@ -538,7 +541,7 @@ namespace TaskForge.Tests.Application.Services
         public async Task GetUserProjectCountAsync_ShouldPropagateException_WhenRepositoryThrows()
         {
             // Arrange
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                 It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                 null, null, null, null))
                 .ThrowsAsync(new Exception("DB error"));

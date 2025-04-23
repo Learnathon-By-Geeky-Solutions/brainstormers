@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.Extensions.Options;
 using Moq;
 using System.Linq.Expressions;
 using TaskForge.Application.Interfaces.Repositories;
@@ -13,30 +14,51 @@ namespace TaskForge.Tests.Application.Services
 {
     public class ProjectInvitationServiceTests
     {
+        private readonly Mock<IProjectInvitationRepository> _projectInvitationRepositoryMock;
+        private readonly Mock<IProjectMemberRepository> _projectMemberRepositoryMock;
+        private readonly Mock<IUserProfileRepository> _userProfileRepositoryMock;
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
-        private readonly Mock<IUserStore<IdentityUser>> _userStoreMock;
         private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
         private readonly ProjectInvitationService _projectInvitationService;
 
         public ProjectInvitationServiceTests()
         {
+            _projectInvitationRepositoryMock = new Mock<IProjectInvitationRepository>();
+            _projectMemberRepositoryMock = new Mock<IProjectMemberRepository>();
+            _userProfileRepositoryMock = new Mock<IUserProfileRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
-            _userStoreMock = new Mock<IUserStore<IdentityUser>>();
 
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-            // Create a minimal UserManager
-            _userManagerMock = new Mock<UserManager<IdentityUser>>(
-                _userStoreMock.Object,
-                null, null, null, null, null, null, null,
-                new Mock<ILogger<UserManager<IdentityUser>>>().Object
-            );
+            _userManagerMock = CreateMockUserManager();
 
             _projectInvitationService = new ProjectInvitationService(
+                _projectInvitationRepositoryMock.Object,
+                _projectMemberRepositoryMock.Object,
+                _userProfileRepositoryMock.Object,
                 _unitOfWorkMock.Object,
                 _userManagerMock.Object
             );
-#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         }
+
+        private static Mock<UserManager<IdentityUser>> CreateMockUserManager()
+        {
+            var store = new Mock<IUserStore<IdentityUser>>();
+
+            return new Mock<UserManager<IdentityUser>>(
+                store.Object,
+                Mock.Of<IOptions<IdentityOptions>>(),
+                Mock.Of<IPasswordHasher<IdentityUser>>(),
+                Array.Empty<IUserValidator<IdentityUser>>(),
+                Array.Empty<IPasswordValidator<IdentityUser>>(),
+                Mock.Of<ILookupNormalizer>(),
+                Mock.Of<IdentityErrorDescriber>(),
+                Mock.Of<IServiceProvider>(),
+                Mock.Of<ILogger<UserManager<IdentityUser>>>()
+                    )
+            {
+                DefaultValue = DefaultValue.Mock
+            };
+        }
+
 
         [Fact]
         public async Task GetByIdAsync_ReturnsInvitation_WhenExists()
@@ -45,7 +67,7 @@ namespace TaskForge.Tests.Application.Services
             var invitationId = 1;
             var mockInvitation = new ProjectInvitation { Id = invitationId };
 
-            _unitOfWorkMock.Setup(x => x.ProjectInvitations.GetByIdAsync(invitationId))
+            _projectInvitationRepositoryMock.Setup(x => x.GetByIdAsync(invitationId))
                            .ReturnsAsync(mockInvitation);
 
             // Act
@@ -54,7 +76,7 @@ namespace TaskForge.Tests.Application.Services
             // Assert
             Assert.NotNull(result);
             Assert.Equal(invitationId, result!.Id);
-            _unitOfWorkMock.Verify(x => x.ProjectInvitations.GetByIdAsync(invitationId), Times.Once);
+            _projectInvitationRepositoryMock.Verify(x => x.GetByIdAsync(invitationId), Times.Once);
         }
 
         [Fact]
@@ -63,7 +85,7 @@ namespace TaskForge.Tests.Application.Services
             // Arrange
             var invitationId = 999;
 
-            _unitOfWorkMock.Setup(x => x.ProjectInvitations.GetByIdAsync(invitationId))
+            _projectInvitationRepositoryMock.Setup(x => x.GetByIdAsync(invitationId))
                            .ReturnsAsync((ProjectInvitation?)null);
 
             // Act
@@ -71,7 +93,7 @@ namespace TaskForge.Tests.Application.Services
 
             // Assert
             Assert.Null(result);
-            _unitOfWorkMock.Verify(x => x.ProjectInvitations.GetByIdAsync(invitationId), Times.Once);
+            _projectInvitationRepositoryMock.Verify(x => x.GetByIdAsync(invitationId), Times.Once);
         }
 
         [Fact]
@@ -80,8 +102,7 @@ namespace TaskForge.Tests.Application.Services
             // Arrange
             var invitationId = 1;
 
-            _unitOfWorkMock
-                .Setup(u => u.ProjectInvitations.GetByIdAsync(invitationId))
+            _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
                 .ThrowsAsync(new Exception("Database error"));
 
             // Act & Assert
@@ -97,7 +118,7 @@ namespace TaskForge.Tests.Application.Services
             var pageIndex = 1;
             var pageSize = 2;
             var skip = (pageIndex - 1) * pageSize;
-            var totalCount = 5;
+            var totalCount = 2;
 
             var mockInvitations = new List<ProjectInvitation>
             {
@@ -123,10 +144,9 @@ namespace TaskForge.Tests.Application.Services
                 }
             };
 
-            // Setup must match: predicate, orderBy, includes, take, skip
-            _unitOfWorkMock
-                .Setup(u => u.ProjectInvitations.GetPaginatedListAsync(
-                    It.Is<Expression<Func<ProjectInvitation, bool>>>(pred => pred.Compile()(mockInvitations[0])),
+            _projectInvitationRepositoryMock
+                .Setup(u => u.GetPaginatedListAsync(
+                    It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
                     It.IsAny<Func<IQueryable<ProjectInvitation>, IOrderedQueryable<ProjectInvitation>>>(),
                     It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
                     pageSize,
@@ -142,8 +162,9 @@ namespace TaskForge.Tests.Application.Services
             Assert.Equal(totalCount, result.TotalCount);
             Assert.Equal(mockInvitations.Count, result.Items.Count);
             Assert.Equal("testuser1", result.Items[0].InvitedUserProfile.User.UserName);
+            Assert.Equal("testuser2", result.Items[1].InvitedUserProfile.User.UserName);
 
-            _unitOfWorkMock.Verify(u => u.ProjectInvitations.GetPaginatedListAsync(
+            _projectInvitationRepositoryMock.Verify(u => u.GetPaginatedListAsync(
                 It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
                 It.IsAny<Func<IQueryable<ProjectInvitation>, IOrderedQueryable<ProjectInvitation>>>(),
                 It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
@@ -161,7 +182,7 @@ namespace TaskForge.Tests.Application.Services
             var pageSize = 2;
             var skip = (pageIndex - 1) * pageSize;
 
-            _unitOfWorkMock.Setup(u => u.ProjectInvitations.GetPaginatedListAsync(
+            _projectInvitationRepositoryMock.Setup(u => u.GetPaginatedListAsync(
                     It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
                     null,
                     It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
@@ -179,7 +200,7 @@ namespace TaskForge.Tests.Application.Services
             Assert.False(result.HasPreviousPage, "On first page, HasPreviousPage should be false");
             Assert.False(result.HasNextPage, "With no items, HasNextPage should be false");
 
-            _unitOfWorkMock.Verify(u => u.ProjectInvitations.GetPaginatedListAsync(
+            _projectInvitationRepositoryMock.Verify(u => u.GetPaginatedListAsync(
                 It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
                 null,
                 It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
@@ -205,8 +226,7 @@ namespace TaskForge.Tests.Application.Services
             };
             var totalCount = 5;
 
-            _unitOfWorkMock
-                .Setup(u => u.ProjectInvitations.GetPaginatedListAsync(
+            _projectInvitationRepositoryMock.Setup(u => u.GetPaginatedListAsync(
                     It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
                     null,
                     It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
@@ -230,32 +250,30 @@ namespace TaskForge.Tests.Application.Services
         {
             // Arrange
             var projectId = 50;
-            var pageIndex = 2;
+            var pageIndex = 1;
             var pageSize = 5;
             var skip = (pageIndex - 1) * pageSize;
 
             var items = new[] { new ProjectInvitation { Id = 99, ProjectId = projectId } };
             var count = 1;
 
-            _unitOfWorkMock
-              .Setup(u => u.ProjectInvitations.GetPaginatedListAsync(
-                  It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
-                  /* orderBy */  null,
-                  /* includes */ null,
-                  /* take */     pageSize,
-                  /* skip */     skip
-              ))
-              .ReturnsAsync((items.AsEnumerable(), count));
+            _projectInvitationRepositoryMock.Setup(repo => repo.GetPaginatedListAsync(
+                It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
+                /* orderBy */ null,
+                /* includes */ It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
+                /* take */ pageSize,
+                /* skip */ skip))
+            .ReturnsAsync((items.AsEnumerable(), count));
 
             // Act
-            var (fetched, total) = await _unitOfWorkMock.Object
-              .ProjectInvitations
-              .GetPaginatedListAsync(pi => pi.ProjectId == projectId, null, null, pageSize, skip);
+            var result = await _projectInvitationService.GetInvitationListAsync(projectId, pageIndex, pageSize);
 
             // Assert
-            Assert.Equal(count, total);
-            Assert.Single(fetched);
-            Assert.Equal(99, fetched.First().Id);
+            Assert.NotNull(result);
+            Assert.Equal(count, result.TotalCount);
+            Assert.Equal(items.Length, result.Items.Count);
+            Assert.Equal(projectId, result.Items[0].ProjectId);
+            Assert.Equal(99, result.Items[0].Id);
         }
 
         [Fact]
@@ -266,8 +284,7 @@ namespace TaskForge.Tests.Application.Services
             var pageIndex = 1;
             var pageSize = 10;
 
-            _unitOfWorkMock
-                .Setup(u => u.ProjectInvitations.GetPaginatedListAsync(
+            _projectInvitationRepositoryMock.Setup(u => u.GetPaginatedListAsync(
                     It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
                     null,
                     It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
@@ -316,7 +333,7 @@ namespace TaskForge.Tests.Application.Services
             _userManagerMock.Setup(x => x.FindByEmailAsync(email))
                 .ReturnsAsync(identityUser);
 
-            _unitOfWorkMock.Setup(x => x.UserProfiles.FindByExpressionAsync(
+            _userProfileRepositoryMock.Setup(x => x.FindByExpressionAsync(
                     It.IsAny<Expression<Func<UserProfile, bool>>>(),
                     null,
                     null,
@@ -363,7 +380,7 @@ namespace TaskForge.Tests.Application.Services
             _userManagerMock.Setup(x => x.FindByEmailAsync(email))
                 .ReturnsAsync(identityUser);
 
-            _unitOfWorkMock.Setup(x => x.UserProfiles.FindByExpressionAsync(
+            _userProfileRepositoryMock.Setup(x => x.FindByExpressionAsync(
                     It.IsAny<Expression<Func<UserProfile, bool>>>(),
                     null,
                     null,
@@ -371,7 +388,7 @@ namespace TaskForge.Tests.Application.Services
                     null))
                 .ReturnsAsync(new List<UserProfile> { userProfile });
 
-            _unitOfWorkMock.Setup(x => x.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(x => x.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                     null,
                     null,
@@ -419,17 +436,17 @@ namespace TaskForge.Tests.Application.Services
             _userManagerMock.Setup(x => x.FindByEmailAsync(email))
                 .ReturnsAsync(identityUser);
 
-            _unitOfWorkMock.Setup(x => x.UserProfiles.FindByExpressionAsync(
+            _userProfileRepositoryMock.Setup(x => x.FindByExpressionAsync(
                     It.IsAny<Expression<Func<UserProfile, bool>>>(),
                     null, null, null, null))
                 .ReturnsAsync(new List<UserProfile> { userProfile });
 
-            _unitOfWorkMock.Setup(x => x.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(x => x.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                     null, null, null, null))
                 .ReturnsAsync(new List<ProjectMember>()); // user is not already a member
 
-            _unitOfWorkMock.Setup(x => x.ProjectInvitations.FindByExpressionAsync(
+            _projectInvitationRepositoryMock.Setup(x => x.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
                     null, null, null, null))
                 .ReturnsAsync(new List<ProjectInvitation> { existingInvitation });
@@ -467,22 +484,22 @@ namespace TaskForge.Tests.Application.Services
             _userManagerMock.Setup(x => x.FindByEmailAsync(email))
                 .ReturnsAsync(identityUser);
 
-            _unitOfWorkMock.Setup(x => x.UserProfiles.FindByExpressionAsync(
+            _userProfileRepositoryMock.Setup(x => x.FindByExpressionAsync(
                     It.IsAny<Expression<Func<UserProfile, bool>>>(),
                     null, null, null, null))
                 .ReturnsAsync(new List<UserProfile> { userProfile });
 
-            _unitOfWorkMock.Setup(x => x.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(x => x.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                     null, null, null, null))
                 .ReturnsAsync(new List<ProjectMember>()); // user is not a member
 
-            _unitOfWorkMock.Setup(x => x.ProjectInvitations.FindByExpressionAsync(
+            _projectInvitationRepositoryMock.Setup(x => x.FindByExpressionAsync(
                     It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
                     null, null, null, null))
                 .ReturnsAsync(new List<ProjectInvitation>()); // no pending invitation
 
-            _unitOfWorkMock.Setup(x => x.ProjectInvitations.AddAsync(It.IsAny<ProjectInvitation>()))
+            _projectInvitationRepositoryMock.Setup(x => x.AddAsync(It.IsAny<ProjectInvitation>()))
                 .Returns(Task.CompletedTask);
 
             _unitOfWorkMock.Setup(x => x.SaveChangesAsync())
@@ -519,14 +536,14 @@ namespace TaskForge.Tests.Application.Services
         {
             // Arrange
             var invitationId = 1;
-            _unitOfWorkMock.Setup(u => u.ProjectInvitations.GetByIdAsync(invitationId))
+            _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
                 .ReturnsAsync((ProjectInvitation)null!);
 
             // Act
             await _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Accepted);
 
             // Assert
-            _unitOfWorkMock.Verify(u => u.ProjectInvitations.UpdateAsync(It.IsAny<ProjectInvitation>()), Times.Never);
+            _projectInvitationRepositoryMock.Verify(u => u.UpdateAsync(It.IsAny<ProjectInvitation>()), Times.Never);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
         }
 
@@ -544,11 +561,10 @@ namespace TaskForge.Tests.Application.Services
                 Status = InvitationStatus.Pending
             };
 
-            _unitOfWorkMock.Setup(u => u.ProjectInvitations.GetByIdAsync(invitationId))
+            _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
                 .ReturnsAsync(invitation);
-
-            var projectMembersRepoMock = new Mock<IProjectMemberRepository>(); // Use the actual interface here
-            _unitOfWorkMock.Setup(u => u.ProjectMembers).Returns(projectMembersRepoMock.Object);
+            _projectMemberRepositoryMock.Setup(r => r.AddAsync(It.IsAny<ProjectMember>()))
+                .Returns(Task.CompletedTask);
 
             // Act
             await _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Accepted);
@@ -558,14 +574,15 @@ namespace TaskForge.Tests.Application.Services
             Assert.NotNull(invitation.AcceptedDate);
             Assert.Null(invitation.DeclinedDate);
 
-            projectMembersRepoMock.Verify(r => r.AddAsync(It.Is<ProjectMember>(
+            _projectMemberRepositoryMock.Verify(r => r.AddAsync(It.Is<ProjectMember>(
                 m => m.ProjectId == invitation.ProjectId &&
                      m.UserProfileId == invitation.InvitedUserProfileId &&
                      m.Role == invitation.AssignedRole)), Times.Once);
 
-            _unitOfWorkMock.Verify(u => u.ProjectInvitations.UpdateAsync(invitation), Times.Once);
+            _projectInvitationRepositoryMock.Verify(u => u.UpdateAsync(invitation), Times.Once);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
+
 
         [Fact]
         public async Task UpdateInvitationStatusAsync_ShouldDeclineInvitation()
@@ -582,8 +599,10 @@ namespace TaskForge.Tests.Application.Services
                 AcceptedDate = DateTime.UtcNow // Simulate previously accepted
             };
 
-            _unitOfWorkMock.Setup(u => u.ProjectInvitations.GetByIdAsync(invitationId))
+            _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
                 .ReturnsAsync(invitation);
+            _projectInvitationRepositoryMock.Setup(r => r.UpdateAsync(invitation))
+                .Returns(Task.CompletedTask);
 
             // Act
             await _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Declined);
@@ -593,8 +612,8 @@ namespace TaskForge.Tests.Application.Services
             Assert.Null(invitation.AcceptedDate);
             Assert.NotNull(invitation.DeclinedDate);
 
-            _unitOfWorkMock.Verify(u => u.ProjectMembers.AddAsync(It.IsAny<ProjectMember>()), Times.Never);
-            _unitOfWorkMock.Verify(u => u.ProjectInvitations.UpdateAsync(invitation), Times.Once);
+            _projectMemberRepositoryMock.Verify(u => u.AddAsync(It.IsAny<ProjectMember>()), Times.Never);
+            _projectInvitationRepositoryMock.Verify(u => u.UpdateAsync(invitation), Times.Once);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
 
@@ -613,11 +632,10 @@ namespace TaskForge.Tests.Application.Services
                 ProjectId = 456
             };
 
-            _unitOfWorkMock.Setup(u => u.ProjectInvitations.GetByIdAsync(invitationId))
+            _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
                 .ReturnsAsync(invitation);
 
-            _unitOfWorkMock
-                .Setup(u => u.ProjectMembers.AddAsync(It.IsAny<ProjectMember>()));
+            _projectMemberRepositoryMock.Setup(u => u.AddAsync(It.IsAny<ProjectMember>()));
 
             _unitOfWorkMock.Setup(u => u.SaveChangesAsync())
                 .ThrowsAsync(new Exception("Database save failed"));
@@ -659,17 +677,17 @@ namespace TaskForge.Tests.Application.Services
                 .ToList();
 
             var expectedPaged = expectedFiltered
-                .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
+                .Skip((pageIndex - 1) * pageSize)
                 .ToList();
 
             // Mock setup with expression matching to ensure proper filtering
-            _unitOfWorkMock.Setup(u => u.ProjectInvitations.GetPaginatedListAsync(
+            _projectInvitationRepositoryMock.Setup(u => u.GetPaginatedListAsync(
                     It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
                     null,
                     It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
-                    (pageIndex - 1) * pageSize,
-                    pageSize))
+                    pageSize,
+                    (pageIndex - 1) * pageSize))
                 .ReturnsAsync((expectedPaged, expectedFiltered.Count));
             // Ensure mock returns paginated results
 
@@ -691,12 +709,12 @@ namespace TaskForge.Tests.Application.Services
             var pageIndex = 1;
             var pageSize = 5;
 
-            _unitOfWorkMock.Setup(u => u.ProjectInvitations.GetPaginatedListAsync(
+            _projectInvitationRepositoryMock.Setup(u => u.GetPaginatedListAsync(
                     It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
                     null,
                     It.IsAny<Func<IQueryable<ProjectInvitation>, IIncludableQueryable<ProjectInvitation, object>>>(),
-                    (pageIndex - 1) * pageSize,
-                    pageSize))
+                    pageSize,
+                    (pageIndex - 1) * pageSize))
                 .ReturnsAsync((new List<ProjectInvitation>(), 0));
 
             // Act
@@ -724,13 +742,12 @@ namespace TaskForge.Tests.Application.Services
                 new ProjectInvitation { Id = 4, InvitedUserProfileId = userProfileId }
             };
 
-            _unitOfWorkMock
-                .Setup(u => u.ProjectInvitations.GetPaginatedListAsync(
+            _projectInvitationRepositoryMock.Setup(u => u.GetPaginatedListAsync(
                     It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
                     null,
                     It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
-                    skip,
-                    pageSize
+                    pageSize,
+                    skip
                 ))
                 .ReturnsAsync((mockInvitations, totalCount));
 

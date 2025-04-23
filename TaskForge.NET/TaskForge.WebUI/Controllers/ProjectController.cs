@@ -6,7 +6,6 @@ using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Enums;
-using TaskForge.Web.Models;
 using TaskForge.WebUI.Models;
 
 namespace TaskForge.WebUI.Controllers
@@ -230,12 +229,12 @@ namespace TaskForge.WebUI.Controllers
 
             var sortedTodoTasks = await _taskService.GetSortedTasksAsync(TaskWorkflowStatus.ToDo, id) ?? [];
             var sortedInProgressTasks = await _taskService.GetSortedTasksAsync(TaskWorkflowStatus.InProgress, id) ?? [];
-			var sortedCompletedTasks = await _taskService.GetSortedTasksAsync(TaskWorkflowStatus.Done, id) ?? [];
-			var sortedBlockedTasks = await _taskService.GetSortedTasksAsync(TaskWorkflowStatus.Blocked, id) ?? [];
+            var sortedCompletedTasks = await _taskService.GetSortedTasksAsync(TaskWorkflowStatus.Done, id) ?? [];
+            var sortedBlockedTasks = await _taskService.GetSortedTasksAsync(TaskWorkflowStatus.Blocked, id) ?? [];
 
 
 
-			var model = new ProjectDashboardViewModel
+            var model = new ProjectDashboardViewModel
             {
                 ProjectId = project.Id,
                 ProjectTitle = project.Title,
@@ -284,9 +283,9 @@ namespace TaskForge.WebUI.Controllers
                 }).ToList(),
                 SortedTodoTasks = sortedTodoTasks,
                 SortedInProgressTasks = sortedInProgressTasks,
-				SortedCompletedTasks = sortedCompletedTasks,
-				SortedBlockedTasks = sortedBlockedTasks,
-				UpdateViewModel = new ProjectUpdateViewModel
+                SortedCompletedTasks = sortedCompletedTasks,
+                SortedBlockedTasks = sortedBlockedTasks,
+                UpdateViewModel = new ProjectUpdateViewModel
                 {
                     Id = project.Id,
                     Title = project.Title,

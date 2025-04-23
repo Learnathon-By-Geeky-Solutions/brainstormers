@@ -1,5 +1,4 @@
-﻿using TaskForge.Domain.Entities;
-using TaskForge.Domain.Enums;
+﻿using TaskForge.Domain.Enums;
 
 namespace TaskForge.Application.Helpers.DependencyResolvers
 {

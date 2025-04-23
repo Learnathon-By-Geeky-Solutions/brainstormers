@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using System.Linq.Expressions;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
+using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
@@ -13,11 +14,23 @@ namespace TaskForge.Application.Services
     public class ProjectService : IProjectService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IProjectRepository _projectRepository;
+        private readonly IProjectMemberRepository _projectMemberRepository;
+        private readonly IUserProfileRepository _userProfileRepository;
         private readonly IUserProfileService _userProfileService;
 
-        public ProjectService(IUnitOfWork unitOfWork, IUserProfileService userProfileService)
+        public ProjectService(
+	        IUnitOfWork unitOfWork,
+            IProjectRepository projectRepository,
+            IProjectMemberRepository projectMemberRepository,
+            IUserProfileRepository userProfileRepository,
+	        IUserProfileService userProfileService
+	        )
         {
             _unitOfWork = unitOfWork;
+            _projectRepository = projectRepository;
+            _projectMemberRepository = projectMemberRepository;
+            _userProfileRepository = userProfileRepository;
             _userProfileService = userProfileService;
         }
 
@@ -42,13 +55,13 @@ namespace TaskForge.Application.Services
 
                 if (dto.EndDate != null) project.SetEndDate(dto.EndDate);
 
-                await _unitOfWork.Projects.AddAsync(project);
+                await _projectRepository.AddAsync(project);
                 await _unitOfWork.SaveChangesAsync(); // Ensure Project.Id is generated
 
                 var projectId = project.Id;
 
                 // 2. Get the UserProfileId for CreatedBy
-                var userProfileId = (await _unitOfWork.UserProfiles.FindByExpressionAsync(up => up.UserId == dto.CreatedBy))
+                var userProfileId = (await _userProfileRepository.FindByExpressionAsync(up => up.UserId == dto.CreatedBy))
                                    .Select(up => up.Id)
                                    .FirstOrDefault();
 
@@ -64,7 +77,7 @@ namespace TaskForge.Application.Services
                     Role = ProjectRole.Admin
                 };
 
-                await _unitOfWork.ProjectMembers.AddAsync(projectMember);
+                await _projectMemberRepository.AddAsync(projectMember);
                 await _unitOfWork.SaveChangesAsync();
 
                 // 4. Commit transaction
@@ -95,7 +108,7 @@ namespace TaskForge.Application.Services
 
             if (dto.EndDate != null) project.SetEndDate(dto.EndDate);
 
-            await _unitOfWork.Projects.UpdateAsync(project);
+            await _projectRepository.UpdateAsync(project);
             await _unitOfWork.SaveChangesAsync();
         }
 
@@ -114,7 +127,7 @@ namespace TaskForge.Application.Services
 
         public async Task<Project?> GetProjectByIdAsync(int projectId)
         {
-            return (await _unitOfWork.Projects.FindByExpressionAsync(
+            return (await _projectRepository.FindByExpressionAsync(
                     predicate: p => p.Id == projectId,
                     includes: query => query
                         .Include(p => p.Members)
@@ -137,7 +150,7 @@ namespace TaskForge.Application.Services
             var predicate = BuildPredicate(filter, userProfileId);
             var orderBy = BuildOrderBy(filter);
 
-            var (filteredProjectList, totalCount) = await _unitOfWork.ProjectMembers.GetPaginatedListAsync(
+            var (filteredProjectList, totalCount) = await _projectMemberRepository.GetPaginatedListAsync(
                 predicate: predicate,
                 orderBy: orderBy,
                 includes: query => query.Include(pm => pm.Project),
