@@ -17,8 +17,9 @@ namespace TaskForge.Application.Services
 			if (string.IsNullOrWhiteSpace(relativePath))
 				throw new ArgumentException("Path cannot be null or empty.", nameof(relativePath));
 
-			if (Path.IsPathRooted(relativePath))
-				throw new ArgumentException("Absolute paths are not allowed.", nameof(relativePath));
+			// Check for any absolute path (both Windows and Unix style)
+			if (Path.IsPathRooted(relativePath) && !relativePath.StartsWith(_environment.WebRootPath, StringComparison.OrdinalIgnoreCase))
+				throw new ArgumentException("Absolute paths or path traversal is not allowed.", nameof(relativePath));
 
 			var combinedPath = Path.Combine(_environment.WebRootPath, relativePath);
 			var fullPath = Path.GetFullPath(combinedPath);
