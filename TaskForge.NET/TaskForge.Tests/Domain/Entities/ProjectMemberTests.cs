@@ -14,6 +14,8 @@ namespace TaskForge.Tests.Domain.Entities
 
             // Assert
             Assert.Equal(ProjectRole.Admin, member.Role);
+            Assert.Equal(0, member.ProjectId);
+            Assert.Equal(0, member.UserProfileId);
 
             // These are null by default and must be explicitly initialized
             Assert.Null(member.Project);

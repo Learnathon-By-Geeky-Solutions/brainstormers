@@ -14,5 +14,17 @@ namespace TaskForge.Tests.Domain.Enums
             var name = role.GetDisplayName();
             Assert.Equal(expectedName, name);
         }
+
+        [Fact]
+        public void GetDisplayName_ShouldHandleInvalidEnumValue()
+        {
+            // Test casting an invalid value to the enum
+            var invalidRole = (ProjectRole)999;
+
+            // Verify the behavior - will either return a default string or throw an exception
+            // Adjust the assertion based on expected behavior
+            var exception = Record.Exception(() => invalidRole.GetDisplayName());
+            Assert.Null(exception); 
+        }
     }
 }
