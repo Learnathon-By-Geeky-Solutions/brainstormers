@@ -6,12 +6,13 @@ namespace TaskForge.Tests.Domain.Enums
     public class ProjectRoleTests
     {
         [Theory]
-        [InlineData(ProjectRole.Admin)]
-        [InlineData(ProjectRole.Contributor)]
-        [InlineData(ProjectRole.Viewer)]
-        public void ProjectRole_ShouldHaveValidValues(ProjectRole role)
+        [InlineData(ProjectRole.Admin, "Admin")]
+        [InlineData(ProjectRole.Contributor, "Contributor")]
+        [InlineData(ProjectRole.Viewer, "Viewer")]
+        public void ProjectRole_DisplayName_ShouldMatch(ProjectRole role, string expectedName)
         {
-            Assert.True((int)role >= 0 && (int)role <= 2);
+            var name = role.GetDisplayName();
+            Assert.Equal(expectedName, name);
         }
     }
 }

@@ -14,7 +14,7 @@ namespace TaskForge.Tests.Domain.Entities
 
             // Assert
             Assert.Equal(InvitationStatus.Pending, invitation.Status);
-            Assert.True((DateTime.UtcNow - invitation.InvitationSentDate).TotalSeconds < 5);
+            Assert.InRange(invitation.InvitationSentDate, DateTime.UtcNow.AddSeconds(-5), DateTime.UtcNow.AddSeconds(1));
             Assert.Null(invitation.AcceptedDate);
             Assert.Null(invitation.DeclinedDate);
             Assert.Equal(ProjectRole.Viewer, invitation.AssignedRole);

@@ -1,23 +1,23 @@
 using Moq;
+using System.Diagnostics;
 using TaskForge.Application.Services;
 using Xunit;
 
 namespace TaskForge.Tests.Application.Services
 {
-    public class FileServiceTests
+    public class FileServiceTests : IDisposable
     {
         private readonly Mock<IWebHostEnvironment> _mockEnv;
         private readonly FileService _fileService;
         private readonly string _webRootPath;
+        private bool _disposed;
 
         public FileServiceTests()
         {
             _mockEnv = new Mock<IWebHostEnvironment>();
             _webRootPath = Path.Combine(Path.GetTempPath(), "TaskForgeTestFiles");
             Directory.CreateDirectory(_webRootPath);
-
             _mockEnv.Setup(e => e.WebRootPath).Returns(_webRootPath);
-
             _fileService = new FileService(_mockEnv.Object);
         }
 
@@ -66,6 +66,8 @@ namespace TaskForge.Tests.Application.Services
             await File.WriteAllTextAsync(fullPath, "test data");
 
             // Lock the file to simulate IOException
+            // Disposing the stream is handled by using statement, but could lead to test flakiness
+            // if test execution is interrupted before disposal
             using var stream = File.Open(fullPath, FileMode.Open, FileAccess.Read, FileShare.None);
 
             // Act & Assert
@@ -96,9 +98,37 @@ namespace TaskForge.Tests.Application.Services
             }
             finally
             {
-                File.SetAttributes(fullPath, FileAttributes.Normal);
-                File.Delete(fullPath);
+                if (File.Exists(fullPath))
+                {
+                    File.SetAttributes(fullPath, FileAttributes.Normal);
+                    File.Delete(fullPath);
+                }
             }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+
+            try
+            {
+                if (Directory.Exists(_webRootPath))
+                {
+                    foreach (var file in Directory.GetFiles(_webRootPath))
+                    {
+                        File.SetAttributes(file, FileAttributes.Normal);
+                        File.Delete(file);
+                    }
+
+                    Directory.Delete(_webRootPath, recursive: true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Cleanup failed: {ex.Message}");
+            }
+
+            _disposed = true;
         }
     }
 }

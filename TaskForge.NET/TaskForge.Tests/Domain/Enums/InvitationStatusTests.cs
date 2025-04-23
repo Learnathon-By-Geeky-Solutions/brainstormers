@@ -6,13 +6,14 @@ namespace TaskForge.Tests.Domain.Enums
     public class InvitationStatusTests
     {
         [Theory]
-        [InlineData(InvitationStatus.Pending)]
-        [InlineData(InvitationStatus.Accepted)]
-        [InlineData(InvitationStatus.Declined)]
-        [InlineData(InvitationStatus.Canceled)]
-        public void InvitationStatus_ShouldHaveValidValues(InvitationStatus status)
+        [InlineData(InvitationStatus.Pending, "Pending")]
+        [InlineData(InvitationStatus.Accepted, "Accepted")]
+        [InlineData(InvitationStatus.Declined, "Declined")]
+        [InlineData(InvitationStatus.Canceled, "Canceled")]
+        public void InvitationStatus_DisplayName_ShouldMatch(InvitationStatus status, string expectedName)
         {
-            Assert.True((int)status >= 0 && (int)status <= 3);
+            var name = status.GetDisplayName();
+            Assert.Equal(expectedName, name);
         }
     }
 }

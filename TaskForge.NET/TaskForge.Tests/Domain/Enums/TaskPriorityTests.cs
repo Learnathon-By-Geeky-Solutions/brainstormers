@@ -6,13 +6,14 @@ namespace TaskForge.Tests.Domain.Enums
     public class TaskPriorityTests
     {
         [Theory]
-        [InlineData(TaskPriority.Low)]
-        [InlineData(TaskPriority.Medium)]
-        [InlineData(TaskPriority.High)]
-        [InlineData(TaskPriority.Critical)]
-        public void TaskPriority_ShouldHaveValidValues(TaskPriority priority)
+        [InlineData(TaskPriority.Low, "Low")]
+        [InlineData(TaskPriority.Medium, "Medium")]
+        [InlineData(TaskPriority.High, "High")]
+        [InlineData(TaskPriority.Critical, "Critical")]
+        public void TaskPriority_DisplayName_ShouldMatch(TaskPriority priority, string expectedName)
         {
-            Assert.True((int)priority >= 0 && (int)priority <= 3);
+            var name = priority.GetDisplayName();
+            Assert.Equal(expectedName, name);
         }
     }
 }
