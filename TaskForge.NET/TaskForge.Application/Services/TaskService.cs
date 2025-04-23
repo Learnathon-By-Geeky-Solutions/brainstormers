@@ -10,6 +10,7 @@ using TaskForge.Domain.Enums;
 using TaskForge.Application.Helpers.TaskSorters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using TaskForge.Application.Interfaces.Repositories;
 
 namespace TaskForge.Application.Services
 {
@@ -21,14 +22,33 @@ namespace TaskForge.Application.Services
 		private const int MaxAttachments = 10;
 
 		private readonly IUnitOfWork _unitOfWork;
+		private readonly ITaskRepository _taskRepository;
+		private readonly IProjectMemberRepository _projectMemberRepository;
+		private readonly IUserProfileRepository _userProfileRepository;
+		private readonly ITaskAssignmentRepository _taskAssignmentRepository;
+		private readonly ITaskAttachmentRepository _taskAttachmentRepository;
+
 		private readonly IFileService _fileService;
 		private readonly ITaskSorter _taskSorter;
 		private readonly IDependentTaskStrategy _dependentTaskStrategy;
 		private readonly ILogger<TaskService> _logger;
-		public TaskService(IUnitOfWork unitOfWork, IFileService fileService, IDependentTaskStrategy dependentTaskStrategy, ITaskSorter taskSorter,
+		public TaskService(IUnitOfWork unitOfWork, 
+			IFileService fileService, 
+			IDependentTaskStrategy dependentTaskStrategy, 
+			ITaskSorter taskSorter,
+			ITaskRepository taskRepository,
+			IProjectMemberRepository projectMemberRepository,
+			IUserProfileRepository userProfileRepository,
+			ITaskAssignmentRepository taskAssignmentRepository,
+			ITaskAttachmentRepository taskAttachmentRepository,
 			ILogger<TaskService> logger)
 		{
 			_unitOfWork = unitOfWork;
+			_taskRepository = taskRepository;
+			_projectMemberRepository = projectMemberRepository;
+			_userProfileRepository = userProfileRepository;
+			_taskAssignmentRepository = taskAssignmentRepository;
+			_taskAttachmentRepository = taskAttachmentRepository;
 			_fileService = fileService;
 			_taskSorter = taskSorter;
 			_dependentTaskStrategy = dependentTaskStrategy;
@@ -39,7 +59,7 @@ namespace TaskForge.Application.Services
 
 		public async Task<IEnumerable<TaskItem>> GetTaskListAsync(int projectId)
 		{
-			return await _unitOfWork.Tasks.FindByExpressionAsync(
+			return await _taskRepository.FindByExpressionAsync(
 				predicate: t => t.ProjectId == projectId,
 				includes: t => t.Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile),
 				orderBy: q => q.OrderBy(t => t.DueDate)
@@ -55,7 +75,7 @@ namespace TaskForge.Application.Services
 					 .Include(t => t.Dependencies)
 					 .Include(t => t.Project);
 
-			var result = await _unitOfWork.Tasks.FindByExpressionAsync(predicate, includes: includes);
+			var result = await _taskRepository.FindByExpressionAsync(predicate, includes: includes);
 
 			return result.FirstOrDefault();
 		}
@@ -67,14 +87,14 @@ namespace TaskForge.Application.Services
 				throw new ArgumentOutOfRangeException(nameof(pageSize), "Page size must be greater than zero.");
 			if (userProfileId == null) return new PaginatedList<TaskDto>(new List<TaskDto>(), 0, pageIndex, pageSize);
 
-			var userProjectList = await _unitOfWork.ProjectMembers.FindByExpressionAsync(pm => pm.UserProfileId == userProfileId);
+			var userProjectList = await _projectMemberRepository.FindByExpressionAsync(pm => pm.UserProfileId == userProfileId);
 			var userProjectIds = userProjectList.Select(pm => pm.ProjectId).ToList();
 
 
 			Expression<Func<TaskItem, bool>> _predicate = t => userProjectIds.Contains(t.ProjectId);
 			Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>> _orderBy = query => query.OrderByDescending(t => t.UpdatedDate);
 
-			var (taskList, totalCount) = await _unitOfWork.Tasks.GetPaginatedListAsync(
+			var (taskList, totalCount) = await _taskRepository.GetPaginatedListAsync(
 				predicate: _predicate,
 				orderBy: _orderBy,
 				includes: query => query.Include(t => t.Project),
@@ -141,7 +161,7 @@ namespace TaskForge.Application.Services
 				}
 			}
 
-			await _unitOfWork.Tasks.AddAsync(taskItem);
+			await _taskRepository.AddAsync(taskItem);
 			await _unitOfWork.SaveChangesAsync();
 		}
 
@@ -161,13 +181,13 @@ namespace TaskForge.Application.Services
 			UpdateDependencies(task, dto.DependsOnTaskIds);
 			await HandleAttachmentsAsync(task, dto.Attachments);
 
-			await _unitOfWork.Tasks.UpdateAsync(task);
+			await _taskRepository.UpdateAsync(task);
 			await _unitOfWork.SaveChangesAsync();
 		}
 
 		private async Task<TaskItem?> GetTaskWithRelations(int taskId)
 		{
-			var taskList = await _unitOfWork.Tasks.FindByExpressionAsync(
+			var taskList = await _taskRepository.FindByExpressionAsync(
 				t => t.Id == taskId && !t.IsDeleted,
 				includes: query => query
 					.Include(t => t.Attachments.Where(a => !a.IsDeleted))
@@ -194,7 +214,7 @@ namespace TaskForge.Application.Services
 
 			if (userIds != null && userIds.Count > 0)
 			{
-				var users = await _unitOfWork.UserProfiles.FindByExpressionAsync(u => userIds.Contains(u.Id));
+				var users = await _userProfileRepository.FindByExpressionAsync(u => userIds.Contains(u.Id));
 				foreach (var user in users)
 				{
 					task.AssignedUsers.Add(new TaskAssignment { UserProfile = user });
@@ -260,7 +280,7 @@ namespace TaskForge.Application.Services
 		public async Task RemoveTaskAsync(int id)
 		{
 			// Get the task with related data
-			var task = await _unitOfWork.Tasks.FindByExpressionAsync(
+			var task = await _taskRepository.FindByExpressionAsync(
 				t => t.Id == id,
 				includes: query => query
 					.Include(t => t.Attachments)
@@ -278,29 +298,29 @@ namespace TaskForge.Application.Services
 			}
 
 			// Soft delete the main task
-			await _unitOfWork.Tasks.DeleteByIdAsync(id);
+			await _taskRepository.DeleteByIdAsync(id);
 
 			// Soft delete attachments
 			var attachmentIds = taskItem.Attachments.Select(a => a.Id);
-			await _unitOfWork.TaskAttachments.DeleteByIdsAsync(attachmentIds);
+			await _taskAttachmentRepository.DeleteByIdsAsync(attachmentIds);
 
 			// Soft delete assignments
 			var assignmentIds = taskItem.AssignedUsers.Select(a => a.Id);
-			await _unitOfWork.TaskAssignments.DeleteByIdsAsync(assignmentIds);
+			await _taskAssignmentRepository.DeleteByIdsAsync(assignmentIds);
 
 			await _unitOfWork.SaveChangesAsync();
 		}
 
 		public async Task DeleteAttachmentAsync(int attachmentId)
 		{
-			var attachment = await _unitOfWork.TaskAttachments.GetByIdAsync(attachmentId);
+			var attachment = await _taskAttachmentRepository.GetByIdAsync(attachmentId);
 			if (attachment == null)
 			{
 				throw new KeyNotFoundException("Attachment not found");
 			}
 
 			await _fileService.DeleteFileAsync(attachment.FilePath);
-			await _unitOfWork.TaskAttachments.DeleteByIdAsync(attachmentId);
+			await _taskAttachmentRepository.DeleteByIdAsync(attachmentId);
 			await _unitOfWork.SaveChangesAsync();
 		}
 

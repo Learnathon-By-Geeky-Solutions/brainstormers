@@ -3,6 +3,7 @@ using System.Linq.Expressions;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Helpers.DependencyResolvers;
 using TaskForge.Application.Helpers.TaskSorters;
+using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Application.Services;
@@ -14,28 +15,54 @@ namespace TaskForge.Tests.Application.Services
 {
     public class TaskServiceTests
     {
-        private readonly Mock<IUnitOfWork> _unitOfWorkMock;
-        private readonly Mock<IFileService> _fileServiceMock;
-        private readonly Mock<IDependentTaskStrategy> _dependentTaskStrategyMock = new();
-        private readonly Mock<ITaskSorter> _taskSorterMock = new();
-        private readonly Mock<ILogger<TaskService>> _loggerMock = new();
+		private readonly Mock<IUnitOfWork> _unitOfWorkMock;
+		private readonly Mock<IFileService> _fileServiceMock;
+		private readonly Mock<IDependentTaskStrategy> _dependentTaskStrategyMock;
+		private readonly Mock<ITaskSorter> _taskSorterMock;
+		private readonly Mock<ITaskRepository> _taskRepositoryMock;
+		private readonly Mock<IProjectMemberRepository> _projectMemberRepositoryMock;
+		private readonly Mock<IUserProfileRepository> _userProfileRepositoryMock;
+		private readonly Mock<ITaskAssignmentRepository> _taskAssignmentRepositoryMock;
+		private readonly Mock<ITaskAttachmentRepository> _taskAttachmentRepositoryMock;
+		private readonly Mock<ILogger<TaskService>> _loggerMock;
+
 		private readonly TaskService _taskService;
 
-        public TaskServiceTests()
-        {
-            _unitOfWorkMock = new Mock<IUnitOfWork>();
-            _fileServiceMock = new Mock<IFileService>();
-            _taskService = new TaskService(_unitOfWorkMock.Object, _fileServiceMock.Object, _dependentTaskStrategyMock.Object, _taskSorterMock.Object, _loggerMock.Object);
-        }
+		public TaskServiceTests()
+		{
+			_unitOfWorkMock = new Mock<IUnitOfWork>();
+			_fileServiceMock = new Mock<IFileService>();
+			_dependentTaskStrategyMock = new Mock<IDependentTaskStrategy>();
+			_taskSorterMock = new Mock<ITaskSorter>();
+			_taskRepositoryMock = new Mock<ITaskRepository>();
+			_projectMemberRepositoryMock = new Mock<IProjectMemberRepository>();
+			_userProfileRepositoryMock = new Mock<IUserProfileRepository>();
+			_taskAssignmentRepositoryMock = new Mock<ITaskAssignmentRepository>();
+			_taskAttachmentRepositoryMock = new Mock<ITaskAttachmentRepository>();
+			_loggerMock = new Mock<ILogger<TaskService>>();
 
-        [Fact]
+			_taskService = new TaskService(
+				_unitOfWorkMock.Object,
+				_fileServiceMock.Object,
+				_dependentTaskStrategyMock.Object,
+				_taskSorterMock.Object,
+				_taskRepositoryMock.Object,
+				_projectMemberRepositoryMock.Object,
+				_userProfileRepositoryMock.Object,
+				_taskAssignmentRepositoryMock.Object,
+				_taskAttachmentRepositoryMock.Object,
+				_loggerMock.Object
+			);
+		}
+
+		[Fact]
         public async Task GetTaskListAsync_ReturnsTasksForProject()
         {
             // Arrange
             var projectId = 1;
             var taskList = new List<TaskItem> { new TaskItem { Id = 1, ProjectId = projectId } };
 
-            _unitOfWorkMock.Setup(u => u.Tasks.FindByExpressionAsync(
+            _taskRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<TaskItem, bool>>>(),
                     It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(),
                     It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
@@ -85,7 +112,7 @@ namespace TaskForge.Tests.Application.Services
                 }
             };
 
-            _unitOfWorkMock.Setup(u => u.Tasks.FindByExpressionAsync(
+            _taskRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<TaskItem, bool>>>(),
                     null,
                     It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
@@ -110,7 +137,7 @@ namespace TaskForge.Tests.Application.Services
         public async Task GetTaskByIdAsync_ReturnsNull_WhenTaskDoesNotExist()
         {
             // Arrange
-            _unitOfWorkMock.Setup(u => u.Tasks.FindByExpressionAsync(
+            _taskRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<TaskItem, bool>>>(),
                     It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(),
                     null, null, null))
@@ -164,12 +191,12 @@ namespace TaskForge.Tests.Application.Services
 
             var tasks = new List<TaskItem> { task1, task2 };
 
-            _unitOfWorkMock.Setup(u => u.ProjectMembers.FindByExpressionAsync(
+            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
                 It.IsAny<Expression<Func<ProjectMember, bool>>>(),
                 null, null, null, null))
                 .ReturnsAsync(projectMembers);
 
-            _unitOfWorkMock.Setup(u => u.Tasks.GetPaginatedListAsync(
+            _taskRepositoryMock.Setup(u => u.GetPaginatedListAsync(
                 It.IsAny<Expression<Func<TaskItem, bool>>>(),
                 It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(),
                 It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
@@ -262,7 +289,7 @@ namespace TaskForge.Tests.Application.Services
             };
 
             // Corrected the mock setup to use Expression<Func<TaskItem, bool>> instead of Func<TaskItem, bool>
-            _unitOfWorkMock.Setup(r => r.Tasks.FindByExpressionAsync(
+            _taskRepositoryMock.Setup(r => r.FindByExpressionAsync(
                 It.IsAny<Expression<Func<TaskItem, bool>>>(),
                 It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(),
                 It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
@@ -275,14 +302,14 @@ namespace TaskForge.Tests.Application.Services
                 FullName = "Test User"
             };
 
-            _unitOfWorkMock.Setup(r => r.UserProfiles.FindByExpressionAsync(It.IsAny<Expression<Func<UserProfile, bool>>>(), null, null, null, null))
+            _userProfileRepositoryMock.Setup(r => r.FindByExpressionAsync(It.IsAny<Expression<Func<UserProfile, bool>>>(), null, null, null, null))
                 .ReturnsAsync(new List<UserProfile> { user });
 
             // Act
             await _taskService.UpdateTaskAsync(dto);
 
             // Assert
-            _unitOfWorkMock.Verify(r => r.Tasks.UpdateAsync(It.Is<TaskItem>(t => t.Id == taskId && t.Title == dto.Title)), Times.Once);
+            _taskRepositoryMock.Verify(r => r.UpdateAsync(It.Is<TaskItem>(t => t.Id == taskId && t.Title == dto.Title)), Times.Once);
         }
 
 
@@ -292,7 +319,7 @@ namespace TaskForge.Tests.Application.Services
             // Arrange
             var dto = new TaskUpdateDto { Id = 999, Title = "Title1" }; // Non-existing task ID
 
-            _unitOfWorkMock.Setup(r => r.Tasks.FindByExpressionAsync(It.IsAny<Expression<Func<TaskItem, bool>>>(), null, It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(), 0, 0))
+            _taskRepositoryMock.Setup(r => r.FindByExpressionAsync(It.IsAny<Expression<Func<TaskItem, bool>>>(), null, It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(), 0, 0))
                               .ReturnsAsync(new List<TaskItem>());
 
             // Act & Assert
@@ -318,13 +345,13 @@ namespace TaskForge.Tests.Application.Services
                 Attachments = new List<TaskAttachment>()
             };
 
-            _unitOfWorkMock.Setup(r => r.Tasks.FindByExpressionAsync(
+            _taskRepositoryMock.Setup(r => r.FindByExpressionAsync(
                     It.IsAny<Expression<Func<TaskItem, bool>>>(),
                     null, It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
                     null, null
                     ))
                 .ReturnsAsync(new List<TaskItem> { existingTask });
-            _unitOfWorkMock.Setup(r => r.Tasks.FindByExpressionAsync(
+            _taskRepositoryMock.Setup(r => r.FindByExpressionAsync(
                 It.IsAny<Expression<Func<TaskItem, bool>>>(),
                 It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(),
                 It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
@@ -372,7 +399,7 @@ namespace TaskForge.Tests.Application.Services
             };
 
             // Setup mock for task fetch (with expression)
-            _unitOfWorkMock.Setup(r => r.Tasks.FindByExpressionAsync(
+            _taskRepositoryMock.Setup(r => r.FindByExpressionAsync(
                 It.IsAny<Expression<Func<TaskItem, bool>>>(),
                 It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(),
                 It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
@@ -380,12 +407,12 @@ namespace TaskForge.Tests.Application.Services
             )).ReturnsAsync(new List<TaskItem> { existingTask });
 
             // Setup mock for user profile fetch
-            _unitOfWorkMock.Setup(r => r.UserProfiles.FindByExpressionAsync(
+            _userProfileRepositoryMock.Setup(r => r.FindByExpressionAsync(
                 It.IsAny<Expression<Func<UserProfile, bool>>>(),
                 null, null, null, null
             )).ReturnsAsync(new List<UserProfile> { user });
 
-            _unitOfWorkMock.Setup(r => r.Tasks.UpdateAsync(It.IsAny<TaskItem>()))
+            _taskRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<TaskItem>()))
                            .Returns(Task.CompletedTask);
 
             _unitOfWorkMock.Setup(r => r.SaveChangesAsync())
@@ -395,7 +422,7 @@ namespace TaskForge.Tests.Application.Services
             await _taskService.UpdateTaskAsync(dto);
 
             // Assert
-            _unitOfWorkMock.Verify(r => r.Tasks.UpdateAsync(It.Is<TaskItem>(
+            _taskRepositoryMock.Verify(r => r.UpdateAsync(It.Is<TaskItem>(
                 t => t.AssignedUsers.Count == 1 &&
                      t.AssignedUsers[0].UserProfile.Id == userId
             )), Times.Once);
@@ -427,7 +454,7 @@ namespace TaskForge.Tests.Application.Services
                 AssignedUsers = assignments
             };
 
-            _unitOfWorkMock.Setup(u => u.Tasks.FindByExpressionAsync(
+            _taskRepositoryMock.Setup(u => u.FindByExpressionAsync(
                 It.IsAny<Expression<Func<TaskItem, bool>>>(),
                 null,
                 It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
@@ -435,9 +462,9 @@ namespace TaskForge.Tests.Application.Services
                 .ReturnsAsync(new List<TaskItem> { task });
 
             _fileServiceMock.Setup(f => f.DeleteFileAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
-            _unitOfWorkMock.Setup(u => u.TaskAttachments.DeleteByIdsAsync(It.IsAny<IEnumerable<int>>())).Returns(Task.CompletedTask);
-            _unitOfWorkMock.Setup(u => u.TaskAssignments.DeleteByIdsAsync(It.IsAny<IEnumerable<int>>())).Returns(Task.CompletedTask);
-            _unitOfWorkMock.Setup(u => u.Tasks.DeleteByIdAsync(taskId)).Returns(Task.CompletedTask);
+            _taskAttachmentRepositoryMock.Setup(u => u.DeleteByIdsAsync(It.IsAny<IEnumerable<int>>())).Returns(Task.CompletedTask);
+            _taskAssignmentRepositoryMock.Setup(u => u.DeleteByIdsAsync(It.IsAny<IEnumerable<int>>())).Returns(Task.CompletedTask);
+            _taskRepositoryMock.Setup(u => u.DeleteByIdAsync(taskId)).Returns(Task.CompletedTask);
             _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
             // Act
@@ -446,16 +473,16 @@ namespace TaskForge.Tests.Application.Services
             // Assert
             _fileServiceMock.Verify(f => f.DeleteFileAsync("file1.txt"), Times.Once);
             _fileServiceMock.Verify(f => f.DeleteFileAsync("file2.txt"), Times.Once);
-            _unitOfWorkMock.Verify(u => u.TaskAttachments.DeleteByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.Contains(101) && ids.Contains(102))), Times.Once);
-            _unitOfWorkMock.Verify(u => u.TaskAssignments.DeleteByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.Contains(201) && ids.Contains(202))), Times.Once);
-            _unitOfWorkMock.Verify(u => u.Tasks.DeleteByIdAsync(taskId), Times.Once);
+            _taskAttachmentRepositoryMock.Verify(u => u.DeleteByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.Contains(101) && ids.Contains(102))), Times.Once);
+            _taskAssignmentRepositoryMock.Verify(x => x.DeleteByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.Contains(201) && ids.Contains(202))), Times.Once);
+            _taskRepositoryMock.Verify(x => x.DeleteByIdAsync(taskId), Times.Once);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
         [Fact]
         public async Task RemoveTaskAsync_ThrowsKeyNotFoundException_WhenTaskNotFound()
         {
             // Arrange
-            _unitOfWorkMock.Setup(u => u.Tasks.FindByExpressionAsync(
+            _taskRepositoryMock.Setup(u => u.FindByExpressionAsync(
                     It.IsAny<Expression<Func<TaskItem, bool>>>(),
                     null,
                     It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
@@ -476,7 +503,7 @@ namespace TaskForge.Tests.Application.Services
             var attachmentId = 1;
             var attachment = new TaskAttachment { Id = attachmentId, FilePath = "somepath/file.txt" };
 
-            _unitOfWorkMock.Setup(u => u.TaskAttachments.GetByIdAsync(attachmentId))
+            _taskAttachmentRepositoryMock.Setup(u => u.GetByIdAsync(attachmentId))
                 .ReturnsAsync(attachment);
 
             // Act
@@ -484,7 +511,7 @@ namespace TaskForge.Tests.Application.Services
 
             // Assert
             _fileServiceMock.Verify(f => f.DeleteFileAsync("somepath/file.txt"), Times.Once);
-            _unitOfWorkMock.Verify(u => u.TaskAttachments.DeleteByIdAsync(attachmentId), Times.Once);
+            _taskAttachmentRepositoryMock.Verify(u => u.DeleteByIdAsync(attachmentId), Times.Once);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
         [Fact]
@@ -492,7 +519,7 @@ namespace TaskForge.Tests.Application.Services
         {
             // Arrange
             var attachmentId = 999;
-            _unitOfWorkMock.Setup(u => u.TaskAttachments.GetByIdAsync(attachmentId))
+            _taskAttachmentRepositoryMock.Setup(u => u.GetByIdAsync(attachmentId))
                 .ReturnsAsync(value: null);
 
             // Act & Assert
