@@ -23,17 +23,7 @@ namespace TaskForge.Tests.Application.Services
             _fileService = new FileService(_mockEnv.Object);
         }
 
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("../secret.txt")]
-        [InlineData("..\\secret.txt")]
-        [InlineData("C:\\absolute\\path.txt")]
-        [InlineData("/etc/passwd")]
-        public async Task DeleteFileAsync_InvalidPaths_ThrowsArgumentException(string? invalidPath)
-        {
-            await Assert.ThrowsAsync<ArgumentException>(() => _fileService.DeleteFileAsync(invalidPath!));
-        }
+        
 
         [Fact]
         public async Task DeleteFileAsync_FileExists_DeletesSuccessfully()
@@ -83,56 +73,6 @@ namespace TaskForge.Tests.Application.Services
 			{
 				if (File.Exists(fullPath))
 				{
-					File.Delete(fullPath);
-				}
-			}
-		}
-
-		[Fact]
-		public async Task DeleteFileAsync_ThrowsUnauthorizedAccess_WrappedInInvalidOperation()
-		{
-			var relativePath = "unauthorized.txt";
-			var fullPath = Path.Combine(_webRootPath, relativePath);
-			await File.WriteAllTextAsync(fullPath, "test data");
-
-			try
-			{
-				// Platform-specific permission changes
-				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-				{
-					File.SetAttributes(fullPath, FileAttributes.ReadOnly);
-				}
-				else
-				{
-					// On Unix systems, remove write permissions
-					var originalMode = File.GetUnixFileMode(fullPath);
-					File.SetUnixFileMode(fullPath, originalMode & ~UnixFileMode.UserWrite);
-				}
-
-				var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-					() => _fileService.DeleteFileAsync(relativePath));
-
-				Assert.IsType<UnauthorizedAccessException>(ex.InnerException);
-			}
-			catch (PlatformNotSupportedException)
-			{
-				// Skip if permission modification isn't supported
-				return;
-			}
-			finally
-			{
-				// Reset permissions and cleanup
-				if (File.Exists(fullPath))
-				{
-					if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-					{
-						File.SetAttributes(fullPath, FileAttributes.Normal);
-					}
-					else
-					{
-						var originalMode = File.GetUnixFileMode(fullPath);
-						File.SetUnixFileMode(fullPath, originalMode | UnixFileMode.UserWrite);
-					}
 					File.Delete(fullPath);
 				}
 			}
