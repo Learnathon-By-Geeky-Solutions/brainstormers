@@ -12,35 +12,44 @@ namespace TaskForge.Application.Services
             _environment = environment;
         }
 
-        public async Task DeleteFileAsync(string relativePath)
-        {
-            // Prevent path traversal attacks
-            if (string.IsNullOrEmpty(relativePath) ||
-                relativePath.Contains("..") ||
-                Path.IsPathRooted(relativePath))
-            {
-                throw new ArgumentException("Invalid file path specified", nameof(relativePath));
-            }
+		private string ValidateAndGetAbsolutePath(string relativePath)
+		{
+			if (string.IsNullOrWhiteSpace(relativePath))
+				throw new ArgumentException("Path cannot be null or empty.", nameof(relativePath));
 
-            var fullPath = Path.Combine(_environment.WebRootPath, relativePath);
+			if (Path.IsPathRooted(relativePath))
+				throw new ArgumentException("Absolute paths are not allowed.", nameof(relativePath));
 
-            try
-            {
-                if (File.Exists(fullPath))
-                {
-                    await Task.Run(() => File.Delete(fullPath)); // Run on thread pool to avoid blocking
-                }
-            }
-            catch (IOException ex)
-            {
-                throw new InvalidOperationException($"Could not delete file: {relativePath}. It might be in use.", ex);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                throw new InvalidOperationException($"Access denied when trying to delete file: {relativePath}", ex);
-            }
-        }
+			var combinedPath = Path.Combine(_environment.WebRootPath, relativePath);
+			var fullPath = Path.GetFullPath(combinedPath);
 
-    }
+			if (!fullPath.StartsWith(_environment.WebRootPath, StringComparison.OrdinalIgnoreCase))
+				throw new ArgumentException("Invalid path traversal detected.", nameof(relativePath));
+
+			return fullPath;
+		}
+
+
+		public async Task DeleteFileAsync(string relativePath)
+		{
+			var fullPath = ValidateAndGetAbsolutePath(relativePath);
+
+			try
+			{
+				if (File.Exists(fullPath))
+				{
+					File.Delete(fullPath);
+				}
+			}
+			catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+			{
+				throw new InvalidOperationException("Failed to delete the file.", ex);
+			}
+
+			await Task.CompletedTask;
+		}
+
+
+	}
 
 }
