@@ -91,46 +91,47 @@ namespace TaskForge.Tests.Application.Services
 		[Fact]
 		public async Task DeleteFileAsync_ThrowsUnauthorizedAccess_WrappedInInvalidOperation()
 		{
-			// Arrange
 			var relativePath = "unauthorized.txt";
 			var fullPath = Path.Combine(_webRootPath, relativePath);
-
 			await File.WriteAllTextAsync(fullPath, "test data");
 
 			try
 			{
-				// Try to make file read-only (works on Windows)
+				// Platform-specific permission changes
 				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 				{
 					File.SetAttributes(fullPath, FileAttributes.ReadOnly);
 				}
 				else
 				{
-					// On Unix-like systems, change file permissions to read-only
-					File.SetUnixFileMode(fullPath, UnixFileMode.UserRead);
+					// On Unix systems, remove write permissions
+					var originalMode = File.GetUnixFileMode(fullPath);
+					File.SetUnixFileMode(fullPath, originalMode & ~UnixFileMode.UserWrite);
 				}
 
-				// Act & Assert
-				var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _fileService.DeleteFileAsync(relativePath));
+				var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+					() => _fileService.DeleteFileAsync(relativePath));
+
 				Assert.IsType<UnauthorizedAccessException>(ex.InnerException);
 			}
 			catch (PlatformNotSupportedException)
 			{
-				// Skip if the platform doesn't support the operation
+				// Skip if permission modification isn't supported
 				return;
 			}
 			finally
 			{
+				// Reset permissions and cleanup
 				if (File.Exists(fullPath))
 				{
-					// Reset permissions
 					if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 					{
 						File.SetAttributes(fullPath, FileAttributes.Normal);
 					}
 					else
 					{
-						File.SetUnixFileMode(fullPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+						var originalMode = File.GetUnixFileMode(fullPath);
+						File.SetUnixFileMode(fullPath, originalMode | UnixFileMode.UserWrite);
 					}
 					File.Delete(fullPath);
 				}

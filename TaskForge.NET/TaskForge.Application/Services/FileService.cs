@@ -12,44 +12,53 @@ namespace TaskForge.Application.Services
             _environment = environment;
         }
 
-		private string ValidateAndGetAbsolutePath(string relativePath)
-		{
-			if (string.IsNullOrWhiteSpace(relativePath))
-				throw new ArgumentException("Path cannot be null or empty.", nameof(relativePath));
+        private string ValidateAndGetAbsolutePath(string relativePath)
+        {
+	        if (string.IsNullOrWhiteSpace(relativePath))
+		        throw new ArgumentException("Path cannot be null or empty.", nameof(relativePath));
 
-			// Check for any absolute path (both Windows and Unix style)
-			if (Path.IsPathRooted(relativePath) && !relativePath.StartsWith(_environment.WebRootPath, StringComparison.OrdinalIgnoreCase))
-				throw new ArgumentException("Absolute paths or path traversal is not allowed.", nameof(relativePath));
+	        // Normalize path for cross-platform comparison
+	        var normalizedRoot = Path.GetFullPath(_environment.WebRootPath).Replace('\\', '/');
+	        var normalizedInput = relativePath.Replace('\\', '/');
 
-			var combinedPath = Path.Combine(_environment.WebRootPath, relativePath);
-			var fullPath = Path.GetFullPath(combinedPath);
+	        // Check for absolute paths (both Windows and Unix style)
+	        if (Path.IsPathRooted(normalizedInput))
+	        {
+		        // Get full path and normalize for comparison
+		        var inputFullPath = Path.GetFullPath(Path.Combine(normalizedRoot, normalizedInput))
+			        .Replace('\\', '/');
 
-			if (!fullPath.StartsWith(_environment.WebRootPath, StringComparison.OrdinalIgnoreCase))
-				throw new ArgumentException("Invalid path traversal detected.", nameof(relativePath));
+		        if (!inputFullPath.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase))
+			        throw new ArgumentException("Absolute paths are not allowed.", nameof(relativePath));
+	        }
 
-			return fullPath;
-		}
+	        // Prevent directory traversal
+	        var combinedPath = Path.Combine(normalizedRoot, normalizedInput);
+	        var fullPath = Path.GetFullPath(combinedPath).Replace('\\', '/');
 
+	        if (!fullPath.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase))
+		        throw new ArgumentException("Path traversal detected.", nameof(relativePath));
 
-		public async Task DeleteFileAsync(string relativePath)
-		{
-			var fullPath = ValidateAndGetAbsolutePath(relativePath);
+	        return fullPath;
+        }
 
-			try
-			{
-				if (File.Exists(fullPath))
-				{
-					File.Delete(fullPath);
-				}
-			}
-			catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
-			{
-				throw new InvalidOperationException("Failed to delete the file.", ex);
-			}
+        public Task DeleteFileAsync(string relativePath)
+        {
+	        var fullPath = ValidateAndGetAbsolutePath(relativePath);
 
-			await Task.CompletedTask;
-		}
-
+	        try
+	        {
+		        if (File.Exists(fullPath))
+		        {
+			        File.Delete(fullPath);
+		        }
+		        return Task.CompletedTask;
+	        }
+	        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+	        {
+		        throw new InvalidOperationException("Failed to delete the file.", ex);
+	        }
+        }
 
 	}
 
