@@ -7,24 +7,49 @@ using Xunit;
 
 namespace TaskForge.Tests.Infrastructure.Repositories
 {
-    public class ProjectInvitationRepositoryTests
+    public class ProjectInvitationRepositoryTests : IDisposable
     {
-        [Fact]
-        public void Constructor_ShouldInitializeRepository()
+        private readonly ApplicationDbContext _context;
+        private readonly Mock<IUserContextService> _userContextService;
+        private bool _disposed;
+
+        public ProjectInvitationRepositoryTests()
         {
-            // Arrange
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseInMemoryDatabase("ProjectInvitationRepoTest")
                 .Options;
 
-            var context = new ApplicationDbContext(options);
-            var userContextService = new Mock<IUserContextService>();
+            _context = new ApplicationDbContext(options);
+            _userContextService = new Mock<IUserContextService>();
+        }
 
+        [Fact]
+        public void Constructor_ShouldInitializeRepository()
+        {
             // Act
-            var repository = new ProjectInvitationRepository(context, userContextService.Object);
+            var repository = new ProjectInvitationRepository(_context, _userContextService.Object);
 
             // Assert
             Assert.NotNull(repository); // Forces constructor to run
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _context.Dispose();
+                }
+
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

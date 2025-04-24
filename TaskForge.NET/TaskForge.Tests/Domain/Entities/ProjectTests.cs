@@ -89,7 +89,7 @@ namespace TaskForge.Tests.Domain.Entities
         }
 
         [Fact]
-        public async Task SetEndDate_ShouldHandle_Null_Invaild_valid()
+        public async Task SetEndDate_ShouldVerifyAllScenarios()
         {
             // Arrange
             var startDate = new DateTime(2023, 10, 1, 0, 0, 0, DateTimeKind.Utc);

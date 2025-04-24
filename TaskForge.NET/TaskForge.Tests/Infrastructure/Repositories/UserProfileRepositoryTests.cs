@@ -4,26 +4,52 @@ using TaskForge.Application.Interfaces.Services;
 using TaskForge.Infrastructure.Data;
 using TaskForge.Infrastructure.Repositories;
 using Xunit;
+
 namespace TaskForge.Tests.Infrastructure.Repositories
 {
-    public class UserProfileRepositoryTests
+    public class UserProfileRepositoryTests : IDisposable
     {
-        [Fact]
-        public void ShouldInitializeRepository()
+        private readonly ApplicationDbContext _context;
+        private readonly Mock<IUserContextService> _userContextService;
+        private bool _disposed;
+
+        public UserProfileRepositoryTests()
         {
-            // Arrange
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseInMemoryDatabase("UserProfileRepoTest")
                 .Options;
 
-            var context = new ApplicationDbContext(options);
-            var userContextService = new Mock<IUserContextService>();
+            _context = new ApplicationDbContext(options);
+            _userContextService = new Mock<IUserContextService>();
+        }
 
+        [Fact]
+        public void ShouldInitializeRepository()
+        {
             // Act
-            var repository = new UserProfileRepository(context, userContextService.Object);
+            var repository = new UserProfileRepository(_context, _userContextService.Object);
 
             // Assert
             Assert.NotNull(repository);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _context.Dispose();
+                }
+
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

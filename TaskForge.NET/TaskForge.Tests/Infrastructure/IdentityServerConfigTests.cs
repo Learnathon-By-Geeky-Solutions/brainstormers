@@ -35,7 +35,7 @@ namespace TaskForge.Tests.Infrastructure
         }
 
         [Fact]
-        public async Task GetClients_ShouldReturnExpectedClientConfiguration()
+        public void GetClients_ShouldReturnExpectedClientConfiguration()
         {
             // Act
             var clients = IdentityServerConfig.GetClients().ToList();
@@ -66,11 +66,10 @@ namespace TaskForge.Tests.Infrastructure
             }
 
             _output.WriteLine("Client configuration validated successfully.");
-            await Task.CompletedTask;
         }
 
         [Fact]
-        public async Task GetApiScopes_ShouldReturnExpectedApiScope()
+        public void GetApiScopes_ShouldReturnExpectedApiScope()
         {
             // Act
             var apiScopes = IdentityServerConfig.GetApiScopes().ToList();
@@ -88,7 +87,6 @@ namespace TaskForge.Tests.Infrastructure
             Assert.Equal("TaskForge API", scope.DisplayName);
 
             _output.WriteLine("API scope validated successfully.");
-            await Task.CompletedTask;
         }
     }
 }
