@@ -1,5 +1,4 @@
 ﻿using Duende.IdentityServer.Models;
-using FluentAssertions;
 using TaskForge.Infrastructure;
 using Xunit;
 using Xunit.Abstractions;
@@ -14,7 +13,6 @@ namespace TaskForge.Tests.Infrastructure
 
         static IdentityServerConfigTests()
         {
-            // Patch Console globally before any tests run
             EnsureConsoleStreamsOpenStatic();
         }
 
@@ -37,44 +35,60 @@ namespace TaskForge.Tests.Infrastructure
         }
 
         [Fact]
-        public void GetClients_ShouldReturnExpectedClientConfiguration()
+        public async Task GetClients_ShouldReturnExpectedClientConfiguration()
         {
             // Act
-            var clients = IdentityServerConfig.GetClients();
+            var clients = IdentityServerConfig.GetClients().ToList();
 
             // Assert
             _output.WriteLine("Validating client configuration...");
 
-            clients.Should().NotBeNullOrEmpty("at least one client should be configured");
-            var client = clients.Should().ContainSingle().Subject;
+            Assert.NotNull(clients);
+            Assert.NotEmpty(clients);
+            Assert.Single(clients);
 
-            client.ClientId.Should().Be("taskforge-client");
-            client.AllowedGrantTypes.Should().BeEquivalentTo(GrantTypes.Code);
-            client.RequirePkce.Should().BeTrue();
-            client.RequireClientSecret.Should().BeFalse();
-            client.RedirectUris.Should().ContainSingle().Which.Should().Be("https://localhost:5001/signin-oidc");
-            client.PostLogoutRedirectUris.Should().ContainSingle().Which.Should().Be("https://localhost:5001/signout-callback-oidc");
-            client.AllowedScopes.Should().BeEquivalentTo("openid", "profile", "api1");
+            var client = clients[0];
+
+            Assert.Equal("taskforge-client", client.ClientId);
+            Assert.Equal(GrantTypes.Code, client.AllowedGrantTypes);
+            Assert.True(client.RequirePkce);
+            Assert.False(client.RequireClientSecret);
+            Assert.Single(client.RedirectUris);
+            Assert.Equal("https://localhost:5001/signin-oidc", client.RedirectUris.Single());
+            Assert.Single(client.PostLogoutRedirectUris);
+            Assert.Equal("https://localhost:5001/signout-callback-oidc", client.PostLogoutRedirectUris.Single());
+
+            var expectedScopes = new[] { "openid", "profile", "api1" };
+            Assert.Equal(expectedScopes.Length, client.AllowedScopes.Count);
+            foreach (var scope in expectedScopes)
+            {
+                Assert.Contains(scope, client.AllowedScopes);
+            }
 
             _output.WriteLine("Client configuration validated successfully.");
+            await Task.CompletedTask;
         }
 
         [Fact]
-        public void GetApiScopes_ShouldReturnExpectedApiScope()
+        public async Task GetApiScopes_ShouldReturnExpectedApiScope()
         {
             // Act
-            var apiScopes = IdentityServerConfig.GetApiScopes();
+            var apiScopes = IdentityServerConfig.GetApiScopes().ToList();
 
             // Assert
             _output.WriteLine("Validating API scopes...");
 
-            apiScopes.Should().NotBeNullOrEmpty("at least one API scope should be configured");
-            var scope = apiScopes.Should().ContainSingle().Subject;
+            Assert.NotNull(apiScopes);
+            Assert.NotEmpty(apiScopes);
+            Assert.Single(apiScopes);
 
-            scope.Name.Should().Be("api1");
-            scope.DisplayName.Should().Be("TaskForge API");
+            var scope = apiScopes[0];
+
+            Assert.Equal("api1", scope.Name);
+            Assert.Equal("TaskForge API", scope.DisplayName);
 
             _output.WriteLine("API scope validated successfully.");
+            await Task.CompletedTask;
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using TaskForge.Application.Common.Utilities;
+﻿using TaskForge.Application.Common.Utilities;
 using Xunit;
 
 namespace TaskForge.Tests.Application.Common.Utilities
@@ -8,17 +7,18 @@ namespace TaskForge.Tests.Application.Common.Utilities
     public class DisjointSetUnionTests
     {
         [Fact]
-        public void MakeSet_ShouldInitializeParentAndRank()
+        public async Task MakeSet_ShouldInitializeParentAndRank()
         {
             var dsu = new DisjointSetUnion();
 
             dsu.MakeSet(1);
 
-            dsu.Find(1).Should().Be(1);
+            Assert.Equal(1, dsu.Find(1));
+            await Task.CompletedTask;
         }
 
         [Fact]
-        public void Find_ShouldReturnCorrectRoot_WithPathCompression()
+        public async Task Find_ShouldReturnCorrectRoot_WithPathCompression()
         {
             var dsu = new DisjointSetUnion();
 
@@ -33,11 +33,14 @@ namespace TaskForge.Tests.Application.Common.Utilities
             int root2 = dsu.Find(2);
             int root3 = dsu.Find(3);
 
-            root1.Should().Be(root2).And.Be(root3);
+            Assert.Equal(root1, root2);
+            Assert.Equal(root2, root3);
+
+            await Task.CompletedTask;
         }
 
         [Fact]
-        public void Union_ShouldAttachLowerRankUnderHigherRank()
+        public async Task Union_ShouldAttachLowerRankUnderHigherRank()
         {
             var dsu = new DisjointSetUnion();
 
@@ -49,12 +52,14 @@ namespace TaskForge.Tests.Application.Common.Utilities
             dsu.MakeSet(1);
             dsu.Union(1, 2);
 
-            dsu.Find(2).Should().Be(dsu.Find(3));
-            dsu.Find(1).Should().Be(dsu.Find(2));
+            Assert.Equal(dsu.Find(2), dsu.Find(3));
+            Assert.Equal(dsu.Find(1), dsu.Find(2));
+
+            await Task.CompletedTask;
         }
 
         [Fact]
-        public void Union_ShouldIncrementRankWhenEqual()
+        public async Task Union_ShouldIncrementRankWhenEqual()
         {
             var dsu = new DisjointSetUnion();
 
@@ -66,18 +71,22 @@ namespace TaskForge.Tests.Application.Common.Utilities
             dsu.MakeSet(3);
             dsu.Union(1, 3);
 
-            dsu.Find(1).Should().Be(dsu.Find(3));
+            Assert.Equal(dsu.Find(1), dsu.Find(3));
+
+            await Task.CompletedTask;
         }
 
         [Fact]
-        public void Union_ShouldNotChangeAnythingIfSameSet()
+        public async Task Union_ShouldNotChangeAnythingIfSameSet()
         {
             var dsu = new DisjointSetUnion();
 
             dsu.MakeSet(1);
             dsu.Union(1, 1);
 
-            dsu.Find(1).Should().Be(1);
+            Assert.Equal(1, dsu.Find(1));
+
+            await Task.CompletedTask;
         }
     }
 }
