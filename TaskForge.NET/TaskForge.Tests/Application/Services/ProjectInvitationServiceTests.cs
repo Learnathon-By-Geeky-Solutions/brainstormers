@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Data;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.Linq.Expressions;
@@ -109,6 +111,8 @@ namespace TaskForge.Tests.Application.Services
             await Assert.ThrowsAsync<Exception>(() =>
                 _projectInvitationService.GetByIdAsync(invitationId));
         }
+
+
 
         [Fact]
         public async Task GetInvitationListAsync_ReturnsPaginatedInvitations()
@@ -297,6 +301,8 @@ namespace TaskForge.Tests.Application.Services
                 _projectInvitationService.GetInvitationListAsync(projectId, pageIndex, pageSize));
         }
 
+
+
         [Fact]
         public async Task AddAsync_ShouldReturnFailure_WhenUserNotFound()
         {
@@ -462,58 +468,50 @@ namespace TaskForge.Tests.Application.Services
         [Fact]
         public async Task AddAsync_ShouldReturnSuccess_WhenAllValidationsPass()
         {
-            // Arrange
-            var email = "user@example.com";
-            var projectId = 1;
-            var userId = "user-123";
-            var userProfileId = 10;
+	        // Arrange
+	        var email = "user@example.com";
+	        var projectId = 1;
+	        var userId = "user-123";
+	        var userProfileId = 10;
 
-            var identityUser = new IdentityUser
-            {
-                Id = userId,
-                Email = email,
-                UserName = "testuser"
-            };
+	        var identityUser = new IdentityUser { Id = userId, Email = email, UserName="testuser" };
+	        var userProfile = new UserProfile { Id = userProfileId, UserId = userId };
 
-            var userProfile = new UserProfile
-            {
-                Id = userProfileId,
-                UserId = userId
-            };
+	        _userManagerMock.Setup(x => x.FindByEmailAsync(email))
+		        .ReturnsAsync(identityUser);
 
-            _userManagerMock.Setup(x => x.FindByEmailAsync(email))
-                .ReturnsAsync(identityUser);
+	        _userProfileRepositoryMock.Setup(x => x.FindByExpressionAsync(It.IsAny<Expression<Func<UserProfile, bool>>>(),
+			        null, null, null, null))
+		        .ReturnsAsync(new List<UserProfile> { userProfile });
 
-            _userProfileRepositoryMock.Setup(x => x.FindByExpressionAsync(
-                    It.IsAny<Expression<Func<UserProfile, bool>>>(),
-                    null, null, null, null))
-                .ReturnsAsync(new List<UserProfile> { userProfile });
+	        _projectMemberRepositoryMock.Setup(x => x.FindByExpressionAsync(It.IsAny<Expression<Func<ProjectMember, bool>>>(),
+			        null, null, null, null))
+		        .ReturnsAsync(new List<ProjectMember>());
 
-            _projectMemberRepositoryMock.Setup(x => x.FindByExpressionAsync(
-                    It.IsAny<Expression<Func<ProjectMember, bool>>>(),
-                    null, null, null, null))
-                .ReturnsAsync(new List<ProjectMember>()); // user is not a member
+	        _projectInvitationRepositoryMock.Setup(x => x.FindByExpressionAsync(It.IsAny<Expression<Func<ProjectInvitation, bool>>>(), null, null, null, null))
+		        .ReturnsAsync(new List<ProjectInvitation>());
 
-            _projectInvitationRepositoryMock.Setup(x => x.FindByExpressionAsync(
-                    It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
-                    null, null, null, null))
-                .ReturnsAsync(new List<ProjectInvitation>()); // no pending invitation
+	        _projectInvitationRepositoryMock.Setup(x => x.AddAsync(It.IsAny<ProjectInvitation>()))
+		        .Returns(Task.CompletedTask);
 
-            _projectInvitationRepositoryMock.Setup(x => x.AddAsync(It.IsAny<ProjectInvitation>()))
-                .Returns(Task.CompletedTask);
+	        _unitOfWorkMock.Setup(x => x.SaveChangesAsync())
+		        .ReturnsAsync(1);
 
-            _unitOfWorkMock.Setup(x => x.SaveChangesAsync())
-                .ReturnsAsync(1); // simulate successful DB save
+	        // Mock transaction
+	        var mockTransaction = new Mock<IDbContextTransaction>();
+	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
+		        .ReturnsAsync(mockTransaction.Object);
 
-            // Act
-            var result = await _projectInvitationService.AddAsync(projectId, email, ProjectRole.Contributor);
+	        // Act
+	        var result = await _projectInvitationService.AddAsync(projectId, email, ProjectRole.Contributor);
 
-            // Assert
-            Assert.True(result.Success);
-            Assert.Equal("Invitation sent successfully.", result.Message);
+	        // Assert
+	        Assert.True(result.Success);
+	        Assert.Equal("Invitation sent successfully.", result.Message);
+	        mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
-        [Fact]
+		[Fact]
         public async Task AddAsync_ShouldThrowException_WhenUserManagerThrows()
         {
             // Arrange
@@ -531,7 +529,107 @@ namespace TaskForge.Tests.Application.Services
             Assert.Equal("UserManager failure", exception.Message);
         }
 
-        [Fact]
+		[Fact]
+		public async Task AddAsync_ShouldRollbackTransaction_WhenExceptionIsThrown()
+		{
+			// Arrange
+			var email = "user@example.com";
+			var projectId = 1;
+			var userId = "user-123";
+			var userProfileId = 10;
+
+			var identityUser = new IdentityUser { Id = userId, Email = email, UserName = "testuser" };
+			var userProfile = new UserProfile { Id = userProfileId, UserId = userId };
+
+			_userManagerMock.Setup(x => x.FindByEmailAsync(email))
+				.ReturnsAsync(identityUser);
+
+			_userProfileRepositoryMock.Setup(x => x.FindByExpressionAsync(It.IsAny<Expression<Func<UserProfile, bool>>>(),
+					null, null, null, null))
+				.ReturnsAsync(new List<UserProfile> { userProfile });
+
+			_projectMemberRepositoryMock.Setup(x => x.FindByExpressionAsync(It.IsAny<Expression<Func<ProjectMember, bool>>>(),
+					null, null, null, null))
+				.ReturnsAsync(new List<ProjectMember>());
+
+			_projectInvitationRepositoryMock.Setup(x => x.FindByExpressionAsync(It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
+					null, null, null, null))
+				.ReturnsAsync(new List<ProjectInvitation>());
+
+			_projectInvitationRepositoryMock.Setup(x => x.AddAsync(It.IsAny<ProjectInvitation>()))
+				.Returns(Task.CompletedTask);
+
+			_unitOfWorkMock.Setup(x => x.SaveChangesAsync())
+				.ThrowsAsync(new Exception("Simulated DB failure"));
+
+			var mockTransaction = new Mock<IDbContextTransaction>();
+			mockTransaction.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+			mockTransaction.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
+
+			_unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
+				.ReturnsAsync(mockTransaction.Object);
+
+			// Act
+			var result = await _projectInvitationService.AddAsync(projectId, email, ProjectRole.Contributor);
+
+			// Assert
+			Assert.False(result.Success);
+			Assert.Equal("Failed to send invitation.", result.Message);
+			mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+		}
+
+		[Fact]
+		public async Task AddAsync_ShouldDisposeTransaction()
+		{
+			// Arrange
+			var email = "user@example.com";
+			var projectId = 1;
+			var userId = "user-123";
+			var userProfileId = 10;
+
+			var identityUser = new IdentityUser { Id = userId, Email = email, UserName = "testuser" };
+			var userProfile = new UserProfile { Id = userProfileId, UserId = userId };
+
+			_userManagerMock.Setup(x => x.FindByEmailAsync(email))
+				.ReturnsAsync(identityUser);
+
+			_userProfileRepositoryMock.Setup(x => x.FindByExpressionAsync(It.IsAny<Expression<Func<UserProfile, bool>>>(),
+					null, null, null, null))
+				.ReturnsAsync(new List<UserProfile> { userProfile });
+
+			_projectMemberRepositoryMock.Setup(x => x.FindByExpressionAsync(It.IsAny<Expression<Func<ProjectMember, bool>>>(),
+					null, null, null, null))
+				.ReturnsAsync(new List<ProjectMember>());
+
+			_projectInvitationRepositoryMock.Setup(x => x.FindByExpressionAsync(It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
+					null, null, null, null))
+				.ReturnsAsync(new List<ProjectInvitation>());
+
+			_projectInvitationRepositoryMock.Setup(x => x.AddAsync(It.IsAny<ProjectInvitation>()))
+				.Returns(Task.CompletedTask);
+
+			_unitOfWorkMock.Setup(x => x.SaveChangesAsync())
+				.ReturnsAsync(1);
+
+			var mockTransaction = new Mock<IDbContextTransaction>();
+			mockTransaction.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+			mockTransaction.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
+
+			_unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
+				.ReturnsAsync(mockTransaction.Object);
+
+			// Act
+			await _projectInvitationService.AddAsync(projectId, email, ProjectRole.Contributor);
+
+			// Assert
+			mockTransaction.Verify(t => t.DisposeAsync(), Times.Once);
+		}
+
+
+
+
+
+		[Fact]
         public async Task UpdateInvitationStatusAsync_ShouldDoNothing_WhenInvitationNotFound()
         {
             // Arrange
@@ -547,105 +645,218 @@ namespace TaskForge.Tests.Application.Services
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
         }
 
-        [Fact]
-        public async Task UpdateInvitationStatusAsync_ShouldAcceptInvitation_AndAddProjectMember()
-        {
-            // Arrange
-            var invitationId = 2;
-            var invitation = new ProjectInvitation
-            {
-                Id = invitationId,
-                ProjectId = 1,
-                InvitedUserProfileId = 10,
-                AssignedRole = ProjectRole.Contributor,
-                Status = InvitationStatus.Pending
-            };
+		[Fact]
+		public async Task UpdateInvitationStatusAsync_ShouldAcceptInvitation_AndAddProjectMember()
+		{
+			// Arrange
+			var invitationId = 2;
+			var invitation = new ProjectInvitation
+			{
+				Id = invitationId,
+				ProjectId = 1,
+				InvitedUserProfileId = 10,
+				AssignedRole = ProjectRole.Contributor,
+				Status = InvitationStatus.Pending
+			};
 
-            _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
-                .ReturnsAsync(invitation);
-            _projectMemberRepositoryMock.Setup(r => r.AddAsync(It.IsAny<ProjectMember>()))
-                .Returns(Task.CompletedTask);
+			var mockTransaction = new Mock<IDbContextTransaction>();
+			_unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
+				.ReturnsAsync(mockTransaction.Object);
 
-            // Act
-            await _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Accepted);
+			_projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
+				.ReturnsAsync(invitation);
 
-            // Assert
-            Assert.Equal(InvitationStatus.Accepted, invitation.Status);
-            Assert.NotNull(invitation.AcceptedDate);
-            Assert.Null(invitation.DeclinedDate);
+			_projectMemberRepositoryMock.Setup(r => r.AddAsync(It.IsAny<ProjectMember>()))
+				.Returns(Task.CompletedTask);
 
-            _projectMemberRepositoryMock.Verify(r => r.AddAsync(It.Is<ProjectMember>(
-                m => m.ProjectId == invitation.ProjectId &&
-                     m.UserProfileId == invitation.InvitedUserProfileId &&
-                     m.Role == invitation.AssignedRole)), Times.Once);
+			_projectInvitationRepositoryMock.Setup(r => r.UpdateAsync(invitation))
+				.Returns(Task.CompletedTask);
 
-            _projectInvitationRepositoryMock.Verify(u => u.UpdateAsync(invitation), Times.Once);
-            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
-        }
+			_unitOfWorkMock.Setup(u => u.SaveChangesAsync())
+				.ReturnsAsync(1);
 
+			// Act
+			await _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Accepted);
 
-        [Fact]
+			// Assert
+			Assert.Equal(InvitationStatus.Accepted, invitation.Status);
+			Assert.NotNull(invitation.AcceptedDate);
+			Assert.Null(invitation.DeclinedDate);
+
+			_projectMemberRepositoryMock.Verify(r => r.AddAsync(It.Is<ProjectMember>(m =>
+				m.ProjectId == invitation.ProjectId &&
+				m.UserProfileId == invitation.InvitedUserProfileId &&
+				m.Role == invitation.AssignedRole)), Times.Once);
+
+			_projectInvitationRepositoryMock.Verify(u => u.UpdateAsync(invitation), Times.Once);
+			_unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+			mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+		}
+
+		[Fact]
         public async Task UpdateInvitationStatusAsync_ShouldDeclineInvitation()
         {
-            // Arrange
-            var invitationId = 3;
-            var invitation = new ProjectInvitation
-            {
-                Id = invitationId,
-                ProjectId = 1,
-                InvitedUserProfileId = 10,
-                AssignedRole = ProjectRole.Contributor,
-                Status = InvitationStatus.Pending,
-                AcceptedDate = DateTime.UtcNow // Simulate previously accepted
-            };
+	        // Arrange
+	        var invitationId = 3;
+	        var invitation = new ProjectInvitation
+	        {
+		        Id = invitationId,
+		        ProjectId = 1,
+		        InvitedUserProfileId = 10,
+		        AssignedRole = ProjectRole.Contributor,
+		        Status = InvitationStatus.Pending,
+		        AcceptedDate = DateTime.UtcNow
+	        };
 
-            _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
-                .ReturnsAsync(invitation);
-            _projectInvitationRepositoryMock.Setup(r => r.UpdateAsync(invitation))
-                .Returns(Task.CompletedTask);
+	        var mockTransaction = new Mock<IDbContextTransaction>();
+	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
+		        .ReturnsAsync(mockTransaction.Object);
 
-            // Act
-            await _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Declined);
+	        _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
+		        .ReturnsAsync(invitation);
 
-            // Assert
-            Assert.Equal(InvitationStatus.Declined, invitation.Status);
-            Assert.Null(invitation.AcceptedDate);
-            Assert.NotNull(invitation.DeclinedDate);
+	        _projectInvitationRepositoryMock.Setup(r => r.UpdateAsync(invitation))
+		        .Returns(Task.CompletedTask);
 
-            _projectMemberRepositoryMock.Verify(u => u.AddAsync(It.IsAny<ProjectMember>()), Times.Never);
-            _projectInvitationRepositoryMock.Verify(u => u.UpdateAsync(invitation), Times.Once);
-            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+	        _unitOfWorkMock.Setup(u => u.SaveChangesAsync())
+		        .ReturnsAsync(1);
+
+	        // Act
+	        await _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Declined);
+
+	        // Assert
+	        Assert.Equal(InvitationStatus.Declined, invitation.Status);
+	        Assert.Null(invitation.AcceptedDate);
+	        Assert.NotNull(invitation.DeclinedDate);
+
+	        _projectMemberRepositoryMock.Verify(u => u.AddAsync(It.IsAny<ProjectMember>()), Times.Never);
+	        _projectInvitationRepositoryMock.Verify(u => u.UpdateAsync(invitation), Times.Once);
+	        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+	        mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
-        [Fact]
+		[Fact]
         public async Task UpdateInvitationStatusAsync_ShouldThrowException_WhenSaveFails()
         {
-            // Arrange
-            var invitationId = 1;
-            var status = InvitationStatus.Accepted;
+	        // Arrange
+	        var invitationId = 1;
+	        var status = InvitationStatus.Accepted;
 
-            var invitation = new ProjectInvitation
-            {
-                Id = invitationId,
-                Status = InvitationStatus.Pending,
-                InvitedUserProfileId = 123,
-                ProjectId = 456
-            };
+	        var invitation = new ProjectInvitation
+	        {
+		        Id = invitationId,
+		        Status = InvitationStatus.Pending,
+		        InvitedUserProfileId = 123,
+		        ProjectId = 456
+	        };
 
-            _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
-                .ReturnsAsync(invitation);
+	        var mockTransaction = new Mock<IDbContextTransaction>();
+	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
+		        .ReturnsAsync(mockTransaction.Object);
 
-            _projectMemberRepositoryMock.Setup(u => u.AddAsync(It.IsAny<ProjectMember>()));
+	        _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
+		        .ReturnsAsync(invitation);
 
-            _unitOfWorkMock.Setup(u => u.SaveChangesAsync())
-                .ThrowsAsync(new Exception("Database save failed"));
+	        _projectMemberRepositoryMock.Setup(u => u.AddAsync(It.IsAny<ProjectMember>()))
+		        .Returns(Task.CompletedTask);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() =>
-                _projectInvitationService.UpdateInvitationStatusAsync(invitationId, status));
+	        _projectInvitationRepositoryMock.Setup(r => r.UpdateAsync(invitation))
+		        .Returns(Task.CompletedTask);
+
+	        _unitOfWorkMock.Setup(u => u.SaveChangesAsync())
+		        .ThrowsAsync(new Exception("Database save failed"));
+
+	        // Act & Assert
+	        var ex = await Assert.ThrowsAsync<Exception>(() =>
+		        _projectInvitationService.UpdateInvitationStatusAsync(invitationId, status));
+
+	        Assert.Equal("Database save failed", ex.Message);
+	        mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+	        mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
+        public async Task UpdateInvitationStatusAsync_ShouldRollbackTransaction_WhenExceptionIsThrown()
+        {
+	        // Arrange
+	        var invitationId = 5;
+	        var invitation = new ProjectInvitation
+	        {
+		        Id = invitationId,
+		        ProjectId = 1,
+		        InvitedUserProfileId = 100,
+		        AssignedRole = ProjectRole.Contributor,
+		        Status = InvitationStatus.Pending
+	        };
+
+	        _projectInvitationRepositoryMock.Setup(r => r.GetByIdAsync(invitationId))
+		        .ReturnsAsync(invitation);
+
+	        _projectMemberRepositoryMock.Setup(r => r.AddAsync(It.IsAny<ProjectMember>()));
+
+	        _unitOfWorkMock.Setup(r => r.SaveChangesAsync())
+		        .ThrowsAsync(new Exception("Simulated failure"));
+
+	        var mockTransaction = new Mock<IDbContextTransaction>();
+	        mockTransaction.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>()))
+		        .Returns(Task.CompletedTask);
+	        mockTransaction.Setup(t => t.DisposeAsync())
+		        .Returns(ValueTask.CompletedTask);
+
+	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
+		        .ReturnsAsync(mockTransaction.Object);
+
+	        // Act & Assert
+	        await Assert.ThrowsAsync<Exception>(() =>
+		        _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Accepted));
+
+	        mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+	        mockTransaction.Verify(t => t.DisposeAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateInvitationStatusAsync_ShouldDisposeTransaction()
+        {
+	        // Arrange
+	        var invitationId = 6;
+	        var invitation = new ProjectInvitation
+	        {
+		        Id = invitationId,
+		        ProjectId = 1,
+		        InvitedUserProfileId = 200,
+		        AssignedRole = ProjectRole.Admin,
+		        Status = InvitationStatus.Pending
+	        };
+
+	        _projectInvitationRepositoryMock.Setup(r => r.GetByIdAsync(invitationId))
+		        .ReturnsAsync(invitation);
+
+	        _projectMemberRepositoryMock.Setup(r => r.AddAsync(It.IsAny<ProjectMember>()))
+		        .Returns(Task.CompletedTask);
+
+	        _unitOfWorkMock.Setup(r => r.SaveChangesAsync())
+		        .ReturnsAsync(1);
+
+	        var mockTransaction = new Mock<IDbContextTransaction>();
+	        mockTransaction.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>()))
+		        .Returns(Task.CompletedTask);
+	        mockTransaction.Setup(t => t.DisposeAsync())
+		        .Returns(ValueTask.CompletedTask);
+
+	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
+		        .ReturnsAsync(mockTransaction.Object);
+
+	        // Act
+	        await _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Accepted);
+
+	        // Assert
+	        mockTransaction.Verify(t => t.DisposeAsync(), Times.Once);
+        }
+
+
+
+
+		[Fact]
         public async Task GetInvitationsForUserAsync_ShouldReturnEmpty_WhenUserProfileIdIsNull()
         {
             // Act
