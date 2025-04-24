@@ -1,7 +1,7 @@
 ﻿using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
 
-namespace TaskForge.Web.Models
+namespace TaskForge.WebUI.Models
 {
     public class ProjectListViewModel : PaginationViewModel
     {

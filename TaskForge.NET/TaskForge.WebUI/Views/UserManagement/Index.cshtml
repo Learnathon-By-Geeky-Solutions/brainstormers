@@ -1,0 +1,84 @@
+﻿@model FilterUserListViewModel
+@{
+	ViewData["Title"] = "User List";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>User List</h2>
+
+<div class="mb-4">
+	<form asp-action="Index" method="get" class="row g-3 align-items-end">
+		<div class="col-md-4">
+			<label for="SearchTerm" class="form-label">Search</label>
+			<input name="SearchTerm" id="SearchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Enter name or email"/>
+		</div>
+
+		<div class="col-md-4">
+			<label for="RoleFilter" class="form-label">Roles</label>
+			<select name="RoleFilter" id="RoleFilter" class="form-select">
+				<option value="">All</option>
+				@foreach (var role in ViewBag.Roles)
+				{
+					<option value="@role" selected="@(Model.RoleFilter?.Contains(role) ?? false ? "selected" : null)">
+						@role
+					</option>
+				}
+			</select>
+		</div>
+
+		<div class="col-md-2">
+			<button type="submit" class="btn btn-primary w-100">Filter</button>
+		</div>
+	</form>
+</div>
+
+@* 
+<div class="text-end mb-3">
+	<a asp-action="Create" class="btn btn-success">Create New User</a>
+</div> *@
+
+<div>
+	<table class="table table-bordered table-hover align-middle">
+		<thead class="table-light">
+		<tr>
+			<th>#</th>
+			<th>Full Name</th>
+			<th>Email</th>
+			<th>Phone</th>
+			<th>Job Title</th>
+			<th>Company</th>
+			<th>Role(s)</th>
+			<th class="text-center">Actions</th>
+		</tr>
+		</thead>
+		<tbody>
+		@if (Model.Users.Any())
+		{
+			var index = (Model.PageIndex - 1) * Model.PageSize + 1;
+			foreach (var user in Model.Users)
+			{
+				<tr>
+					<td>@index</td>
+					<td>@user.FullName</td>
+					<td>@user.Email</td>
+					<td>@user.PhoneNumber</td>
+					<td>@user.JobTitle</td>
+					<td>@user.Company</td>
+					<td>@user.Role</td>
+					<td class="text-center">
+						@* <a asp-action="Edit" asp-route-id="@user.UserId" class="btn btn-sm btn-warning">Edit</a> *@
+						<a asp-action="Delete" asp-route-id="@user.UserId" class="btn btn-sm btn-danger">Delete</a>
+					</td>
+				</tr>
+				index++;
+			}
+		}
+		else
+		{
+			<tr>
+				<td colspan="8" class="text-center text-muted">No users found.</td>
+			</tr>
+		}
+		</tbody>
+	</table>
+</div>

@@ -6,7 +6,6 @@ using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Enums;
-using TaskForge.Web.Models;
 using TaskForge.WebUI.Models;
 
 namespace TaskForge.WebUI.Controllers
@@ -169,40 +168,6 @@ namespace TaskForge.WebUI.Controllers
             await _projectService.UpdateProjectAsync(existingProject);
 
             return RedirectToAction("Dashboard", "Project", new { id = existingProject.Id });
-        }
-
-        // GET: Project/Details/5
-        public async Task<IActionResult> Details(int id)
-        {
-            if (!ModelState.IsValid) return View();
-
-            // Restrict project access to assigned users only
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Unauthorized();
-
-            var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, id);
-            if (member == null)
-            {
-                return Forbid(); // User is not an Admin, access denied
-            }
-
-            var project = await _projectService.GetProjectByIdAsync(id);
-
-            if (project == null)
-            {
-                return NotFound();
-            }
-
-            // return project.tasks = the tasks of this project
-
-            project.TaskItems = (await _taskService.GetTaskListAsync(id)).ToList();
-
-            var viewModel = new ProjectDetailsViewModel
-            {
-                Project = project
-            };
-
-            return View(viewModel);
         }
 
         // GET: Project/Dashboard/5
