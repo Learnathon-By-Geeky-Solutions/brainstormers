@@ -10,7 +10,7 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
     public class UnitOfWorkTests
     {
         [Fact]
-        public async Task BeginTransactionAsync_ShouldBeginTransaction()
+        public async Task BeginTransactionAsync_WithExplicitIsolationLevel_ShouldBeginTransaction()
         {
             // Arrange
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -29,48 +29,67 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
         }
 
         [Fact]
-        public void Dispose_CallsContextDispose()
+        public async Task BeginTransactionAsync_WithDefaultParameter_ShouldUseDefaultIsolationLevel()
         {
             // Arrange
-            var mockContext = new Mock<ApplicationDbContext>(new DbContextOptions<ApplicationDbContext>());
-            var unitOfWork = new UnitOfWork(mockContext.Object);
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .ConfigureWarnings(x => x.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+                .Options;
+
+            await using var context = new ApplicationDbContext(options);
+            var unitOfWork = new UnitOfWork(context);
 
             // Act
-            unitOfWork.Dispose();
+            await using var transaction = await unitOfWork.BeginTransactionAsync();
 
             // Assert
-            mockContext.Verify(c => c.Dispose(), Times.Once);
+            Assert.NotNull(transaction);
         }
 
         [Fact]
-        public void Dispose_CanBeCalledMultipleTimesSafely()
+        public async Task SaveChangesAsync_ShouldReturnExpectedResult()
         {
             // Arrange
             var mockContext = new Mock<ApplicationDbContext>(new DbContextOptions<ApplicationDbContext>());
-            var unitOfWork = new UnitOfWork(mockContext.Object);
-
-            // Act
-            unitOfWork.Dispose();
-            unitOfWork.Dispose(); // Call again to ensure no exception
-
-            // Assert
-            mockContext.Verify(c => c.Dispose(), Times.Once);
-        }
-
-        [Fact]
-        public async Task SaveChangesAsync_CallsContextSaveChangesAsync()
-        {
-            // Arrange
-            var mockContext = new Mock<ApplicationDbContext>(new DbContextOptions<ApplicationDbContext>());
-            mockContext.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(42);
+            mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(42);
             var unitOfWork = new UnitOfWork(mockContext.Object);
 
             // Act
             var result = await unitOfWork.SaveChangesAsync();
 
             // Assert
-            mockContext.Verify(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
             Assert.Equal(42, result);
+            mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public void Dispose_ShouldCallContextDispose()
+        {
+            // Arrange
+            var mockContext = new Mock<ApplicationDbContext>(new DbContextOptions<ApplicationDbContext>());
+            var unitOfWork = new UnitOfWork(mockContext.Object);
+
+            // Act
+            unitOfWork.Dispose();
+
+            // Assert
+            mockContext.Verify(c => c.Dispose(), Times.Once);
+        }
+
+        [Fact]
+        public void Dispose_CalledMultipleTimes_ShouldNotThrowAndCallDisposeOnce()
+        {
+            // Arrange
+            var mockContext = new Mock<ApplicationDbContext>(new DbContextOptions<ApplicationDbContext>());
+            var unitOfWork = new UnitOfWork(mockContext.Object);
+
+            // Act
+            unitOfWork.Dispose();
+            unitOfWork.Dispose(); // Safe second call
+
+            // Assert
+            mockContext.Verify(c => c.Dispose(), Times.Once);
         }
     }
 }

@@ -24,7 +24,7 @@ namespace TaskForge.Tests.Infrastructure.Repositories
         }
 
         [Fact]
-        public void ShouldInitializeRepository()
+        public void Constructor_ShouldInitializeRepository()
         {
             // Act
             var repository = new TaskRepository(_context, _userContextService.Object);

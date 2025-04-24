@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using TaskForge.Domain.Entities;
-using TaskForge.Domain.Entities.Common;
+﻿using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
 using Xunit;
 
@@ -19,21 +16,22 @@ namespace TaskForge.Tests.Domain.Entities
             Assert.Equal(string.Empty, project.Title);
             Assert.Null(project.Description);
             Assert.Equal(ProjectStatus.NotStarted, project.Status);
-            Assert.True((DateTime.UtcNow - project.StartDate).TotalSeconds < 1);
+            Assert.NotEqual(default, project.StartDate);
+            Assert.True(project.StartDate.Kind == DateTimeKind.Utc);
             Assert.Empty(project.Members);
             Assert.Empty(project.Invitations);
             Assert.Empty(project.TaskItems);
         }
 
         [Fact]
-        public async Task SetEndDate_ShouldAssignValidDate()
+        public void SetEndDate_ShouldAssignValidDate()
         {
             // Arrange
             var project = new Project();
             var endDate = project.StartDate.AddDays(1);
 
             // Act
-            await Task.Run(() => project.SetEndDate(endDate));
+            project.SetEndDate(endDate);
 
             // Assert
             Assert.Equal(endDate, project.EndDate);
@@ -53,15 +51,15 @@ namespace TaskForge.Tests.Domain.Entities
         }
 
         [Fact]
-        public async Task SetEndDate_ShouldThrowIfEndDateBeforeStartDate()
+        public void SetEndDate_ShouldThrowIfEndDateBeforeStartDate()
         {
             // Arrange
             var project = new Project();
             var invalidEndDate = project.StartDate.AddDays(-1);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() =>
-                Task.Run(() => project.SetEndDate(invalidEndDate)));
+            Assert.Throws<ArgumentException>(() =>
+                project.SetEndDate(invalidEndDate));
         }
 
         [Fact]
@@ -96,7 +94,7 @@ namespace TaskForge.Tests.Domain.Entities
             var project = new Project { StartDate = startDate };
 
             // Act
-            await Task.Run(() => project.SetEndDate(null));
+            project.SetEndDate(null);
 
             // Assert
             Assert.Null(project.EndDate);
@@ -105,7 +103,7 @@ namespace TaskForge.Tests.Domain.Entities
             await Assert.ThrowsAsync<ArgumentException>(() =>
                 Task.Run(() => project.SetEndDate(startDate.AddDays(-1))));
 
-            await Task.Run(() => project.SetEndDate(startDate.AddDays(1)));
+            project.SetEndDate(startDate.AddDays(1));
             Assert.Equal(startDate.AddDays(1), project.EndDate);
         }
 

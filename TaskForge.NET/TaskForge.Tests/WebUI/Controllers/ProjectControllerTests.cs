@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.CodeAnalysis;
 using Moq;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
@@ -12,6 +13,7 @@ using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
 using TaskForge.WebUI.Models;
 using TaskForge.WebUI.Controllers;
+using Project = TaskForge.Domain.Entities.Project;
 using Xunit;
 
 namespace TaskForge.Tests.WebUI.Controllers
@@ -431,7 +433,27 @@ namespace TaskForge.Tests.WebUI.Controllers
             Assert.Equal("EndDate must be greater than StartDate", results[0].ErrorMessage);
             Assert.Contains(nameof(CreateProjectViewModel.EndDate), results[0].MemberNames);
         }
+        [Fact]
+        public async Task Create_Post_UserIsNull_ReturnsUnauthorized()
+        {
+            // Arrange
+            _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync((IdentityUser?)null);
 
+            var model = new CreateProjectViewModel
+            {
+                Title = "Test Project",
+                Status = ProjectStatus.Completed,
+                StartDate = new DateTime(2023, 10, 24, 0, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2023, 10, 26, 0, 0, 0, DateTimeKind.Utc)
+            };
+
+            // Act
+            var result = await _controller.Create(model);
+
+            // Assert
+            Assert.IsType<UnauthorizedResult>(result);
+        }
 
         [Fact]
         public async Task Details_InvalidModelState_ReturnsView()
@@ -612,6 +634,7 @@ namespace TaskForge.Tests.WebUI.Controllers
         {
             // Arrange
             int projectId = 1;
+
             var user = new IdentityUser
             {
                 Id = "user3",
@@ -619,109 +642,139 @@ namespace TaskForge.Tests.WebUI.Controllers
                 UserName = "testuser03"
             };
 
-            var invitedUserProfile = new UserProfile
+            var invitedUserProfile1 = new UserProfile
             {
                 Id = 4,
                 UserId = user.Id,
                 User = user
             };
 
-            var member = new ProjectMemberDto
+            var invitedUserProfile2 = new UserProfile
             {
-                Id = 1,
+                Id = 5,
+                UserId = "user4",
+                User = new IdentityUser
+                {
+                    UserName = "user4",
+                    Email = "user4@email.com"
+                }
+            };
+
+            var member1 = new ProjectMemberDto
+            {
+                Id = 2,
+                Name = "Alice",
+                Email = "alice@email.com",
                 Role = ProjectRole.Admin
+            };
+
+            var member2 = new ProjectMemberDto
+            {
+                Id = 3,
+                Name = "Bob",
+                Email = "bob@email.com",
+                Role = ProjectRole.Contributor
             };
 
             var project = new Project
             {
                 Id = projectId,
-                Title = "Test Project",
-                Description = "Desc",
-                Status = ProjectStatus.NotStarted,
-                StartDate = DateTime.UtcNow
+                Title = "Sample Project",
+                Description = "Sample description",
+                Status = ProjectStatus.InProgress,
+                StartDate = DateTime.UtcNow.AddDays(-10)
             };
             project.SetEndDate(null);
 
-            var tasks = new List<TaskItem>
+            var task1 = new TaskItem
             {
-                new TaskItem
+                Id = 10,
+                Title = "Task A",
+                Description = "Do A",
+                ProjectId = projectId,
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.Low,
+                AssignedUsers = new List<TaskAssignment>
                 {
-                    Id = 1,
-                    Title = "Task1",
-                    ProjectId = projectId,
-                    Status = TaskWorkflowStatus.ToDo,
-                    Priority = TaskPriority.Medium,
-                    AssignedUsers = new List<TaskAssignment>
+                    new TaskAssignment
                     {
-                        new TaskAssignment
+                        UserProfile = new UserProfile
                         {
-                            UserProfile = new UserProfile
-                            {
-                                FullName = "Tester 02",
-                                User = new IdentityUser
-                                {
-                                    UserName = "Name2",
-                                    Email = "Email"
-                                },
-                                AvatarUrl = "Hello"
-                            }
-                        }
-                    }
-                },
-                new TaskItem
-                {
-                    Id = 2,
-                    Title = "Title 02",
-                    Description = "Description",
-                    Status = TaskWorkflowStatus.Done,
-                    Priority = TaskPriority.Medium,
-                    AssignedUsers = new List<TaskAssignment>
-                    {
-                        new TaskAssignment
-                        {
-                            UserProfile = new UserProfile
-                            {
-                                FullName = "Tester 01",
-                                User = new IdentityUser
-                                {
-                                    UserName = "Name",
-                                    Email = "Email"
-                                },
-                                AvatarUrl = "Hello"
-                            }
+                            FullName = "Charlie",
+                            User = new IdentityUser { UserName = "charlie", Email = "charlie@email.com" },
+                            AvatarUrl = "avatar1.png"
                         }
                     }
                 }
             };
 
-
-            var members = new List<ProjectMemberDto>
+            var task2 = new TaskItem
             {
-                new ProjectMemberDto { Id = 2, Name = "Test 01", Email = "test@gmail.com", Role = ProjectRole.Admin },
-                new ProjectMemberDto { Id = 3, Name = "Test 02", Email = "test02@gmail.com", Role = ProjectRole.Contributor }
+                Id = 11,
+                Title = "Task B",
+                Description = "Do B",
+                ProjectId = projectId,
+                Status = TaskWorkflowStatus.InProgress,
+                Priority = TaskPriority.High,
+                AssignedUsers = new List<TaskAssignment>
+                {
+                    new TaskAssignment
+                    {
+                        UserProfile = new UserProfile
+                        {
+                            FullName = "Dana",
+                            User = new IdentityUser { UserName = "dana", Email = "dana@email.com" },
+                            AvatarUrl = "avatar2.png"
+                        }
+                    }
+                }
             };
 
-            var invites = new PaginatedList<ProjectInvitation>(new List<ProjectInvitation>
+            var invitation1 = new ProjectInvitation
             {
-                new ProjectInvitation
-                {
-                    Id = 5,
-                    ProjectId = projectId,
-                    InvitedUserProfileId = invitedUserProfile.Id,
-                    Project = project,
-                    AssignedRole = ProjectRole.Admin,
-                    Status = InvitationStatus.Pending,
-                    InvitationSentDate = DateTime.UtcNow,
-                    InvitedUserProfile = invitedUserProfile
-                }
-            }, 1, 1, 10);
+                Id = 20,
+                ProjectId = projectId,
+                AssignedRole = ProjectRole.Admin,
+                Status = InvitationStatus.Pending,
+                InvitationSentDate = DateTime.UtcNow.AddDays(-3),
+                InvitedUserProfileId = invitedUserProfile1.Id,
+                InvitedUserProfile = invitedUserProfile1,
+                Project = project
+            };
 
-            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-            _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, projectId)).ReturnsAsync(member);
-            _projectServiceMock.Setup(x => x.GetProjectByIdAsync(projectId)).ReturnsAsync(project);
-            _taskServiceMock.Setup(x => x.GetTaskListAsync(projectId)).ReturnsAsync(tasks);
-            _projectMemberServiceMock.Setup(x => x.GetProjectMembersAsync(projectId)).ReturnsAsync(members);
-            _invitationServiceMock.Setup(x => x.GetInvitationListAsync(projectId, 1, 10)).ReturnsAsync(invites);
+            var invitation2 = new ProjectInvitation
+            {
+                Id = 21,
+                ProjectId = projectId,
+                AssignedRole = ProjectRole.Contributor,
+                Status = InvitationStatus.Accepted,
+                InvitationSentDate = DateTime.UtcNow.AddDays(-2),
+                InvitedUserProfileId = invitedUserProfile2.Id,
+                InvitedUserProfile = invitedUserProfile2,
+                Project = project
+            };
+
+            var member = new ProjectMemberDto { Id = 1, Role = ProjectRole.Admin };
+
+            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, projectId))
+                .ReturnsAsync(member);
+            _projectServiceMock.Setup(x => x.GetProjectByIdAsync(projectId))
+                .ReturnsAsync(project);
+            _taskServiceMock.Setup(x => x.GetTaskListAsync(projectId))
+                .ReturnsAsync(new List<TaskItem> { task1, task2 });
+            _projectMemberServiceMock.Setup(x => x.GetProjectMembersAsync(projectId))
+                .ReturnsAsync(new List<ProjectMemberDto> { member1, member2 });
+
+            var invitations = new List<ProjectInvitation> { invitation1, invitation2 };
+
+            var paginatedInvites = new PaginatedList<ProjectInvitation>(
+                invitations, invitations.Count, 1, 10);
+            _invitationServiceMock
+                .Setup(x => x.GetInvitationListAsync(projectId, 1, 10))
+                .ReturnsAsync(paginatedInvites);
+
 
             // Act
             var result = await _controller.Dashboard(projectId);
@@ -731,41 +784,69 @@ namespace TaskForge.Tests.WebUI.Controllers
             var model = Assert.IsType<ProjectDashboardViewModel>(viewResult.Model);
 
             Assert.Equal(projectId, model.ProjectId);
-            Assert.Equal(project.Title, model.ProjectTitle);
-            Assert.Equal(project.Description, model.ProjectDescription);
-            Assert.Equal(ProjectStatus.NotStarted, model.ProjectStatus);
+            Assert.Equal("Sample Project", model.ProjectTitle);
+            Assert.Equal("Sample description", model.ProjectDescription);
+            Assert.Equal(ProjectStatus.InProgress, model.ProjectStatus);
+            Assert.Equal(ProjectRole.Admin, model.UserRoleInThisProject);
             Assert.Equal(project.StartDate.Date, model.StartDate.Date);
             Assert.Null(model.EndDate);
-            Assert.Equal(ProjectRole.Admin, model.UserRoleInThisProject);
-
-            Assert.Equal(2, model.TotalTasks);
-            Assert.Equal(1, model.PendingTasks);
-            Assert.Equal(1, model.CompletedTasks);
 
             Assert.Equal(2, model.Members.Count);
-            Assert.Contains(model.Members, m => m.Email == "test@gmail.com");
-            Assert.Contains(model.Members, m => m.Email == "test02@gmail.com");
+            Assert.Contains(model.Members, m => m.Id == member1.Id && m.Name == member1.Name &&
+                m.Email == member1.Email && m.Role == member1.Role);
+            Assert.Contains(model.Members, m => m.Id == member2.Id && m.Name == member2.Name &&
+                m.Email == member2.Email && m.Role == member2.Role);
 
-            Assert.Single(model.Invitations);
-            Assert.Equal("testuser03", model.Invitations.FirstOrDefault()?.InvitedUserEmail);
-            Assert.Equal(InvitationStatus.Pending, model.Invitations.FirstOrDefault()?.Status);
+            Assert.Equal(2, model.Invitations.Count);
+
+            Assert.Contains(model.Invitations, i =>
+                i.Id == invitation1.Id &&
+                i.ProjectId == invitation1.ProjectId &&
+                i.InvitedUserEmail == invitedUserProfile1.User.UserName &&
+                i.Status == invitation1.Status &&
+                i.AssignedRole == invitation1.AssignedRole &&
+                i.InvitationSentDate.Date == invitation1.InvitationSentDate.Date);
+
+            Assert.Contains(model.Invitations, i =>
+                i.Id == invitation2.Id &&
+                i.ProjectId == invitation2.ProjectId &&
+                i.InvitedUserEmail == invitedUserProfile2.User.UserName &&
+                i.Status == invitation2.Status &&
+                i.AssignedRole == invitation2.AssignedRole &&
+                i.InvitationSentDate.Date == invitation2.InvitationSentDate.Date);
 
             Assert.Equal(2, model.TaskItems.Count);
-            var task = model.TaskItems.FirstOrDefault();
-            Assert.NotNull(task);
-            Assert.Equal("Task1", task.Title);
-            Assert.Equal(TaskWorkflowStatus.ToDo, task.Status);
-            Assert.Equal(TaskPriority.Medium, task.Priority);
-            Assert.Equal(projectId, task.ProjectId);
-            Assert.NotNull(task);
-            Assert.Single(task.AssignedUsers);
-            Assert.Equal("Tester 02", task.AssignedUsers.FirstOrDefault()?.FullName);
+            Assert.Contains(model.TaskItems, t =>
+                t.Id == task1.Id &&
+                t.Title == task1.Title &&
+                t.Description == task1.Description &&
+                t.Status == task1.Status &&
+                t.Priority == task1.Priority &&
+                t.AssignedUsers.Any(u =>
+                    u.FullName == "Charlie" &&
+                    u.UserName == "charlie" &&
+                    u.Email == "charlie@email.com" &&
+                    u.AvatarUrl == "avatar1.png"));
+
+            Assert.Contains(model.TaskItems, t =>
+                t.Id == task2.Id &&
+                t.Title == task2.Title &&
+                t.Description == task2.Description &&
+                t.Status == task2.Status &&
+                t.Priority == task2.Priority &&
+                t.AssignedUsers.Any(u =>
+                    u.FullName == "Dana" &&
+                    u.UserName == "dana" &&
+                    u.Email == "dana@email.com" &&
+                    u.AvatarUrl == "avatar2.png"));
 
             var update = model.UpdateViewModel;
-            Assert.Equal(1, update.Id);
-            Assert.Equal("Test Project", update.Title);
-            Assert.Equal("Desc", update.Description);
-            Assert.Equal(ProjectStatus.NotStarted, update?.Status);
+            Assert.NotNull(update);
+            Assert.Equal(projectId, update.Id);
+            Assert.Equal("Sample Project", update.Title);
+            Assert.Equal("Sample description", update.Description);
+            Assert.Equal(ProjectStatus.InProgress, update.Status);
+            Assert.Null(update.EndDateInput);
         }
         [Fact]
         public async Task Dashboard_MemberAndInvitation_NullValues_AreHandledGracefully()
@@ -850,93 +931,168 @@ namespace TaskForge.Tests.WebUI.Controllers
 
 
         [Fact]
-        public async Task ManageMembers_ValidAdminUser_ReturnsViewWithModel()
+        public async Task ManageMembers_ValidAdminUser_ReturnsViewWithExpectedModel()
         {
-            int projectId = 1;
+            // Arrange
+            var projectId = 1;
+            var pageIndex = 1;
+            var pageSize = 10;
+            var time = new DateTime(2023, 10, 24, 0, 0, 0, DateTimeKind.Utc);
+
             var user = new IdentityUser
             {
                 Id = "user3",
                 Email = "test03@gmail.com",
                 UserName = "testuser03"
             };
-            var invitedUserProfile = new UserProfile
-            {
-                Id = 4,
-                UserId = user.Id,
-                User = user
-            };
+            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
 
-            var project = new Project { Id = projectId, Title = "Test Project", Description = "" };
-
-            var memberDto = new ProjectMemberDto
+            var member1 = new ProjectMemberDto
             {
                 Id = 1,
-                ProjectId = projectId,
-                Name = "Admin User",
-                Email = "admin@example.com",
+                Name = "John Doe",
+                Email = "john@example.com",
                 Role = ProjectRole.Admin
             };
+            var member2 = new ProjectMemberDto
+            {
+                Id = 2,
+                Name = null,
+                Email = null,
+                Role = ProjectRole.Admin
+            };
+            _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, projectId))
+                .ReturnsAsync(member1);
 
-            var invite = new ProjectInvitation
+            var project = new Project
+            {
+                Id = projectId,
+                Title = "Test Project",
+                Description = "Desc",
+            };
+            _projectServiceMock.Setup(s => s.GetProjectByIdAsync(projectId))
+                .ReturnsAsync(project);
+
+            var projectMembers = new List<ProjectMemberDto> { member1, member2 };
+            _projectMemberServiceMock.Setup(s => s.GetProjectMembersAsync(projectId))
+                .ReturnsAsync(projectMembers);
+
+            var invitation1 = new ProjectInvitation
             {
                 Id = 1,
                 ProjectId = projectId,
                 Project = project,
-                InvitedUserProfile = invitedUserProfile,
-                InvitedUserProfileId = invitedUserProfile.Id,
+                InvitedUserProfile = new UserProfile
+                {
+                    User = new IdentityUser { Id = "test01", Email = "test01@gmail" }
+                },
                 Status = InvitationStatus.Pending,
-                InvitationSentDate = DateTime.UtcNow,
-                AssignedRole = ProjectRole.Contributor,
-                AcceptedDate = DateTime.UtcNow.AddDays(-111),
-                DeclinedDate = DateTime.UtcNow.AddDays(-222)
+                InvitationSentDate = time,
+                AssignedRole = ProjectRole.Admin
             };
+            var invitation2 = new ProjectInvitation
+            {
+                Id = 2,
+                ProjectId = projectId,
+                Project = project,
+                InvitedUserProfile = new UserProfile
+                {
+                    User = new IdentityUser { Id = "test02", Email = "test02@gmail" }
+                },
+                Status = InvitationStatus.Accepted,
+                InvitationSentDate = time.AddHours(1),
+                AssignedRole = ProjectRole.Viewer
+            };
+            var invitations = new List<ProjectInvitation> { invitation1, invitation2 };
+            var paginatedInvitations = new PaginatedList<ProjectInvitation>(invitations, invitations.Count, pageIndex, pageSize);
+            _invitationServiceMock.Setup(s => s.GetInvitationListAsync(projectId, pageIndex, pageSize))
+                .ReturnsAsync(paginatedInvitations);
 
+            // Act
+            var result = await _controller.ManageMembers(projectId);
 
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ManageMembersViewModel>(viewResult.Model);
 
-            var paginatedInvites = new PaginatedList<ProjectInvitation>(
-                new List<ProjectInvitation> { invite }, 1, 1, 10
-            );
-
-            _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-                .ReturnsAsync(user);
-
-            _projectMemberServiceMock.Setup(s => s.GetUserProjectRoleAsync(user.Id, projectId))
-                .ReturnsAsync(memberDto);
-
-            _projectServiceMock.Setup(s => s.GetProjectByIdAsync(projectId))
-                .ReturnsAsync(project);
-
-            _projectMemberServiceMock.Setup(s => s.GetProjectMembersAsync(projectId))
-                .ReturnsAsync(new List<ProjectMemberDto> { memberDto });
-
-            _invitationServiceMock.Setup(s => s.GetInvitationListAsync(projectId, 1, 10))
-                .ReturnsAsync(paginatedInvites);
-
-            var result = await _controller.ManageMembers(projectId) as ViewResult;
-
-            Assert.NotNull(result);
-            var model = Assert.IsType<ManageMembersViewModel>(result.Model);
             Assert.Equal(projectId, model.ProjectId);
-            Assert.Equal("Test Project", model.ProjectTitle);
-            Assert.Equal("No Description", model.ProjectDescription);
-            Assert.Single(model.ProjectMembers);
-            Assert.Single(model.ProjectInvitations.Items);
+            Assert.Equal(project.Title, model.ProjectTitle);
+            Assert.Equal(project.Description, model.ProjectDescription);
 
-            var member = model.ProjectMembers.FirstOrDefault();
-            Assert.NotNull(member);
-            Assert.Equal("Admin User", member.Name);
-            Assert.Equal("admin@example.com", member.Email);
-            Assert.Equal(ProjectRole.Admin, member.Role);
+            Assert.NotNull(model.ProjectMembers);
+            Assert.Collection(model.ProjectMembers,
+                m =>
+                {
+                    Assert.Equal(member1.Id, m.Id);
+                    Assert.Equal("John Doe", m.Name);
+                    Assert.Equal("john@example.com", m.Email);
+                    Assert.Equal(ProjectRole.Admin, m.Role);
+                },
+                m =>
+                {
+                    Assert.Equal(member2.Id, m.Id);
+                    Assert.Equal("Unknown", m.Name); // Name was null
+                    Assert.Equal("N/A", m.Email);    // Email was null
+                    Assert.Equal(ProjectRole.Admin, m.Role);
+                });
 
-            var invitation = model.ProjectInvitations.Items.FirstOrDefault();
-            Assert.NotNull(invitation);
-            Assert.Equal("test03@gmail.com", invitation.InvitedUserEmail);
-            Assert.Equal(ProjectRole.Contributor, invitation.AssignedRole);
-            Assert.Equal(InvitationStatus.Pending, invitation.Status);
 
+            var vmMember1 = model.ProjectMembers.FirstOrDefault(m => m.Id == member1.Id);
+            Assert.NotNull(vmMember1);
+            Assert.Equal(member1.Id, vmMember1!.Id);
+            Assert.Equal(member1.Name, vmMember1.Name);
+            Assert.Equal(member1.Email, vmMember1.Email);
+            Assert.Equal(member1.Role, vmMember1.Role);
 
-            Assert.Equal(string.Empty, model.InvitedUserEmail);
-            Assert.Equal(default, model.AssignedRole);
+            var vmMember2 = model.ProjectMembers.FirstOrDefault(m => m.Id == member2.Id);
+            Assert.NotNull(vmMember2);
+            Assert.Equal(member2.Id, vmMember2!.Id);
+            Assert.Equal("Unknown", vmMember2.Name);
+            Assert.Equal("N/A", vmMember2.Email);
+            Assert.Equal(member2.Role, vmMember2.Role);
+
+            Assert.NotNull(model.ProjectInvitations);
+            Assert.Collection(model.ProjectInvitations.Items,
+                i =>
+                {
+                    Assert.Equal(invitation1.Id, i.Id);
+                    Assert.Equal(projectId, i.ProjectId);
+                    Assert.Equal("test01@gmail", i.InvitedUserEmail);
+                    Assert.Equal(InvitationStatus.Pending, i.Status);
+                    Assert.Equal(time, i.InvitationSentDate);
+                    Assert.Equal(ProjectRole.Admin, i.AssignedRole);
+                },
+                i =>
+                {
+                    Assert.Equal(invitation2.Id, i.Id);
+                    Assert.Equal(projectId, i.ProjectId);
+                    Assert.Equal("test02@gmail", i.InvitedUserEmail);
+                    Assert.Equal(InvitationStatus.Accepted, i.Status);
+                    Assert.Equal(time.AddHours(1), i.InvitationSentDate);
+                    Assert.Equal(ProjectRole.Viewer, i.AssignedRole);
+                });
+            Assert.Equal(invitations.Count, model.ProjectInvitations.TotalCount);
+            Assert.Equal(pageIndex, model.ProjectInvitations.PageIndex);
+            Assert.Equal(pageSize, model.ProjectInvitations.PageSize);
+
+            var invite1 = model.ProjectInvitations.Items.FirstOrDefault(i => i.Id == invitation1.Id);
+            Assert.NotNull(invite1);
+            Assert.Equal(invitation1.Id, invite1!.Id);
+            Assert.Equal(invitation1.ProjectId, invite1.ProjectId);
+            Assert.Equal("test01@gmail", invite1.InvitedUserEmail);
+            Assert.Equal(invitation1.Status, invite1.Status);
+            Assert.Equal(invitation1.InvitationSentDate, invite1.InvitationSentDate);
+            Assert.Equal(invitation1.AssignedRole, invite1.AssignedRole);
+
+            var invite2 = model.ProjectInvitations.Items.FirstOrDefault(i => i.Id == invitation2.Id);
+            Assert.NotNull(invite2);
+            Assert.Equal(invitation2.Id, invite2!.Id);
+            Assert.Equal(invitation2.ProjectId, invite2.ProjectId);
+            Assert.Equal("test02@gmail", invite2.InvitedUserEmail);
+            Assert.Equal(invitation2.Status, invite2.Status);
+            Assert.Equal(invitation2.InvitationSentDate, invite2.InvitationSentDate);
+            Assert.Equal(invitation2.AssignedRole, invite2.AssignedRole);
         }
         [Fact]
         public async Task ManageMembers_ModelStateInvalid_ReturnsView()
@@ -1006,6 +1162,29 @@ namespace TaskForge.Tests.WebUI.Controllers
             var model = Assert.IsType<ManageMembersViewModel>(result?.Model);
             Assert.Empty(model.ProjectMembers);
             Assert.Empty(model.ProjectInvitations.Items);
+        }
+        [Theory]
+        [InlineData(null)]
+        [InlineData(ProjectRole.Contributor)]
+        [InlineData(ProjectRole.Viewer)]
+        public async Task ManageMembers_WhenUserNotAdminOrNotInProject_ReturnsForbid(ProjectRole? role)
+        {
+            int projectId = 1;
+            var user = new IdentityUser { Id = "user1" };
+
+            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+
+            ProjectMemberDto? member = role.HasValue
+                ? new ProjectMemberDto { Role = role.Value }
+                : null;
+
+            _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, projectId))
+                .ReturnsAsync(member);
+
+            var result = await _controller.ManageMembers(projectId);
+
+            Assert.IsType<ForbidResult>(result);
         }
 
 
