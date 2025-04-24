@@ -1,4 +1,5 @@
-﻿using TaskForge.Domain.Entities;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using TaskForge.Domain.Entities;
 using Xunit;
 
 namespace TaskForge.Tests.Domain.Entities
@@ -17,7 +18,10 @@ namespace TaskForge.Tests.Domain.Entities
             };
             var userProfile = new UserProfile
             {
-                Id = 20
+                Id = 20,
+                FullName = "Test User",
+                UserId = "test-user-id",
+                CreatedBy = "system"
             };
             var assignment = new TaskAssignment
             {
@@ -32,8 +36,8 @@ namespace TaskForge.Tests.Domain.Entities
             Assert.Equal(1, assignment.Id);
             Assert.NotNull(assignment.TaskItem);
             Assert.Equal(taskItem, assignment.TaskItem);
-            Assert.Equal(userProfile, assignment.UserProfile);
             Assert.Equal(10, assignment.TaskItemId);
+            Assert.Equal(userProfile, assignment.UserProfile);
             Assert.Equal(20, assignment.UserProfileId);
             Assert.Equal("test-user", assignment.CreatedBy);
         }

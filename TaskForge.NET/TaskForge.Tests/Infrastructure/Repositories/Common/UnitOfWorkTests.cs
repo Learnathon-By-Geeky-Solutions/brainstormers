@@ -1,27 +1,36 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Moq;
-using TaskForge.Application.Interfaces.Services;
 using TaskForge.Infrastructure.Data;
 using TaskForge.Infrastructure.Repositories.Common;
-using TaskForge.Tests.Helpers;
 using Xunit;
-
 namespace TaskForge.Tests.Infrastructure.Repositories.Common
 {
     public class UnitOfWorkTests
     {
-        private readonly TestApplicationDbContext _realContext;
-        private readonly UnitOfWork _unitOfWork;
-
         public UnitOfWorkTests()
         {
+
+        }
+
+        [Fact]
+        public async Task BeginTransactionAsync_ShouldBeginTransaction()
+        {
+            // Arrange
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .UseInMemoryDatabase("BeginTransactionTestDb")
+                .ConfigureWarnings(x => x.Ignore(InMemoryEventId.TransactionIgnoredWarning))
                 .Options;
 
-            _realContext = new TestApplicationDbContext(options);
+            await using var context = new ApplicationDbContext(options);
+            var unitOfWork = new UnitOfWork(context);
 
-            _unitOfWork = new UnitOfWork(_realContext);
+            // Act
+            var transaction = await unitOfWork.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+
+            // Assert
+            Assert.NotNull(transaction);
+            await transaction.DisposeAsync();
         }
 
         [Fact]

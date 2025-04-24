@@ -30,12 +30,12 @@ namespace TaskForge.Tests.Domain.Entities
 
             Assert.Equal(1, attachment.Id);
             Assert.NotNull(attachment.Task);
+            Assert.Equal(100, attachment.TaskId);
             Assert.Equal(task, attachment.Task);
             Assert.Equal("design.png", attachment.FileName);
             Assert.Equal("guid-file.png", attachment.StoredFileName);
             Assert.Equal("/files/guid-file.png", attachment.FilePath);
             Assert.Equal("image/png", attachment.ContentType);
-            Assert.Equal(100, attachment.TaskId);
             Assert.Equal("Mock file for testing", attachment.Description);
             Assert.Equal("dev", attachment.CreatedBy);
         }
