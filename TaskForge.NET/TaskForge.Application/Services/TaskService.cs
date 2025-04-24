@@ -168,22 +168,34 @@ namespace TaskForge.Application.Services
 
 		public async Task UpdateTaskAsync(TaskUpdateDto dto)
 		{
-			var task = await GetTaskWithRelations(dto.Id);
-			if (task == null) throw new KeyNotFoundException("Task not found.");
+			await using var transaction = await _unitOfWork.BeginTransactionAsync();
 
-			var newAttachmentsCount = dto.Attachments?.Count ?? 0;
-			if (task.Attachments.Count + newAttachmentsCount > MaxAttachments)
-				throw new InvalidOperationException($"You can only attach up to {MaxAttachments} files.");
+			try
+			{
+				var task = await GetTaskWithRelations(dto.Id);
+				if (task == null) throw new KeyNotFoundException("Task not found.");
 
+				var newAttachmentsCount = dto.Attachments?.Count ?? 0;
+				if (task.Attachments.Count + newAttachmentsCount > MaxAttachments)
+					throw new InvalidOperationException($"You can only attach up to {MaxAttachments} files.");
 
-			UpdateBasicFields(task, dto);
-			await UpdateAssignedUsersAsync(task, dto.AssignedUserIds);
-			UpdateDependencies(task, dto.DependsOnTaskIds);
-			await HandleAttachmentsAsync(task, dto.Attachments);
+				UpdateBasicFields(task, dto);
+				await UpdateAssignedUsersAsync(task, dto.AssignedUserIds);
+				UpdateDependencies(task, dto.DependsOnTaskIds);
+				await HandleAttachmentsAsync(task, dto.Attachments);
 
-			await _taskRepository.UpdateAsync(task);
-			await _unitOfWork.SaveChangesAsync();
+				await _taskRepository.UpdateAsync(task);
+				await _unitOfWork.SaveChangesAsync();
+
+				await transaction.CommitAsync();
+			}
+			catch
+			{
+				await transaction.RollbackAsync();
+				throw;
+			}
 		}
+
 
 		private async Task<TaskItem?> GetTaskWithRelations(int taskId)
 		{
