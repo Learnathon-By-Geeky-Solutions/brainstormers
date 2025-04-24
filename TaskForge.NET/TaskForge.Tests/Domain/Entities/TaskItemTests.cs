@@ -10,6 +10,7 @@ namespace TaskForge.Tests.Domain.Entities
         [Fact]
         public void TaskItem_Should_Set_And_Get_Properties()
         {
+            var startDate = new DateTime(2023, 10, 1, 0, 0, 0, DateTimeKind.Utc);
             var task = new TaskItem
             {
                 Id = 1,
@@ -18,7 +19,7 @@ namespace TaskForge.Tests.Domain.Entities
                 ProjectId = 101,
                 Status = TaskWorkflowStatus.ToDo,
                 Priority = TaskPriority.High,
-                StartDate = DateTime.UtcNow,
+                StartDate = startDate,
                 CreatedBy = "dev"
             };
 
@@ -35,9 +36,10 @@ namespace TaskForge.Tests.Domain.Entities
         [Fact]
         public void SetDueDate_Should_Set_DueDate_When_Valid()
         {
+            var startDate = new DateTime(2023, 10, 1, 0, 0, 0, DateTimeKind.Utc);
             var task = new TaskItem
             {
-                StartDate = DateTime.UtcNow
+                StartDate = startDate
             };
 
             var dueDate = task.StartDate.Value.AddDays(2);
@@ -49,14 +51,18 @@ namespace TaskForge.Tests.Domain.Entities
         [Fact]
         public void SetDueDate_Should_Throw_If_DueDate_Before_StartDate()
         {
+            var startDate = new DateTime(2023, 10, 1, 0, 0, 0, DateTimeKind.Utc);
             var task = new TaskItem
             {
-                StartDate = DateTime.UtcNow
+                StartDate = startDate
             };
 
             var earlierDate = task.StartDate.Value.AddDays(-1);
-
             Assert.Throws<ValidationException>(() => task.SetDueDate(earlierDate));
+            
+            earlierDate = task.StartDate.Value.AddDays(5);
+            task.SetDueDate(earlierDate);
+            Assert.Equal(earlierDate, task.DueDate);
         }
 
         [Fact]
@@ -73,7 +79,7 @@ namespace TaskForge.Tests.Domain.Entities
         [Fact]
         public void SetStatus_To_Done_Should_Not_Change_StartDate_If_Already_Set()
         {
-            var startDate = DateTime.UtcNow.AddDays(-2);
+            var startDate = new DateTime(2023, 10, 1, 0, 0, 0, DateTimeKind.Utc);
             var task = new TaskItem { StartDate = startDate };
 
             task.SetStatus(TaskWorkflowStatus.Done);
