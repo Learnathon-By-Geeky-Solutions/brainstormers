@@ -84,18 +84,30 @@ namespace TaskForge.Application.Services
 				return ServiceResult.FailureResult("An invitation has already been sent to this user.");
 			}
 
-			var invitation = new ProjectInvitation
+			await using var transaction = await _unitOfWork.BeginTransactionAsync();
+			try
 			{
-				ProjectId = projectId,
-				InvitedUserProfileId = userProfileId.Value,
-				Status = InvitationStatus.Pending,
-				AssignedRole = assignedRole,
-				InvitationSentDate = DateTime.UtcNow,
-			};
+				var invitation = new ProjectInvitation
+				{
+					ProjectId = projectId,
+					InvitedUserProfileId = userProfileId.Value,
+					Status = InvitationStatus.Pending,
+					AssignedRole = assignedRole,
+					InvitationSentDate = DateTime.UtcNow,
+				};
 
-			await _projectInvitationRepo.AddAsync(invitation);
-			await _unitOfWork.SaveChangesAsync();
-			return ServiceResult.SuccessResult("Invitation sent successfully.");
+				await _projectInvitationRepo.AddAsync(invitation);
+				await _unitOfWork.SaveChangesAsync();
+				await transaction.CommitAsync();
+
+				return ServiceResult.SuccessResult("Invitation sent successfully.");
+			}
+			catch (Exception e)
+			{
+				await transaction.RollbackAsync();
+				// optionally log exception
+				return ServiceResult.FailureResult("Failed to send invitation.");
+			}
 		}
 
 		public async Task UpdateInvitationStatusAsync(int id, InvitationStatus status)
@@ -106,31 +118,42 @@ namespace TaskForge.Application.Services
 				return;
 			}
 
-			invitation.Status = status;
-
-			if (status == InvitationStatus.Accepted)
+			await using var transaction = await _unitOfWork.BeginTransactionAsync();
+			try
 			{
-				invitation.AcceptedDate = DateTime.UtcNow;
-				invitation.DeclinedDate = null;
+				invitation.Status = status;
 
-				var projectMember = new ProjectMember
+				if (status == InvitationStatus.Accepted)
 				{
-					ProjectId = invitation.ProjectId,
-					UserProfileId = invitation.InvitedUserProfileId,
-					Role = invitation.AssignedRole,
-				};
+					invitation.AcceptedDate = DateTime.UtcNow;
+					invitation.DeclinedDate = null;
 
-				await _projectMemberRepo.AddAsync(projectMember);
+					var projectMember = new ProjectMember
+					{
+						ProjectId = invitation.ProjectId,
+						UserProfileId = invitation.InvitedUserProfileId,
+						Role = invitation.AssignedRole,
+					};
+
+					await _projectMemberRepo.AddAsync(projectMember);
+				}
+				else if (status == InvitationStatus.Declined)
+				{
+					invitation.DeclinedDate = DateTime.UtcNow;
+					invitation.AcceptedDate = null;
+				}
+
+				await _projectInvitationRepo.UpdateAsync(invitation);
+				await _unitOfWork.SaveChangesAsync();
+				await transaction.CommitAsync();
 			}
-			else if (status == InvitationStatus.Declined)
+			catch (Exception)
 			{
-				invitation.DeclinedDate = DateTime.UtcNow;
-				invitation.AcceptedDate = null;
+				await transaction.RollbackAsync();
+				throw;
 			}
-
-			await _projectInvitationRepo.UpdateAsync(invitation);
-			await _unitOfWork.SaveChangesAsync();
 		}
+
 
 		public async Task<PaginatedList<ProjectInvitation>> GetInvitationsForUserAsync(int? userProfileId, int pageIndex, int pageSize)
 		{
