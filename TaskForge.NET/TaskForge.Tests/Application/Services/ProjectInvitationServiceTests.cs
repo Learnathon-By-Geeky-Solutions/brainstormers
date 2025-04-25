@@ -22,8 +22,9 @@ namespace TaskForge.Tests.Application.Services
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
         private readonly ProjectInvitationService _projectInvitationService;
+        private readonly Mock<IDbContextTransaction> _transactionMock;
 
-        public ProjectInvitationServiceTests()
+		public ProjectInvitationServiceTests()
         {
             _projectInvitationRepositoryMock = new Mock<IProjectInvitationRepository>();
             _projectMemberRepositoryMock = new Mock<IProjectMemberRepository>();
@@ -39,7 +40,8 @@ namespace TaskForge.Tests.Application.Services
                 _unitOfWorkMock.Object,
                 _userManagerMock.Object
             );
-        }
+            _transactionMock = new Mock<IDbContextTransaction>();
+		}
 
         private static Mock<UserManager<IdentityUser>> CreateMockUserManager()
         {
@@ -498,9 +500,8 @@ namespace TaskForge.Tests.Application.Services
 		        .ReturnsAsync(1);
 
 	        // Mock transaction
-	        var mockTransaction = new Mock<IDbContextTransaction>();
 	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-		        .ReturnsAsync(mockTransaction.Object);
+		        .ReturnsAsync(_transactionMock.Object);
 
 	        // Act
 	        var result = await _projectInvitationService.AddAsync(projectId, email, ProjectRole.Contributor);
@@ -508,7 +509,7 @@ namespace TaskForge.Tests.Application.Services
 	        // Assert
 	        Assert.True(result.Success);
 	        Assert.Equal("Invitation sent successfully.", result.Message);
-	        mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+	        _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
 		[Fact]
@@ -562,12 +563,11 @@ namespace TaskForge.Tests.Application.Services
 			_unitOfWorkMock.Setup(x => x.SaveChangesAsync())
 				.ThrowsAsync(new Exception("Simulated DB failure"));
 
-			var mockTransaction = new Mock<IDbContextTransaction>();
-			mockTransaction.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-			mockTransaction.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
+			_transactionMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+			_transactionMock.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
 
 			_unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-				.ReturnsAsync(mockTransaction.Object);
+				.ReturnsAsync(_transactionMock.Object);
 
 			// Act
 			var result = await _projectInvitationService.AddAsync(projectId, email, ProjectRole.Contributor);
@@ -575,7 +575,7 @@ namespace TaskForge.Tests.Application.Services
 			// Assert
 			Assert.False(result.Success);
 			Assert.Equal("Failed to send invitation.", result.Message);
-			mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+			_transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
 		}
 
 		[Fact]
@@ -611,18 +611,17 @@ namespace TaskForge.Tests.Application.Services
 			_unitOfWorkMock.Setup(x => x.SaveChangesAsync())
 				.ReturnsAsync(1);
 
-			var mockTransaction = new Mock<IDbContextTransaction>();
-			mockTransaction.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-			mockTransaction.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
+			_transactionMock.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+			_transactionMock.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
 
 			_unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-				.ReturnsAsync(mockTransaction.Object);
+				.ReturnsAsync(_transactionMock.Object);
 
 			// Act
 			await _projectInvitationService.AddAsync(projectId, email, ProjectRole.Contributor);
 
 			// Assert
-			mockTransaction.Verify(t => t.DisposeAsync(), Times.Once);
+			_transactionMock.Verify(t => t.DisposeAsync(), Times.Once);
 		}
 
 
@@ -659,9 +658,8 @@ namespace TaskForge.Tests.Application.Services
 				Status = InvitationStatus.Pending
 			};
 
-			var mockTransaction = new Mock<IDbContextTransaction>();
 			_unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-				.ReturnsAsync(mockTransaction.Object);
+				.ReturnsAsync(_transactionMock.Object);
 
 			_projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
 				.ReturnsAsync(invitation);
@@ -690,7 +688,7 @@ namespace TaskForge.Tests.Application.Services
 
 			_projectInvitationRepositoryMock.Verify(u => u.UpdateAsync(invitation), Times.Once);
 			_unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
-			mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+			_transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
 		}
 
 		[Fact]
@@ -708,9 +706,8 @@ namespace TaskForge.Tests.Application.Services
 		        AcceptedDate = DateTime.UtcNow
 	        };
 
-	        var mockTransaction = new Mock<IDbContextTransaction>();
 	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-		        .ReturnsAsync(mockTransaction.Object);
+		        .ReturnsAsync(_transactionMock.Object);
 
 	        _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
 		        .ReturnsAsync(invitation);
@@ -732,7 +729,7 @@ namespace TaskForge.Tests.Application.Services
 	        _projectMemberRepositoryMock.Verify(u => u.AddAsync(It.IsAny<ProjectMember>()), Times.Never);
 	        _projectInvitationRepositoryMock.Verify(u => u.UpdateAsync(invitation), Times.Once);
 	        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
-	        mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+	        _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
 		[Fact]
@@ -750,9 +747,8 @@ namespace TaskForge.Tests.Application.Services
 		        ProjectId = 456
 	        };
 
-	        var mockTransaction = new Mock<IDbContextTransaction>();
 	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-		        .ReturnsAsync(mockTransaction.Object);
+		        .ReturnsAsync(_transactionMock.Object);
 
 	        _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
 		        .ReturnsAsync(invitation);
@@ -771,8 +767,8 @@ namespace TaskForge.Tests.Application.Services
 		        _projectInvitationService.UpdateInvitationStatusAsync(invitationId, status));
 
 	        Assert.Equal("Database save failed", ex.Message);
-	        mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-	        mockTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+	        _transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+	        _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -797,21 +793,20 @@ namespace TaskForge.Tests.Application.Services
 	        _unitOfWorkMock.Setup(r => r.SaveChangesAsync())
 		        .ThrowsAsync(new Exception("Simulated failure"));
 
-	        var mockTransaction = new Mock<IDbContextTransaction>();
-	        mockTransaction.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>()))
+	        _transactionMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>()))
 		        .Returns(Task.CompletedTask);
-	        mockTransaction.Setup(t => t.DisposeAsync())
+	        _transactionMock.Setup(t => t.DisposeAsync())
 		        .Returns(ValueTask.CompletedTask);
 
 	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-		        .ReturnsAsync(mockTransaction.Object);
+		        .ReturnsAsync(_transactionMock.Object);
 
 	        // Act & Assert
 	        await Assert.ThrowsAsync<Exception>(() =>
 		        _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Accepted));
 
-	        mockTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
-	        mockTransaction.Verify(t => t.DisposeAsync(), Times.Once);
+	        _transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+	        _transactionMock.Verify(t => t.DisposeAsync(), Times.Once);
         }
 
         [Fact]
@@ -837,20 +832,19 @@ namespace TaskForge.Tests.Application.Services
 	        _unitOfWorkMock.Setup(r => r.SaveChangesAsync())
 		        .ReturnsAsync(1);
 
-	        var mockTransaction = new Mock<IDbContextTransaction>();
-	        mockTransaction.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>()))
+	        _transactionMock.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>()))
 		        .Returns(Task.CompletedTask);
-	        mockTransaction.Setup(t => t.DisposeAsync())
+	        _transactionMock.Setup(t => t.DisposeAsync())
 		        .Returns(ValueTask.CompletedTask);
 
 	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-		        .ReturnsAsync(mockTransaction.Object);
+		        .ReturnsAsync(_transactionMock.Object);
 
 	        // Act
 	        await _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Accepted);
 
 	        // Assert
-	        mockTransaction.Verify(t => t.DisposeAsync(), Times.Once);
+	        _transactionMock.Verify(t => t.DisposeAsync(), Times.Once);
         }
 
 
