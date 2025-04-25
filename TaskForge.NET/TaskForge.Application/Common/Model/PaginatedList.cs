@@ -13,6 +13,9 @@ public class PaginatedList<T>
 
 	public PaginatedList(IEnumerable<T> items, int totalCount, int pageIndex, int pageSize)
 	{
+		if (pageSize <= 0)
+			throw new ArgumentException("Page size must be greater than zero.", nameof(pageSize));
+
 		Items = items.ToList();
 		TotalCount = totalCount;
 		PageIndex = pageIndex;
