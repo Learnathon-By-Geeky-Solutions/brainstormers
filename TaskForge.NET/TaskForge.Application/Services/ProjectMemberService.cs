@@ -18,6 +18,7 @@ namespace TaskForge.Application.Services
 			_unitOfWork = unitOfWork;
 		}
 
+
 		public async Task<ProjectMember?> GetByIdAsync(int memberId)
 		{
 			return await _projectMemberRepository.GetByIdAsync(memberId);
@@ -66,12 +67,6 @@ namespace TaskForge.Application.Services
 			}).ToList();
 		}
 
-		public async Task RemoveAsync(int memberId)
-		{
-			await _projectMemberRepository.DeleteByIdAsync(memberId);
-			await _unitOfWork.SaveChangesAsync();
-		}
-
 		public async Task<int> GetUserProjectCountAsync(int? userProfileId)
 		{
 			var projectMembers = await _projectMemberRepository.FindByExpressionAsync(
@@ -80,5 +75,13 @@ namespace TaskForge.Application.Services
 
 			return projectMembers.Select(pm => pm.ProjectId).Distinct().Count();
 		}
+
+
+		public async Task RemoveAsync(int memberId)
+		{
+			await _projectMemberRepository.DeleteByIdAsync(memberId);
+			await _unitOfWork.SaveChangesAsync();
+		}
+
 	}
 }

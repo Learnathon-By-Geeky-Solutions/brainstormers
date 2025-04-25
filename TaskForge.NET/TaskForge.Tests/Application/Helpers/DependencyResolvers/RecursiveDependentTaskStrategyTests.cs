@@ -19,6 +19,7 @@ namespace TaskForge.Tests.Application.Helpers.DependencyResolvers
             _strategy = new RecursiveDependentTaskStrategy(_mockRepository.Object);
         }
 
+
         [Fact]
         public async Task InitializeAsync_ShouldBuildAdjacencyList()
         {
@@ -69,6 +70,7 @@ namespace TaskForge.Tests.Application.Helpers.DependencyResolvers
             Assert.Equal(3, result.Count); 
         }
 
+
         [Fact]
         public async Task GetDependentTaskIdsAsync_ShouldReturnEmptyList_IfNoDependencies()
         {
@@ -88,7 +90,6 @@ namespace TaskForge.Tests.Application.Helpers.DependencyResolvers
             Assert.NotNull(result);
             Assert.Empty(result);
         }
-
         [Fact]
         public async Task GetDependentTaskIdsAsync_ShouldNotRevisitNodes()
         {

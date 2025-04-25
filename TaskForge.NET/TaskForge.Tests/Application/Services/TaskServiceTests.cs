@@ -1,4 +1,6 @@
-﻿using Moq;
+﻿using System.Data;
+using Microsoft.EntityFrameworkCore.Storage;
+using Moq;
 using System.Linq.Expressions;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Helpers.DependencyResolvers;
@@ -25,6 +27,8 @@ namespace TaskForge.Tests.Application.Services
 		private readonly Mock<ITaskAssignmentRepository> _taskAssignmentRepositoryMock;
 		private readonly Mock<ITaskAttachmentRepository> _taskAttachmentRepositoryMock;
 		private readonly Mock<ILogger<TaskService>> _loggerMock;
+		private readonly Mock<IDbContextTransaction> _transactionMock;
+
 
 		private readonly TaskService _taskService;
 
@@ -40,7 +44,6 @@ namespace TaskForge.Tests.Application.Services
 			_taskAssignmentRepositoryMock = new Mock<ITaskAssignmentRepository>();
 			_taskAttachmentRepositoryMock = new Mock<ITaskAttachmentRepository>();
 			_loggerMock = new Mock<ILogger<TaskService>>();
-
 			_taskService = new TaskService(
 				_unitOfWorkMock.Object,
 				_fileServiceMock.Object,
@@ -53,6 +56,7 @@ namespace TaskForge.Tests.Application.Services
 				_taskAttachmentRepositoryMock.Object,
 				_loggerMock.Object
 			);
+			_transactionMock = new Mock<IDbContextTransaction>();
 		}
 
 		[Fact]
@@ -77,7 +81,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.NotNull(result);
             Assert.Single(result);
         }
-
 
 
 
@@ -149,7 +152,6 @@ namespace TaskForge.Tests.Application.Services
             // Assert
             Assert.Null(result);
         }
-
 
 
 
@@ -234,7 +236,6 @@ namespace TaskForge.Tests.Application.Services
 
 
 
-
         [Fact]
         public async Task CreateTaskAsync_ThrowsIfAttachmentsExceedLimit()
         {
@@ -253,80 +254,87 @@ namespace TaskForge.Tests.Application.Services
 
 
 
-        [Fact]
-        public async Task UpdateTaskAsync_SuccessfullyUpdatesTask()
-        {
-            // Arrange
-            var taskId = 1;
-            var userId = 1;
-            var fileMock = new Mock<IFormFile>();
-            fileMock.Setup(f => f.FileName).Returns("testfile.png");
-            fileMock.Setup(f => f.Length).Returns(1024);
-            var attachments = new List<IFormFile> { fileMock.Object };
-            var dto = new TaskUpdateDto
-            {
-                Id = taskId,
-                Title = "Updated Task",
-                Description = "Updated Task Description",
-                Status = (int)TaskWorkflowStatus.InProgress,
-                Priority = (int)TaskPriority.High,
-                StartDate = DateTime.UtcNow,
-                DueDate = DateTime.UtcNow.AddDays(5),
-                AssignedUserIds = new List<int> { userId },
-                Attachments = attachments,
-                DependsOnTaskIds = new List<int> { 2, 3 },
-                DependentTaskIds = new List<int> { 4, 5 }
-            };
+		[Fact]
+		public async Task UpdateTaskAsync_SuccessfullyUpdatesTask()
+		{
+			// Arrange
+			var taskId = 1;
+			var userId = 1;
+			var fileMock = new Mock<IFormFile>();
+			fileMock.Setup(f => f.FileName).Returns("testfile.png");
+			fileMock.Setup(f => f.Length).Returns(1024);
+			var attachments = new List<IFormFile> { fileMock.Object };
+			var dto = new TaskUpdateDto
+			{
+				Id = taskId,
+				Title = "Updated Task",
+				Description = "Updated Task Description",
+				Status = (int)TaskWorkflowStatus.InProgress,
+				Priority = (int)TaskPriority.High,
+				StartDate = DateTime.UtcNow,
+				DueDate = DateTime.UtcNow.AddDays(5),
+				AssignedUserIds = new List<int> { userId },
+				Attachments = attachments,
+				DependsOnTaskIds = new List<int> { 2, 3 },
+				DependentTaskIds = new List<int> { 4, 5 }
+			};
 
-            var existingTask = new TaskItem
-            {
-                Id = taskId,
-                IsDeleted = false,
-                Title = "Old Task",
-                Status = TaskWorkflowStatus.ToDo,
-                Priority = TaskPriority.Medium,
-                Attachments = new List<TaskAttachment>()
-            };
+			var existingTask = new TaskItem
+			{
+				Id = taskId,
+				IsDeleted = false,
+				Title = "Old Task",
+				Status = TaskWorkflowStatus.ToDo,
+				Priority = TaskPriority.Medium,
+				Attachments = new List<TaskAttachment>()
+			};
 
-            // Corrected the mock setup to use Expression<Func<TaskItem, bool>> instead of Func<TaskItem, bool>
-            _taskRepositoryMock.Setup(r => r.FindByExpressionAsync(
-                It.IsAny<Expression<Func<TaskItem, bool>>>(),
-                It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(),
-                It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
-                null, null
-            )).ReturnsAsync(new List<TaskItem> { existingTask });
+			_taskRepositoryMock.Setup(r => r.FindByExpressionAsync(
+				It.IsAny<Expression<Func<TaskItem, bool>>>(),
+				It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(),
+				It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
+				null, null)).ReturnsAsync(new List<TaskItem> { existingTask });
 
-            var user = new UserProfile
-            {
-                Id = userId,
-                FullName = "Test User"
-            };
+			var user = new UserProfile { Id = userId, FullName = "Test User" };
+			_userProfileRepositoryMock.Setup(r => r.FindByExpressionAsync(
+				It.IsAny<Expression<Func<UserProfile, bool>>>(), null, null, null, null))
+				.ReturnsAsync(new List<UserProfile> { user });
 
-            _userProfileRepositoryMock.Setup(r => r.FindByExpressionAsync(It.IsAny<Expression<Func<UserProfile, bool>>>(), null, null, null, null))
-                .ReturnsAsync(new List<UserProfile> { user });
-
-            // Act
-            await _taskService.UpdateTaskAsync(dto);
-
-            // Assert
-            _taskRepositoryMock.Verify(r => r.UpdateAsync(It.Is<TaskItem>(t => t.Id == taskId && t.Title == dto.Title)), Times.Once);
-        }
+			// Transaction setup
+			_transactionMock.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+			_transactionMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+			_transactionMock.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
+			_unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
+				.ReturnsAsync(_transactionMock.Object);
 
 
-        [Fact]
+			// Act
+			await _taskService.UpdateTaskAsync(dto);
+
+			// Assert
+			_taskRepositoryMock.Verify(r => r.UpdateAsync(It.Is<TaskItem>(t => t.Id == taskId && t.Title == dto.Title)), Times.Once);
+			_transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+		}
+		[Fact]
         public async Task UpdateTaskAsync_TaskNotFound_ThrowsKeyNotFoundException()
         {
             // Arrange
             var dto = new TaskUpdateDto { Id = 999, Title = "Title1" }; // Non-existing task ID
+            _transactionMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            _transactionMock.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
 
-            _taskRepositoryMock.Setup(r => r.FindByExpressionAsync(It.IsAny<Expression<Func<TaskItem, bool>>>(), null, It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(), 0, 0))
+            _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
+	            .ReturnsAsync(_transactionMock.Object);
+
+			_taskRepositoryMock.Setup(r => r.FindByExpressionAsync(It.IsAny<Expression<Func<TaskItem, bool>>>(), null, It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(), 0, 0))
                               .ReturnsAsync(new List<TaskItem>());
 
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() => _taskService.UpdateTaskAsync(dto));
-        }
+            _transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
 
-        [Fact]
+		}
+		[Fact]
         public async Task UpdateTaskAsync_TooManyAttachments_ThrowsInvalidOperationException()
         {
             // Arrange
@@ -358,11 +366,18 @@ namespace TaskForge.Tests.Application.Services
                 null, null
             )).ReturnsAsync(new List<TaskItem> { existingTask });
 
-            // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _taskService.UpdateTaskAsync(dto));
-        }
+            _transactionMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            _transactionMock.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
 
-        [Fact]
+            _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
+	            .ReturnsAsync(_transactionMock.Object);
+
+			// Act & Assert
+			await Assert.ThrowsAsync<InvalidOperationException>(() => _taskService.UpdateTaskAsync(dto));
+            _transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+
+		}
+		[Fact]
         public async Task UpdateTaskAsync_UpdatesAssignedUsersCorrectly()
         {
             // Arrange
@@ -418,16 +433,23 @@ namespace TaskForge.Tests.Application.Services
             _unitOfWorkMock.Setup(r => r.SaveChangesAsync())
                            .ReturnsAsync(1);
 
-            // Act
-            await _taskService.UpdateTaskAsync(dto);
+            _transactionMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            _transactionMock.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
+
+            _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
+	            .ReturnsAsync(_transactionMock.Object);
+
+			// Act
+			await _taskService.UpdateTaskAsync(dto);
 
             // Assert
             _taskRepositoryMock.Verify(r => r.UpdateAsync(It.Is<TaskItem>(
                 t => t.AssignedUsers.Count == 1 &&
                      t.AssignedUsers[0].UserProfile.Id == userId
             )), Times.Once);
-        }
 
+            _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+		}
 
 
 
@@ -467,8 +489,11 @@ namespace TaskForge.Tests.Application.Services
             _taskRepositoryMock.Setup(u => u.DeleteByIdAsync(taskId)).Returns(Task.CompletedTask);
             _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
-            // Act
-            await _taskService.RemoveTaskAsync(taskId);
+            _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(IsolationLevel.ReadCommitted))
+	            .ReturnsAsync(_transactionMock.Object);
+
+			// Act
+			await _taskService.RemoveTaskAsync(taskId);
 
             // Assert
             _fileServiceMock.Verify(f => f.DeleteFileAsync("file1.txt"), Times.Once);
@@ -477,7 +502,9 @@ namespace TaskForge.Tests.Application.Services
             _taskAssignmentRepositoryMock.Verify(x => x.DeleteByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.Contains(201) && ids.Contains(202))), Times.Once);
             _taskRepositoryMock.Verify(x => x.DeleteByIdAsync(taskId), Times.Once);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
-        }
+            _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+			_transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
+		}
         [Fact]
         public async Task RemoveTaskAsync_ThrowsKeyNotFoundException_WhenTaskNotFound()
         {
@@ -489,10 +516,15 @@ namespace TaskForge.Tests.Application.Services
                     null, null))
                 .ReturnsAsync(new List<TaskItem>()); // No task found
 
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<KeyNotFoundException>(() => _taskService.RemoveTaskAsync(999));
+            _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(IsolationLevel.ReadCommitted))
+	            .ReturnsAsync(_transactionMock.Object);
+
+			// Act & Assert
+			var ex = await Assert.ThrowsAsync<KeyNotFoundException>(() => _taskService.RemoveTaskAsync(999));
             Assert.Equal("Task not found", ex.Message);
-        }
+            _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+            _transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+		}
 
 
 

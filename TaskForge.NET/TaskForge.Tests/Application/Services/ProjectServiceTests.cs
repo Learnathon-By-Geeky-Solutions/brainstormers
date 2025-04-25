@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Storage;
 using Moq;
 using System.Data;
@@ -43,136 +44,7 @@ namespace TaskForge.Tests.Application.Services
 			);
 		}
 
-        [Fact]
-        public async Task CreateProjectAsync_CreatesProjectAndAddsCreatorAsAdmin()
-        {
-            // Arrange
-            var createProjectDto = new CreateProjectDto
-            {
-                Title = "New Project",
-                Description = "Test Description",
-                Status = ProjectStatus.NotStarted,
-                StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddDays(10),
-                CreatedBy = "user-123"
-            };
 
-            var projectId = 1;
-            var userProfileId = 2;
-
-            var userProfiles = new List<UserProfile>
-            {
-                new UserProfile { Id = userProfileId, UserId = createProjectDto.CreatedBy }
-            };
-
-            _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-                .ReturnsAsync(_transactionMock.Object);
-
-            _projectRepositoryMock.Setup(u => u.AddAsync(It.IsAny<Project>()))
-                .Callback<Project>(p => p.Id = projectId)
-                .Returns(Task.CompletedTask);
-
-            _unitOfWorkMock.Setup(u => u.SaveChangesAsync())
-                .ReturnsAsync(1);
-
-            _userProfileRepositoryMock.Setup(u => u.FindByExpressionAsync(
-                    It.IsAny<Expression<Func<UserProfile, bool>>>(),
-                    null,
-                    null,
-                    null,
-                    null))
-                .ReturnsAsync(userProfiles);
-
-            _projectMemberRepositoryMock.Setup(u => u.AddAsync(It.IsAny<ProjectMember>()))
-                .Returns(Task.CompletedTask);
-
-            // Act
-            await _projectService.CreateProjectAsync(createProjectDto);
-
-            // Assert
-            _projectRepositoryMock.Verify(u => u.AddAsync(It.Is<Project>(p => p.Title == createProjectDto.Title)), Times.Once);
-
-            _userProfileRepositoryMock.Verify(u => u.FindByExpressionAsync(
-                It.IsAny<Expression<Func<UserProfile, bool>>>(),
-                null, null, null, null), Times.Once);
-
-            _projectMemberRepositoryMock.Verify(u => u.AddAsync(It.Is<ProjectMember>(pm =>
-                pm.ProjectId == projectId &&
-                pm.UserProfileId == userProfileId &&
-                pm.Role == ProjectRole.Admin)), Times.Once);
-
-            _transactionMock.Verify(t => t.CommitAsync(default), Times.Once);
-        }
-
-        [Fact]
-        public async Task UpdateProjectAsync_UpdatesProjectSuccessfully()
-        {
-            // Arrange
-            var projectDto = new Project
-            {
-                Id = 1,
-                Title = "Updated Project",
-                Description = "Updated Description",
-                StartDate = DateTime.UtcNow,
-                Status = ProjectStatus.InProgress
-            };
-
-            projectDto.SetEndDate(DateTime.UtcNow.AddDays(5));
-            _projectRepositoryMock.Setup(u => u.UpdateAsync(It.IsAny<Project>()))
-                .Returns(Task.CompletedTask);
-
-            _unitOfWorkMock.Setup(u => u.SaveChangesAsync())
-                .ReturnsAsync(1);
-
-            // Act
-            await _projectService.UpdateProjectAsync(projectDto);
-
-            // Assert
-            _projectRepositoryMock.Verify(u => u.UpdateAsync(It.Is<Project>(p =>
-                p.Title == projectDto.Title &&
-                p.Description == projectDto.Description &&
-                p.Status == projectDto.Status &&
-                p.StartDate == projectDto.StartDate &&
-                p.EndDate == projectDto.EndDate &&
-                p.UpdatedBy == projectDto.UpdatedBy &&
-                p.UpdatedDate == projectDto.UpdatedDate)), Times.Once);
-
-            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
-        }
-
-        [Fact]
-        public async Task UpdateProjectAsync_ThrowsArgumentNullException_WhenProjectIsNull()
-        {
-#pragma warning disable CS8625
-            await Assert.ThrowsAsync<ArgumentNullException>(() => _projectService.UpdateProjectAsync(null));
-#pragma warning restore CS8625
-        }
-
-        [Fact]
-        public async Task CreateProjectAsync_ThrowsArgumentNullException_WhenDtoIsNull()
-        {
-            // Act & Assert
-#pragma warning disable CS8625
-            await Assert.ThrowsAsync<ArgumentNullException>(() => _projectService.CreateProjectAsync(null));
-#pragma warning restore CS8625
-        }
-
-        [Fact]
-        public async Task GetProjectStatusOptions_ReturnsAllEnumOptions()
-        {
-            var result = await _projectService.GetProjectStatusOptions();
-            var statusList = result.ToList();
-
-            var expectedStatuses = Enum.GetValues(typeof(ProjectStatus)).Cast<ProjectStatus>().ToList();
-            Assert.Equal(expectedStatuses.Count, statusList.Count);
-
-            foreach (var status in expectedStatuses)
-            {
-                var item = statusList.FirstOrDefault(i => i.Value == status.ToString());
-                Assert.NotNull(item);
-                Assert.Equal(status.GetDisplayName(), item.Text);
-            }
-        }
 
         [Fact]
         public async Task GetProjectByIdAsync_ReturnsProjectWithAllIncludes()
@@ -248,7 +120,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.Equal("Test User", result.Members.First().UserProfile.FullName);
             Assert.Equal("testuser", result.Members.First().UserProfile.User.UserName);
         }
-
         [Fact]
         public async Task GetProjectByIdAsync_ReturnsNull_WhenProjectDoesNotExist()
         {
@@ -264,7 +135,28 @@ namespace TaskForge.Tests.Application.Services
             Assert.Null(result);
         }
 
+
+
         [Fact]
+        public async Task GetProjectStatusOptions_ReturnsAllEnumOptions()
+        {
+	        var result = await _projectService.GetProjectStatusOptions();
+	        var statusList = result.ToList();
+
+	        var expectedStatuses = Enum.GetValues(typeof(ProjectStatus)).Cast<ProjectStatus>().ToList();
+	        Assert.Equal(expectedStatuses.Count, statusList.Count);
+
+	        foreach (var status in expectedStatuses)
+	        {
+		        var item = statusList.FirstOrDefault(i => i.Value == status.ToString());
+		        Assert.NotNull(item);
+		        Assert.Equal(status.GetDisplayName(), item.Text);
+	        }
+        }
+
+
+
+		[Fact]
         public async Task GetFilteredProjectsAsync_ReturnsPaginatedProjectList_WhenUserExists()
         {
             // Arrange
@@ -338,7 +230,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.Equal("Test Project 1", firstItem?.ProjectTitle);
             Assert.Equal(ProjectRole.Admin, firstItem?.UserRoleInThisProject);
         }
-
         [Fact]
         public async Task GetFilteredProjectsAsync_ReturnsEmptyList_WhenUserIdIsNull()
         {
@@ -355,7 +246,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.Empty(result.Items);
             Assert.Equal(0, result.TotalCount);
         }
-
         [Fact]
         public async Task GetFilteredProjectsAsync_ReturnsEmptyList_WhenUserProfileIdIsZero()
         {
@@ -376,7 +266,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.Empty(result.Items);
             Assert.Equal(0, result.TotalCount);
         }
-
         [Fact]
         public async Task GetFilteredProjectsAsync_UsesDefaultOrdering_WhenSortByInvalid()
         {
@@ -416,5 +305,147 @@ namespace TaskForge.Tests.Application.Services
             Assert.Single(result.Items);
         }
 
-    }
+
+
+		[Fact]
+		public async Task CreateProjectAsync_CreatesProjectAndAddsCreatorAsAdmin()
+		{
+			// Arrange
+			var createProjectDto = new CreateProjectDto
+			{
+				Title = "New Project",
+				Description = "Test Description",
+				Status = ProjectStatus.NotStarted,
+				StartDate = DateTime.UtcNow,
+				EndDate = DateTime.UtcNow.AddDays(10),
+				CreatedBy = "user-123"
+			};
+
+			var projectId = 1;
+			var userProfileId = 2;
+
+			var userProfiles = new List<UserProfile>
+			{
+				new UserProfile { Id = userProfileId, UserId = createProjectDto.CreatedBy }
+			};
+
+			_unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
+				.ReturnsAsync(_transactionMock.Object);
+
+			_projectRepositoryMock.Setup(u => u.AddAsync(It.IsAny<Project>()))
+				.Callback<Project>(p => p.Id = projectId)
+				.Returns(Task.CompletedTask);
+
+			_unitOfWorkMock.Setup(u => u.SaveChangesAsync())
+				.ReturnsAsync(1);
+
+			_userProfileRepositoryMock.Setup(u => u.FindByExpressionAsync(
+					It.IsAny<Expression<Func<UserProfile, bool>>>(),
+					null,
+					null,
+					null,
+					null))
+				.ReturnsAsync(userProfiles);
+
+			_projectMemberRepositoryMock.Setup(u => u.AddAsync(It.IsAny<ProjectMember>()))
+				.Returns(Task.CompletedTask);
+
+			// Act
+			await _projectService.CreateProjectAsync(createProjectDto);
+
+			// Assert
+			_projectRepositoryMock.Verify(u => u.AddAsync(It.Is<Project>(p => p.Title == createProjectDto.Title)), Times.Once);
+
+			_userProfileRepositoryMock.Verify(u => u.FindByExpressionAsync(
+				It.IsAny<Expression<Func<UserProfile, bool>>>(),
+				null, null, null, null), Times.Once);
+
+			_projectMemberRepositoryMock.Verify(u => u.AddAsync(It.Is<ProjectMember>(pm =>
+				pm.ProjectId == projectId &&
+				pm.UserProfileId == userProfileId &&
+				pm.Role == ProjectRole.Admin)), Times.Once);
+
+			_transactionMock.Verify(t => t.CommitAsync(default), Times.Once);
+		}
+		[Fact]
+		public async Task CreateProjectAsync_ThrowsArgumentNullException_WhenDtoIsNull()
+		{
+			// Act & Assert
+#pragma warning disable CS8625
+			await Assert.ThrowsAsync<ArgumentNullException>(() => _projectService.CreateProjectAsync(null));
+#pragma warning restore CS8625
+		}
+
+
+
+		[Fact]
+		public async Task UpdateProjectAsync_UpdatesProjectSuccessfully()
+		{
+			// Arrange
+			var projectDto = new Project
+			{
+				Id = 1,
+				Title = "Updated Project",
+				Description = "Updated Description",
+				StartDate = DateTime.UtcNow,
+				Status = ProjectStatus.InProgress,
+				UpdatedBy = "test_user",
+				UpdatedDate = DateTime.UtcNow
+			};
+			projectDto.SetEndDate(DateTime.UtcNow.AddDays(5));
+
+			var existingProject = new Project
+			{
+				Id = 1,
+				Title = "Old Project",
+				Description = "Old Description",
+				StartDate = DateTime.UtcNow.AddDays(-10),
+				Status = ProjectStatus.Completed,
+				UpdatedBy = "old_user",
+				UpdatedDate = DateTime.UtcNow.AddDays(-5)
+			};
+
+			_projectRepositoryMock.Setup(r => r.GetByIdAsync(projectDto.Id))
+				.ReturnsAsync(existingProject);
+
+			_projectRepositoryMock.Setup(r => r.UpdateAsync(It.IsAny<Project>()))
+				.Returns(Task.CompletedTask);
+
+			_unitOfWorkMock.Setup(u => u.SaveChangesAsync())
+				.ReturnsAsync(1);
+
+			// Act
+			await _projectService.UpdateProjectAsync(projectDto);
+
+			// Assert
+			_projectRepositoryMock.Verify(r => r.UpdateAsync(It.Is<Project>(p =>
+				p.Title == projectDto.Title &&
+				p.Description == projectDto.Description &&
+				p.Status == projectDto.Status &&
+				p.StartDate == projectDto.StartDate &&
+				p.EndDate == projectDto.EndDate &&
+				p.UpdatedBy == projectDto.UpdatedBy &&
+				p.UpdatedDate == projectDto.UpdatedDate)), Times.Once);
+
+			_unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+		}
+		[Fact]
+		public async Task UpdateProjectAsync_ThrowsInvalidOperationException_WhenProjectNotFound()
+		{
+			// Arrange
+			var projectDto = new Project { Id = 99 };
+
+			_projectRepositoryMock.Setup(r => r.GetByIdAsync(projectDto.Id))
+				.ReturnsAsync((Project)null);
+
+			// Act & Assert
+			await Assert.ThrowsAsync<InvalidOperationException>(() => _projectService.UpdateProjectAsync(projectDto));
+		}
+		[Fact]
+		public async Task UpdateProjectAsync_ThrowsArgumentNullException_WhenProjectIsNull()
+		{
+			await Assert.ThrowsAsync<ArgumentNullException>(() => _projectService.UpdateProjectAsync(null));
+		}
+
+	}
 }

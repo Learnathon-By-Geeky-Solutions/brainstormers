@@ -62,7 +62,6 @@ namespace TaskForge.Tests.Application.Services
 
             _roleManagerMock.Verify(r => r.CreateAsync(It.IsAny<IdentityRole>()), Times.Exactly(3));
         }
-
         [Fact]
         public async Task SeedRolesAndSuperUser_ShouldNotCreateRoleIfExists()
         {
@@ -72,7 +71,6 @@ namespace TaskForge.Tests.Application.Services
 
             _roleManagerMock.Verify(r => r.CreateAsync(It.IsAny<IdentityRole>()), Times.Never);
         }
-
         [Fact]
         public async Task SeedRolesAndSuperUser_ShouldLogWarning_WhenSuperAdminCredentialsMissing()
         {
@@ -91,7 +89,6 @@ namespace TaskForge.Tests.Application.Services
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
         }
-
         [Fact]
         public async Task SeedRolesAndSuperUser_ShouldCreateSuperAdmin_WhenUserNotExists()
         {
@@ -118,7 +115,6 @@ namespace TaskForge.Tests.Application.Services
             _userManagerMock.Verify(u => u.AddToRoleAsync(It.IsAny<IdentityUser>(), "Admin"), Times.Once);
             _userProfileServiceMock.Verify(u => u.CreateUserProfileAsync(It.IsAny<string>(), "Super Admin"), Times.Once);
         }
-
         [Fact]
         public async Task SeedRolesAndSuperUser_ShouldLog_WhenSuperAdminAlreadyExists()
         {
@@ -147,7 +143,6 @@ namespace TaskForge.Tests.Application.Services
 
             _userProfileServiceMock.Verify(u => u.CreateUserProfileAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
-
         [Fact]
         public async Task SeedRolesAndSuperUser_ShouldCreateUserProfile_WhenMissing()
         {

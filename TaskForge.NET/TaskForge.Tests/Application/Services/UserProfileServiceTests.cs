@@ -21,7 +21,48 @@ namespace TaskForge.Tests.Application.Services
             _service = new UserProfileService(_mockUnitOfWork.Object, _mockUserProfileRepo.Object);
         }
 
+
         [Fact]
+        public async Task GetByUserIdAsync_ReturnsId_WhenUserProfileExists()
+        {
+	        // Arrange
+	        var userId = "user-456";
+	        var expectedId = 99;
+
+	        var userProfiles = new List<UserProfile>
+	        {
+		        new UserProfile { Id = expectedId, UserId = userId, FullName = "Test User" }
+	        };
+
+	        _mockUserProfileRepo
+		        .Setup(r => r.FindByExpressionAsync(It.IsAny<Expression<Func<UserProfile, bool>>>(), null, null, null, null))
+		        .ReturnsAsync(userProfiles);
+
+	        // Act
+	        var result = await _service.GetByUserIdAsync(userId);
+
+	        // Assert
+	        Assert.Equal(expectedId, result);
+        }
+        [Fact]
+        public async Task GetByUserIdAsync_ReturnsNull_WhenNoUserProfileExists()
+        {
+	        // Arrange
+	        var userId = "nonexistent-user";
+
+	        _mockUserProfileRepo
+		        .Setup(r => r.FindByExpressionAsync(It.IsAny<Expression<Func<UserProfile, bool>>>(), null, null, null, null))
+		        .ReturnsAsync(new List<UserProfile>());
+
+	        // Act
+	        var result = await _service.GetByUserIdAsync(userId);
+
+	        // Assert
+	        Assert.Null(result);
+        }
+
+
+		[Fact]
         public async Task CreateUserProfileAsync_AddsAndSavesProfile()
         {
             // Arrange
@@ -40,44 +81,5 @@ namespace TaskForge.Tests.Application.Services
             _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
 
-        [Fact]
-        public async Task GetByUserIdAsync_ReturnsId_WhenUserProfileExists()
-        {
-            // Arrange
-            var userId = "user-456";
-            var expectedId = 99;
-
-            var userProfiles = new List<UserProfile>
-            {
-                new UserProfile { Id = expectedId, UserId = userId, FullName = "Test User" }
-            };
-
-            _mockUserProfileRepo
-                .Setup(r => r.FindByExpressionAsync(It.IsAny<Expression<Func<UserProfile, bool>>>(), null, null, null, null))
-                .ReturnsAsync(userProfiles);
-
-            // Act
-            var result = await _service.GetByUserIdAsync(userId);
-
-            // Assert
-            Assert.Equal(expectedId, result);
-        }
-
-        [Fact]
-        public async Task GetByUserIdAsync_ReturnsNull_WhenNoUserProfileExists()
-        {
-            // Arrange
-            var userId = "nonexistent-user";
-
-            _mockUserProfileRepo
-                .Setup(r => r.FindByExpressionAsync(It.IsAny<Expression<Func<UserProfile, bool>>>(), null, null, null, null))
-                .ReturnsAsync(new List<UserProfile>());
-
-            // Act
-            var result = await _service.GetByUserIdAsync(userId);
-
-            // Assert
-            Assert.Null(result);
-        }
     }
 }
