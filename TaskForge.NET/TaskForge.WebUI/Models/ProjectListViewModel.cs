@@ -1,4 +1,4 @@
-﻿using TaskForge.Application.Common.Model;
+using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
 
 namespace TaskForge.WebUI.Models;

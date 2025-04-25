@@ -1,9 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System.Data;
-using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Repositories.Common;
-using TaskForge.Application.Interfaces.Services;
 using TaskForge.Infrastructure.Data;
 
 namespace TaskForge.Infrastructure.Repositories.Common
@@ -11,27 +9,11 @@ namespace TaskForge.Infrastructure.Repositories.Common
     public class UnitOfWork : IUnitOfWork
     {
         private readonly ApplicationDbContext _context;
-        private bool _disposed = false;
+        private bool _disposed;
 
-        public IProjectRepository Projects { get; }
-        public ITaskRepository Tasks { get; }
-        public IProjectMemberRepository ProjectMembers { get; }
-        public IProjectInvitationRepository ProjectInvitations { get; }
-        public IUserProfileRepository UserProfiles { get; }
-        public ITaskAttachmentRepository TaskAttachments { get; }
-        public ITaskAssignmentRepository TaskAssignments { get; }
-
-        public UnitOfWork(ApplicationDbContext context, IUserContextService userContextService)
+        public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
-
-            Projects = new ProjectRepository(context, userContextService);
-            Tasks = new TaskRepository(context, userContextService);
-            ProjectMembers = new ProjectMemberRepository(context, userContextService);
-            ProjectInvitations = new ProjectInvitationRepository(context, userContextService);
-            UserProfiles = new UserProfileRepository(context, userContextService);
-            TaskAttachments = new TaskAttachmentRepository(context, userContextService);
-            TaskAssignments = new TaskAssignmentRepository(context, userContextService);
         }
 
         public async Task<int> SaveChangesAsync()
@@ -46,16 +28,14 @@ namespace TaskForge.Infrastructure.Repositories.Common
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    // Dispose managed resources
-                    _context.Dispose();
-                }
-                // Free unmanaged resources (if any)
-                _disposed = true;
-            }
+	        if (_disposed) return;
+	        if (disposing)
+	        {
+		        // Dispose managed resources
+		        _context.Dispose();
+	        }
+	        // Free unmanaged resources (if any)
+	        _disposed = true;
         }
 
         public void Dispose()
