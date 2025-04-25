@@ -7,6 +7,8 @@ namespace TaskForge.Application.Interfaces.Services;
 public interface IUserService
 {
     Task<PaginatedList<UserListItemDto>> GetFilteredUsersAsync(UserFilterDto filter, int pageIndex, int pageSize);
+    Task<UserListItemDto?> GetUserByIdAsync(string userId);
+    Task<IdentityResult> CreateUserAsync(UserCreateDto dto);
     Task<bool> DeleteUserAsync(string userId);
     Task<List<IdentityRole>> GetAllRolesAsync();
     Task<bool> AssignRoleAsync(string userId, string role);

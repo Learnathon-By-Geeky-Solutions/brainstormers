@@ -12,7 +12,7 @@ public class UserProfile : BaseEntity
     public string FullName { get; set; } = string.Empty;
 
     [MaxLength(500)]
-    public string? AvatarUrl { get; set; } // URL or file path to the user's avatar image
+    public string? AvatarUrl { get; set; }
 
     [MaxLength(20)]
     public string? PhoneNumber { get; set; }
@@ -28,16 +28,16 @@ public class UserProfile : BaseEntity
     public string? Company { get; set; }
 
     [MaxLength(2000)]
-    public string? ProfessionalSummary { get; set; } // A self-described text about skills & experience
+    public string? ProfessionalSummary { get; set; }
 
     [MaxLength(500)]
     public string? LinkedInProfile { get; set; }
 
     [MaxLength(500)]
-    public string? WebsiteUrl { get; set; } // Optional website or portfolio URL
+    public string? WebsiteUrl { get; set; }
 
     [Required]
-    public string UserId { get; set; } = string.Empty; // Foreign Key to IdentityUser
+    public string UserId { get; set; } = string.Empty;
 
     [ForeignKey(nameof(UserId))]
     public virtual IdentityUser User { get; set; } = null!;
