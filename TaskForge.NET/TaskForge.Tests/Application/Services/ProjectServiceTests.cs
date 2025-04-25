@@ -35,6 +35,15 @@ namespace TaskForge.Tests.Application.Services
             _userProfileRepositoryMock = new Mock<IUserProfileRepository>();
             _transactionMock = new Mock<IDbContextTransaction>();
 
+            // Common transaction behavior setup
+            _transactionMock.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            _transactionMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            _transactionMock.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
+
+            // Setup unit of work to return transaction
+            _unitOfWorkMock.Setup(u => u.BeginTransactionAsync())
+	            .ReturnsAsync(_transactionMock.Object);
+
 			_projectService = new ProjectService(
 				_unitOfWorkMock.Object,
 				_projectRepositoryMock.Object,
@@ -328,9 +337,6 @@ namespace TaskForge.Tests.Application.Services
 			{
 				new UserProfile { Id = userProfileId, UserId = createProjectDto.CreatedBy }
 			};
-
-			_unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-				.ReturnsAsync(_transactionMock.Object);
 
 			_projectRepositoryMock.Setup(u => u.AddAsync(It.IsAny<Project>()))
 				.Callback<Project>(p => p.Id = projectId)

@@ -22,7 +22,7 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
             var unitOfWork = new UnitOfWork(context);
 
             // Act
-            await using var transaction = await unitOfWork.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+            await using var transaction = await unitOfWork.BeginTransactionAsync();
 
             // Assert
             Assert.NotNull(transaction);

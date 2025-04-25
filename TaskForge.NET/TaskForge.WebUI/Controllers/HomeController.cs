@@ -37,8 +37,10 @@ namespace TaskForge.WebUI.Controllers
             if (!ModelState.IsValid) return RedirectToAction("Index");
 
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Account");
 
-            string userId = user.Id;
+
+			var userId = user.Id;
 
             var userProfileId = await _userProfileService.GetByUserIdAsync(userId);
             if (userProfileId == null) return NotFound();

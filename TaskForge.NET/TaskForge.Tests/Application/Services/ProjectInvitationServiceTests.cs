@@ -41,6 +41,15 @@ namespace TaskForge.Tests.Application.Services
                 _userManagerMock.Object
             );
             _transactionMock = new Mock<IDbContextTransaction>();
+
+            // Common transaction behavior setup
+            _transactionMock.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            _transactionMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            _transactionMock.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
+
+            // Setup unit of work to return transaction
+            _unitOfWorkMock.Setup(u => u.BeginTransactionAsync())
+	            .ReturnsAsync(_transactionMock.Object);
 		}
 
         private static Mock<UserManager<IdentityUser>> CreateMockUserManager()
@@ -223,26 +232,39 @@ namespace TaskForge.Tests.Application.Services
             // Simulate 2 items on page 2, total 5 ⇒ totalPages = 3
             var mockInvitations = new[]
             {
-                new ProjectInvitation { Id = 3, ProjectId = projectId },
+	            new ProjectInvitation { Id = 3, ProjectId = projectId },
                 new ProjectInvitation { Id = 4, ProjectId = projectId }
-            };
+			};
             var totalCount = 5;
 
             _projectInvitationRepositoryMock.Setup(u => u.GetPaginatedListAsync(
-                    It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
-                    null,
-                    It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
-                    pageSize,
-                    skip
-                ))
-                .ReturnsAsync((mockInvitations.AsEnumerable(), totalCount));
+		            It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
+		            It.IsAny<Func<IQueryable<ProjectInvitation>, IOrderedQueryable<ProjectInvitation>>?>(),
+		            It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>?>(),
+		            pageSize,
+		            skip
+	            ))
+	            .ReturnsAsync((mockInvitations.AsEnumerable(), totalCount));
 
-            // Act
-            var result = await _projectInvitationService.GetInvitationListAsync(projectId, pageIndex, pageSize);
 
-            // Assert
-            Assert.Equal(2, result.Items.Count);
-            Assert.Equal(5, result.TotalCount);
+
+
+			// Act
+			var result = await _projectInvitationService.GetInvitationListAsync(projectId, pageIndex, pageSize);
+
+			// Assert
+			_projectInvitationRepositoryMock.Verify(x => x.GetPaginatedListAsync(
+				It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
+				It.IsAny<Func<IQueryable<ProjectInvitation>, IOrderedQueryable<ProjectInvitation>>?>(),
+				It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>?>(),
+				pageSize,
+				skip
+				), Times.Once);
+
+
+
+			Assert.Equal(2, result.Items.Count);
+            Assert.Equal(totalCount, result.TotalCount);
             Assert.True(result.HasPreviousPage, "PageIndex 2 > 1 => HasPreviousPage should be true");
             Assert.True(result.HasNextPage, "PageIndex 2 < TotalPages (3) => HasNextPage should be true");
         }
@@ -604,10 +626,6 @@ namespace TaskForge.Tests.Application.Services
 	        _unitOfWorkMock.Setup(x => x.SaveChangesAsync())
 		        .ReturnsAsync(1);
 
-	        // Mock transaction
-	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-		        .ReturnsAsync(_transactionMock.Object);
-
 	        // Act
 	        var result = await _projectInvitationService.AddAsync(projectId, email, ProjectRole.Contributor);
 
@@ -666,12 +684,6 @@ namespace TaskForge.Tests.Application.Services
 			_unitOfWorkMock.Setup(x => x.SaveChangesAsync())
 				.ThrowsAsync(new Exception("Simulated DB failure"));
 
-			_transactionMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-			_transactionMock.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
-
-			_unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-				.ReturnsAsync(_transactionMock.Object);
-
 			// Act
 			var result = await _projectInvitationService.AddAsync(projectId, email, ProjectRole.Contributor);
 
@@ -713,12 +725,6 @@ namespace TaskForge.Tests.Application.Services
 			_unitOfWorkMock.Setup(x => x.SaveChangesAsync())
 				.ReturnsAsync(1);
 
-			_transactionMock.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-			_transactionMock.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
-
-			_unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-				.ReturnsAsync(_transactionMock.Object);
-
 			// Act
 			await _projectInvitationService.AddAsync(projectId, email, ProjectRole.Contributor);
 
@@ -756,9 +762,6 @@ namespace TaskForge.Tests.Application.Services
 				AssignedRole = ProjectRole.Contributor,
 				Status = InvitationStatus.Pending
 			};
-
-			_unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-				.ReturnsAsync(_transactionMock.Object);
 
 			_projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
 				.ReturnsAsync(invitation);
@@ -804,9 +807,6 @@ namespace TaskForge.Tests.Application.Services
 		        AcceptedDate = DateTime.UtcNow
 	        };
 
-	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-		        .ReturnsAsync(_transactionMock.Object);
-
 	        _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
 		        .ReturnsAsync(invitation);
 
@@ -843,9 +843,6 @@ namespace TaskForge.Tests.Application.Services
 		        InvitedUserProfileId = 123,
 		        ProjectId = 456
 	        };
-
-	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-		        .ReturnsAsync(_transactionMock.Object);
 
 	        _projectInvitationRepositoryMock.Setup(u => u.GetByIdAsync(invitationId))
 		        .ReturnsAsync(invitation);
@@ -889,14 +886,6 @@ namespace TaskForge.Tests.Application.Services
 	        _unitOfWorkMock.Setup(r => r.SaveChangesAsync())
 		        .ThrowsAsync(new Exception("Simulated failure"));
 
-	        _transactionMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>()))
-		        .Returns(Task.CompletedTask);
-	        _transactionMock.Setup(t => t.DisposeAsync())
-		        .Returns(ValueTask.CompletedTask);
-
-	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-		        .ReturnsAsync(_transactionMock.Object);
-
 	        // Act & Assert
 	        await Assert.ThrowsAsync<Exception>(() =>
 		        _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Accepted));
@@ -926,14 +915,6 @@ namespace TaskForge.Tests.Application.Services
 
 	        _unitOfWorkMock.Setup(r => r.SaveChangesAsync())
 		        .ReturnsAsync(1);
-
-	        _transactionMock.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>()))
-		        .Returns(Task.CompletedTask);
-	        _transactionMock.Setup(t => t.DisposeAsync())
-		        .Returns(ValueTask.CompletedTask);
-
-	        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
-		        .ReturnsAsync(_transactionMock.Object);
 
 	        // Act
 	        await _projectInvitationService.UpdateInvitationStatusAsync(invitationId, InvitationStatus.Accepted);

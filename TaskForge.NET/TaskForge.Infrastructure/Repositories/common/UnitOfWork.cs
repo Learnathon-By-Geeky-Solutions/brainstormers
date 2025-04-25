@@ -16,14 +16,20 @@ namespace TaskForge.Infrastructure.Repositories.Common
             _context = context;
         }
 
-        public async Task<int> SaveChangesAsync()
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
         {
-            return await _context.SaveChangesAsync();
+	        return await _context.Database.BeginTransactionAsync();
         }
 
-        public async Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
+        public async Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel)
         {
-            return await _context.Database.BeginTransactionAsync(isolationLevel);
+	        return await _context.Database.BeginTransactionAsync(isolationLevel);
+        }
+
+
+		public async Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
         }
 
         protected virtual void Dispose(bool disposing)
