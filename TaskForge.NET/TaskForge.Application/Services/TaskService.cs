@@ -1,4 +1,3 @@
-using System.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using TaskForge.Application.Common.Model;
@@ -289,7 +288,7 @@ namespace TaskForge.Application.Services
 
 		public async Task RemoveTaskAsync(int id)
 		{
-			await using var transaction = await _unitOfWork.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+			await using var transaction = await _unitOfWork.BeginTransactionAsync();
 
 			try
 			{

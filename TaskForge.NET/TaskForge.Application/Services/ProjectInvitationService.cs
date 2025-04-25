@@ -63,8 +63,8 @@ namespace TaskForge.Application.Services
 				includes: query => query
 					.Include(pi => pi.InvitedUserProfile)
 						.ThenInclude(pi => pi.User),
-				skip: (pageIndex - 1) * pageSize,
-				take: pageSize
+				take: pageSize,
+				skip: (pageIndex - 1) * pageSize
 			);
 
 			return new PaginatedList<ProjectInvitation>(projectInvitationList, totalCount, pageIndex, pageSize);

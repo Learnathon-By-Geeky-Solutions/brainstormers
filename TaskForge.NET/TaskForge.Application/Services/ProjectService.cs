@@ -131,7 +131,7 @@ namespace TaskForge.Application.Services
 			if (dto == null)
 				throw new ArgumentNullException(nameof(dto), "CreateProjectDto cannot be null.");
 
-			using var transaction = await _unitOfWork.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted); // Specify isolation level
+			await using var transaction = await _unitOfWork.BeginTransactionAsync();
 
 			try
 			{
