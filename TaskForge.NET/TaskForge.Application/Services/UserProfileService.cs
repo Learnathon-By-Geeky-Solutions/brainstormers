@@ -3,9 +3,13 @@ using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 
-namespace TaskForge.Application.Services
+namespace TaskForge.Application.Services;
+
+public class UserProfileService : IUserProfileService
 {
-    public class UserProfileService : IUserProfileService
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UserProfileService(IUnitOfWork unitOfWork)
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserProfileRepository _userProfileRepository;
@@ -15,25 +19,24 @@ namespace TaskForge.Application.Services
             _userProfileRepository = userProfileRepository;
         }
 
-        public async Task CreateUserProfileAsync(string userId, string fullName)
+    public async Task CreateUserProfileAsync(string userId, string fullName)
+    {
+        var userProfile = new UserProfile
         {
-            var userProfile = new UserProfile
-            {
-                UserId = userId,
-                FullName = fullName
-            };
-            await _userProfileRepository.AddAsync(userProfile);
-            await _unitOfWork.SaveChangesAsync();
-        }
+            UserId = userId,
+            FullName = fullName
+        };
+        await _userProfileRepository.AddAsync(userProfile);
+        await _unitOfWork.SaveChangesAsync();
+    }
 
 		public async Task<int?> GetByUserIdAsync(string userId)
 		{
-			var userProfiles = await _userProfileRepository
+      var userProfiles = await _userProfileRepository
 				.FindByExpressionAsync(up => up.UserId == userId);
 
-			var userProfile = userProfiles.FirstOrDefault();
+        var userProfile = userProfiles.FirstOrDefault();
 
-			return userProfile?.Id; // This returns null if userProfile is null
-		}
-	}
+        return userProfile?.Id; // This returns null if userProfile is null
+    }
 }

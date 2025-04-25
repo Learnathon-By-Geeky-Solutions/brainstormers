@@ -1,0 +1,21 @@
+﻿@model UserListItemViewModel
+
+@{
+	ViewData["Title"] = "Delete User";
+}
+
+<h2>Delete User</h2>
+
+<p>Are you sure you want to delete this user?</p>
+<div class="mb-3">
+	<h4>Name: @Model.FullName</h4>
+	<h6>Email: @Model.Email</h6>
+	<h6>Phone: @Model.PhoneNumber</h6>
+</div>
+
+<form asp-action="DeleteConfirmed" method="post">
+	@Html.AntiForgeryToken()
+	<input type="hidden" name="id" value="@Model.UserId"/>
+	<button type="submit" class="btn btn-danger">Yes, Delete</button>
+	<a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>

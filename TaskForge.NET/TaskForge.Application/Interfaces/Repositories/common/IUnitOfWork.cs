@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Storage;
-using System.Data;
+﻿using System.Data;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace TaskForge.Application.Interfaces.Repositories.Common
 {
