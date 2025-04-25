@@ -7,7 +7,6 @@ namespace TaskForge.Application.Services;
 
 public class UserProfileService : IUserProfileService
 {
-	
 	private readonly IUnitOfWork _unitOfWork;
 	private readonly IUserProfileRepository _userProfileRepository;
 	public UserProfileService(IUnitOfWork unitOfWork, IUserProfileRepository userProfileRepository)

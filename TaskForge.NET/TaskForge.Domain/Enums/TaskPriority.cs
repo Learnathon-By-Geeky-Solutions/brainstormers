@@ -1,10 +1,9 @@
-﻿namespace TaskForge.Domain.Enums
+﻿namespace TaskForge.Domain.Enums;
+
+public enum TaskPriority
 {
-    public enum TaskPriority
-    {
-        Low=0,
-        Medium=1,
-        High=2,
-        Critical=3
-    }
+    Low = 0,
+    Medium = 1,
+    High = 2,
+    Critical = 3
 }

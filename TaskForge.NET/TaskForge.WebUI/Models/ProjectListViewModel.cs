@@ -1,11 +1,10 @@
-﻿using TaskForge.Application.Common.Model;
+using TaskForge.Application.Common.Model;
 using TaskForge.Application.DTOs;
 
-namespace TaskForge.WebUI.Models
+namespace TaskForge.WebUI.Models;
+
+public class ProjectListViewModel : PaginationViewModel
 {
-    public class ProjectListViewModel : PaginationViewModel
-    {
-        public ProjectFilterDto? Filter { get; set; }
-        public IEnumerable<ProjectWithRoleDto>? FilteredProjectList { get; set; }
-    }
+    public ProjectFilterDto? Filter { get; set; }
+    public IEnumerable<ProjectWithRoleDto>? FilteredProjectList { get; set; }
 }
