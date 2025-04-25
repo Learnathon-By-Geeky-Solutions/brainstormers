@@ -135,6 +135,7 @@ namespace TaskForge.Application.Services
 		}
 
 
+
 		public async Task CreateTaskAsync(TaskDto taskDto)
 		{
 			if (taskDto.Attachments != null && taskDto.Attachments.Count > MaxAttachments)
@@ -167,6 +168,7 @@ namespace TaskForge.Application.Services
 		}
 
 
+
 		public async Task UpdateTaskAsync(TaskUpdateDto dto)
 		{
 			await using var transaction = await _unitOfWork.BeginTransactionAsync();
@@ -196,8 +198,6 @@ namespace TaskForge.Application.Services
 				throw;
 			}
 		}
-
-
 		private async Task<TaskItem?> GetTaskWithRelations(int taskId)
 		{
 			var taskList = await _taskRepository.FindByExpressionAsync(
@@ -210,7 +210,6 @@ namespace TaskForge.Application.Services
 
 			return taskList.FirstOrDefault();
 		}
-
 		private void UpdateBasicFields(TaskItem task, TaskUpdateDto dto)
 		{
 			task.Title = dto.Title;
@@ -220,7 +219,6 @@ namespace TaskForge.Application.Services
 			task.StartDate = dto.StartDate;
 			task.SetDueDate(dto.DueDate);
 		}
-
 		private async Task UpdateAssignedUsersAsync(TaskItem task, List<int>? userIds)
 		{
 			task.AssignedUsers.Clear();
@@ -234,7 +232,6 @@ namespace TaskForge.Application.Services
 				}
 			}
 		}
-
 		private void UpdateDependencies(TaskItem task, List<int>? dependencyIds)
 		{
 			task.Dependencies.Clear();
@@ -247,7 +244,6 @@ namespace TaskForge.Application.Services
 				}
 			}
 		}
-
 		private async Task HandleAttachmentsAsync(TaskItem task, List<IFormFile>? attachments)
 		{
 			if (attachments == null || attachments.Count == 0) return;
@@ -259,7 +255,6 @@ namespace TaskForge.Application.Services
 				task.Attachments.Add(attachment);
 			}
 		}
-
 		private async Task<TaskAttachment> SaveAttachmentAsync(IFormFile file)
 		{
 			if (file.Length == 0) throw new ArgumentException("File is empty.");
@@ -290,6 +285,8 @@ namespace TaskForge.Application.Services
 			};
 		}
 
+
+
 		public async Task RemoveTaskAsync(int id)
 		{
 			await using var transaction = await _unitOfWork.BeginTransactionAsync(IsolationLevel.ReadCommitted);
@@ -319,9 +316,16 @@ namespace TaskForge.Application.Services
 
 				await transaction.CommitAsync();
 
-				foreach (var attachment in taskItem.Attachments)
+				try
 				{
-					await _fileService.DeleteFileAsync(attachment.FilePath);
+					foreach (var attachment in taskItem.Attachments)
+					{
+						await _fileService.DeleteFileAsync(attachment.FilePath);
+					}
+				}
+				catch (Exception ex)
+				{
+					_logger.LogWarning(ex, "DB committed but failed to delete attachment file(s) for task {TaskId}", id);
 				}
 			}
 			catch
@@ -330,7 +334,6 @@ namespace TaskForge.Application.Services
 				throw;
 			}
 		}
-
 
 		public async Task DeleteAttachmentAsync(int attachmentId)
 		{

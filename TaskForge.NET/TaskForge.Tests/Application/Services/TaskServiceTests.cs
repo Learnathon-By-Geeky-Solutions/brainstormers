@@ -84,7 +84,6 @@ namespace TaskForge.Tests.Application.Services
 
 
 
-
         [Fact]
         public async Task GetTaskByIdAsync_ReturnsTask_WhenTaskExists()
         {
@@ -153,7 +152,6 @@ namespace TaskForge.Tests.Application.Services
             // Assert
             Assert.Null(result);
         }
-
 
 
 
@@ -238,7 +236,6 @@ namespace TaskForge.Tests.Application.Services
 
 
 
-
         [Fact]
         public async Task CreateTaskAsync_ThrowsIfAttachmentsExceedLimit()
         {
@@ -306,9 +303,7 @@ namespace TaskForge.Tests.Application.Services
 			// Transaction setup
 			_transactionMock.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 			_transactionMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-			_transactionMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 			_transactionMock.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
-
 			_unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<IsolationLevel>()))
 				.ReturnsAsync(_transactionMock.Object);
 
@@ -320,9 +315,6 @@ namespace TaskForge.Tests.Application.Services
 			_taskRepositoryMock.Verify(r => r.UpdateAsync(It.Is<TaskItem>(t => t.Id == taskId && t.Title == dto.Title)), Times.Once);
 			_transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
 		}
-
-
-
 		[Fact]
         public async Task UpdateTaskAsync_TaskNotFound_ThrowsKeyNotFoundException()
         {
@@ -342,7 +334,6 @@ namespace TaskForge.Tests.Application.Services
             _transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
 
 		}
-
 		[Fact]
         public async Task UpdateTaskAsync_TooManyAttachments_ThrowsInvalidOperationException()
         {
@@ -386,7 +377,6 @@ namespace TaskForge.Tests.Application.Services
             _transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
 
 		}
-
 		[Fact]
         public async Task UpdateTaskAsync_UpdatesAssignedUsersCorrectly()
         {
@@ -460,7 +450,6 @@ namespace TaskForge.Tests.Application.Services
 
             _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
 		}
-
 
 
 

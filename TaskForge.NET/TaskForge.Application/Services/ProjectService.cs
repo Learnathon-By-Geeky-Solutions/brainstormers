@@ -35,95 +35,6 @@ namespace TaskForge.Application.Services
 		}
 
 
-		public async Task CreateProjectAsync(CreateProjectDto dto)
-		{
-			if (dto == null)
-				throw new ArgumentNullException(nameof(dto), "CreateProjectDto cannot be null.");
-
-			using var transaction = await _unitOfWork.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted); // Specify isolation level
-
-			try
-			{
-				// 1. Map DTO to Project entity
-				var project = new Project
-				{
-					Title = dto.Title,
-					Description = dto.Description,
-					Status = dto.Status,
-					StartDate = dto.StartDate,
-				};
-
-				if (dto.EndDate != null) project.SetEndDate(dto.EndDate);
-
-				await _projectRepository.AddAsync(project);
-				await _unitOfWork.SaveChangesAsync(); // Ensure Project.Id is generated
-
-				var projectId = project.Id;
-
-				// 2. Get the UserProfileId for CreatedBy
-				var userProfileId = (await _userProfileRepository.FindByExpressionAsync(up => up.UserId == dto.CreatedBy))
-								   .Select(up => up.Id)
-								   .FirstOrDefault();
-
-				if (userProfileId == default)
-					throw new InvalidOperationException("User profile not found for the provided user ID.");
-
-
-				// 3. Add the creator as a member of the project
-				var projectMember = new ProjectMember
-				{
-					ProjectId = projectId,
-					UserProfileId = userProfileId,
-					Role = ProjectRole.Admin
-				};
-
-				await _projectMemberRepository.AddAsync(projectMember);
-				await _unitOfWork.SaveChangesAsync();
-
-				// 4. Commit transaction
-				await transaction.CommitAsync();
-			}
-			catch (Exception ex)
-			{
-				await transaction.RollbackAsync();
-				throw new InvalidOperationException("Error creating project.", ex);
-			}
-		}
-
-		public async Task UpdateProjectAsync(Project dto)
-		{
-			if (dto == null)
-				throw new ArgumentNullException(nameof(dto), "Project cannot be null.");
-
-			var existingProject = await _projectRepository.GetByIdAsync(dto.Id);
-			if (existingProject == null)
-				throw new InvalidOperationException($"Project with ID {dto.Id} not found.");
-
-			existingProject.Title = dto.Title;
-			existingProject.Description = dto.Description;
-			existingProject.Status = dto.Status;
-			existingProject.StartDate = dto.StartDate;
-			existingProject.UpdatedBy = dto.UpdatedBy;
-			existingProject.UpdatedDate = dto.UpdatedDate;
-			existingProject.SetEndDate(dto.EndDate);
-
-			await _projectRepository.UpdateAsync(existingProject);
-			await _unitOfWork.SaveChangesAsync();
-		}
-
-
-
-		public Task<IEnumerable<SelectListItem>> GetProjectStatusOptions()
-		{
-			return Task.FromResult(Enum.GetValues(typeof(ProjectStatus))
-				   .Cast<ProjectStatus>()
-				   .Select(status => new SelectListItem
-				   {
-					   Value = status.ToString(),
-					   Text = status.GetDisplayName().ToString()
-				   }));
-		}
-
 
 		public async Task<Project?> GetProjectByIdAsync(int projectId)
 		{
@@ -139,6 +50,16 @@ namespace TaskForge.Application.Services
 				.FirstOrDefault();
 		}
 
+		public Task<IEnumerable<SelectListItem>> GetProjectStatusOptions()
+		{
+			return Task.FromResult(Enum.GetValues(typeof(ProjectStatus))
+				.Cast<ProjectStatus>()
+				.Select(status => new SelectListItem
+				{
+					Value = status.ToString(),
+					Text = status.GetDisplayName().ToString()
+				}));
+		}
 
 		public async Task<PaginatedList<ProjectWithRoleDto>> GetFilteredProjectsAsync(ProjectFilterDto filter, int pageIndex, int pageSize)
 		{
@@ -201,6 +122,86 @@ namespace TaskForge.Application.Services
 				("enddate", "desc") => query.OrderByDescending(pm => pm.Project.EndDate),
 				_ => query.OrderBy(pm => pm.ProjectId)
 			};
+		}
+
+
+
+		public async Task CreateProjectAsync(CreateProjectDto dto)
+		{
+			if (dto == null)
+				throw new ArgumentNullException(nameof(dto), "CreateProjectDto cannot be null.");
+
+			using var transaction = await _unitOfWork.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted); // Specify isolation level
+
+			try
+			{
+				// 1. Map DTO to Project entity
+				var project = new Project
+				{
+					Title = dto.Title,
+					Description = dto.Description,
+					Status = dto.Status,
+					StartDate = dto.StartDate,
+				};
+
+				if (dto.EndDate != null) project.SetEndDate(dto.EndDate);
+
+				await _projectRepository.AddAsync(project);
+				await _unitOfWork.SaveChangesAsync(); // Ensure Project.Id is generated
+
+				var projectId = project.Id;
+
+				// 2. Get the UserProfileId for CreatedBy
+				var userProfileId = (await _userProfileRepository.FindByExpressionAsync(up => up.UserId == dto.CreatedBy))
+								   .Select(up => up.Id)
+								   .FirstOrDefault();
+
+				if (userProfileId == default)
+					throw new InvalidOperationException("User profile not found for the provided user ID.");
+
+
+				// 3. Add the creator as a member of the project
+				var projectMember = new ProjectMember
+				{
+					ProjectId = projectId,
+					UserProfileId = userProfileId,
+					Role = ProjectRole.Admin
+				};
+
+				await _projectMemberRepository.AddAsync(projectMember);
+				await _unitOfWork.SaveChangesAsync();
+
+				// 4. Commit transaction
+				await transaction.CommitAsync();
+			}
+			catch (Exception ex)
+			{
+				await transaction.RollbackAsync();
+				throw new InvalidOperationException("Error creating project.", ex);
+			}
+		}
+
+
+
+		public async Task UpdateProjectAsync(Project dto)
+		{
+			if (dto == null)
+				throw new ArgumentNullException(nameof(dto), "Project cannot be null.");
+
+			var existingProject = await _projectRepository.GetByIdAsync(dto.Id);
+			if (existingProject == null)
+				throw new InvalidOperationException($"Project with ID {dto.Id} not found.");
+
+			existingProject.Title = dto.Title;
+			existingProject.Description = dto.Description;
+			existingProject.Status = dto.Status;
+			existingProject.StartDate = dto.StartDate;
+			existingProject.UpdatedBy = dto.UpdatedBy;
+			existingProject.UpdatedDate = dto.UpdatedDate;
+			existingProject.SetEndDate(dto.EndDate);
+
+			await _projectRepository.UpdateAsync(existingProject);
+			await _unitOfWork.SaveChangesAsync();
 		}
 
 	}

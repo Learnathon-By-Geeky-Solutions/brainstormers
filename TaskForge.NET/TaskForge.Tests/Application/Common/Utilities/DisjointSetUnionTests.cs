@@ -17,6 +17,7 @@ namespace TaskForge.Tests.Application.Common.Utilities
             dsu.Find(1).Should().Be(1);
         }
 
+
         [Fact]
         public void Find_ShouldReturnCorrectRoot_WithPathCompression()
         {
@@ -36,6 +37,7 @@ namespace TaskForge.Tests.Application.Common.Utilities
             root1.Should().Be(root2).And.Be(root3);
         }
 
+
         [Fact]
         public void Union_ShouldAttachLowerRankUnderHigherRank()
         {
@@ -52,7 +54,6 @@ namespace TaskForge.Tests.Application.Common.Utilities
             dsu.Find(2).Should().Be(dsu.Find(3));
             dsu.Find(1).Should().Be(dsu.Find(2));
         }
-
         [Fact]
         public void Union_ShouldIncrementRankWhenEqual()
         {
@@ -68,7 +69,6 @@ namespace TaskForge.Tests.Application.Common.Utilities
 
             dsu.Find(1).Should().Be(dsu.Find(3));
         }
-
         [Fact]
         public void Union_ShouldNotChangeAnythingIfSameSet()
         {

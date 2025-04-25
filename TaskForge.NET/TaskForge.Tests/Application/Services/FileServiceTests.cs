@@ -39,7 +39,6 @@ namespace TaskForge.Tests.Application.Services
             // Assert
             Assert.False(File.Exists(fullPath));
         }
-
         [Fact]
         public async Task DeleteFileAsync_FileDoesNotExist_DoesNotThrow()
         {
@@ -48,7 +47,6 @@ namespace TaskForge.Tests.Application.Services
                 _fileService.DeleteFileAsync("nonexistent-file.txt"));
             Assert.Null(ex);
         }
-
 		[Fact]
 		public async Task DeleteFileAsync_ThrowsIOException_WrappedInInvalidOperation()
 		{
@@ -78,6 +76,8 @@ namespace TaskForge.Tests.Application.Services
 			}
 		}
 
+
+
 		public void Dispose()
         {
             if (_disposed) return;
@@ -102,5 +102,6 @@ namespace TaskForge.Tests.Application.Services
 
             _disposed = true;
         }
+
     }
 }

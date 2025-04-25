@@ -82,7 +82,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.Equal(invitationId, result!.Id);
             _projectInvitationRepositoryMock.Verify(x => x.GetByIdAsync(invitationId), Times.Once);
         }
-
         [Fact]
         public async Task GetByIdAsync_ReturnsNull_WhenInvitationDoesNotExist()
         {
@@ -99,7 +98,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.Null(result);
             _projectInvitationRepositoryMock.Verify(x => x.GetByIdAsync(invitationId), Times.Once);
         }
-
         [Fact]
         public async Task GetByIdAsync_ShouldThrowException_WhenRepositoryThrows()
         {
@@ -178,7 +176,6 @@ namespace TaskForge.Tests.Application.Services
                 skip
             ), Times.Once);
         }
-
         [Fact]
         public async Task GetInvitationListAsync_ReturnsEmpty_WhenNoInvitations()
         {
@@ -214,7 +211,6 @@ namespace TaskForge.Tests.Application.Services
                 skip
             ), Times.Once);
         }
-
         [Fact]
         public async Task GetInvitationListAsync_SetsHasPreviousAndNext_OnMiddlePage()
         {
@@ -250,7 +246,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.True(result.HasPreviousPage, "PageIndex 2 > 1 => HasPreviousPage should be true");
             Assert.True(result.HasNextPage, "PageIndex 2 < TotalPages (3) => HasNextPage should be true");
         }
-
         [Fact]
         public async Task GetInvitationListAsync_Works_WhenIncludesNullInRepository()
         {
@@ -281,7 +276,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.Equal(projectId, result.Items[0].ProjectId);
             Assert.Equal(99, result.Items[0].Id);
         }
-
         [Fact]
         public async Task GetInvitationListAsync_ShouldThrowException_WhenRepositoryFails()
         {
@@ -305,7 +299,122 @@ namespace TaskForge.Tests.Application.Services
 
 
 
-        [Fact]
+		[Fact]
+		public async Task GetInvitationsForUserAsync_ShouldReturnEmpty_WhenUserProfileIdIsNull()
+		{
+			// Act
+			var result = await _projectInvitationService.GetInvitationsForUserAsync(null, 1, 10);
+
+			// Assert
+			Assert.NotNull(result);
+			Assert.Empty(result.Items);
+			Assert.Equal(0, result.TotalCount);
+		}
+		[Fact]
+		public async Task GetInvitationsForUserAsync_ShouldReturnPaginatedInvitations_WhenUserProfileIdIsValid()
+		{
+			// Arrange
+			var userProfileId = 1;
+			var pageIndex = 2;
+			var pageSize = 2;
+
+			var allInvitations = new List<ProjectInvitation>
+			{
+				new ProjectInvitation { Id = 1, InvitedUserProfileId = userProfileId },
+				new ProjectInvitation { Id = 2, InvitedUserProfileId = userProfileId },
+				new ProjectInvitation { Id = 3, InvitedUserProfileId = 99 } // should be filtered out
+            };
+
+			var expectedFiltered = allInvitations
+				.Where(i => i.InvitedUserProfileId == userProfileId)
+				.ToList();
+
+			var expectedPaged = expectedFiltered
+				.Take(pageSize)
+				.Skip((pageIndex - 1) * pageSize)
+				.ToList();
+
+			// Mock setup with expression matching to ensure proper filtering
+			_projectInvitationRepositoryMock.Setup(u => u.GetPaginatedListAsync(
+					It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
+					null,
+					It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
+					pageSize,
+					(pageIndex - 1) * pageSize))
+				.ReturnsAsync((expectedPaged, expectedFiltered.Count));
+			// Ensure mock returns paginated results
+
+			// Act
+			var result = await _projectInvitationService.GetInvitationsForUserAsync(userProfileId, pageIndex, pageSize);
+
+			// Assert
+			Assert.NotNull(result);
+			Assert.Equal(expectedPaged.Count, result.Items.Count);
+			Assert.Equal(expectedFiltered.Count, result.TotalCount);
+			Assert.All(result.Items, i => Assert.Equal(userProfileId, i.InvitedUserProfileId));
+		}
+		[Fact]
+		public async Task GetInvitationsForUserAsync_ShouldReturnEmptyList_WhenNoInvitationsExist()
+		{
+			// Arrange
+			var userProfileId = 99;
+			var pageIndex = 1;
+			var pageSize = 5;
+
+			_projectInvitationRepositoryMock.Setup(u => u.GetPaginatedListAsync(
+					It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
+					null,
+					It.IsAny<Func<IQueryable<ProjectInvitation>, IIncludableQueryable<ProjectInvitation, object>>>(),
+					pageSize,
+					(pageIndex - 1) * pageSize))
+				.ReturnsAsync((new List<ProjectInvitation>(), 0));
+
+			// Act
+			var result = await _projectInvitationService.GetInvitationsForUserAsync(userProfileId, pageIndex, pageSize);
+
+			// Assert
+			Assert.NotNull(result);
+			Assert.Empty(result.Items);
+			Assert.Equal(0, result.TotalCount);
+		}
+		[Fact]
+		public async Task GetInvitationsForUserAsync_SetsHasPreviousAndNext_OnMiddlePage()
+		{
+			// Arrange
+			var userProfileId = 1;
+			var pageIndex = 2;
+			var pageSize = 2;
+			var skip = (pageIndex - 1) * pageSize;
+			var totalCount = 5; // 3 pages in total
+
+			var mockInvitations = new List<ProjectInvitation>
+			{
+				new ProjectInvitation { Id = 3, InvitedUserProfileId = userProfileId },
+				new ProjectInvitation { Id = 4, InvitedUserProfileId = userProfileId }
+			};
+
+			_projectInvitationRepositoryMock.Setup(u => u.GetPaginatedListAsync(
+					It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
+					null,
+					It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
+					pageSize,
+					skip
+				))
+				.ReturnsAsync((mockInvitations, totalCount));
+
+			// Act
+			var result = await _projectInvitationService.GetInvitationsForUserAsync(userProfileId, pageIndex, pageSize);
+
+			// Assert
+			Assert.Equal(2, result.Items.Count);
+			Assert.Equal(totalCount, result.TotalCount);
+			Assert.True(result.HasPreviousPage, "PageIndex > 1 => HasPreviousPage should be true");
+			Assert.True(result.HasNextPage, "PageIndex < TotalPages => HasNextPage should be true");
+		}
+
+
+
+		[Fact]
         public async Task AddAsync_ShouldReturnFailure_WhenUserNotFound()
         {
             // Arrange
@@ -322,7 +431,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.False(result.Success);
             Assert.Equal("User not found.", result.Message);
         }
-
         [Fact]
         public async Task AddAsync_ShouldReturnFailure_WhenUserProfileNotFound()
         {
@@ -356,7 +464,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.False(result.Success);
             Assert.Equal("User profile not found.", result.Message);
         }
-
         [Fact]
         public async Task AddAsync_ShouldReturnFailure_WhenAlreadyProjectMemberExists()
         {
@@ -411,7 +518,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.False(result.Success);
             Assert.Equal("User is already a member of this project.", result.Message);
         }
-
         [Fact]
         public async Task AddAsync_ShouldReturnFailure_WhenInvitationAlreadyExists()
         {
@@ -466,7 +572,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.False(result.Success);
             Assert.Equal("An invitation has already been sent to this user.", result.Message);
         }
-
         [Fact]
         public async Task AddAsync_ShouldReturnSuccess_WhenAllValidationsPass()
         {
@@ -511,7 +616,6 @@ namespace TaskForge.Tests.Application.Services
 	        Assert.Equal("Invitation sent successfully.", result.Message);
 	        _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
-
 		[Fact]
         public async Task AddAsync_ShouldThrowException_WhenUserManagerThrows()
         {
@@ -529,7 +633,6 @@ namespace TaskForge.Tests.Application.Services
 
             Assert.Equal("UserManager failure", exception.Message);
         }
-
 		[Fact]
 		public async Task AddAsync_ShouldRollbackTransaction_WhenExceptionIsThrown()
 		{
@@ -577,7 +680,6 @@ namespace TaskForge.Tests.Application.Services
 			Assert.Equal("Failed to send invitation.", result.Message);
 			_transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
 		}
-
 		[Fact]
 		public async Task AddAsync_ShouldDisposeTransaction()
 		{
@@ -626,8 +728,6 @@ namespace TaskForge.Tests.Application.Services
 
 
 
-
-
 		[Fact]
         public async Task UpdateInvitationStatusAsync_ShouldDoNothing_WhenInvitationNotFound()
         {
@@ -643,7 +743,6 @@ namespace TaskForge.Tests.Application.Services
             _projectInvitationRepositoryMock.Verify(u => u.UpdateAsync(It.IsAny<ProjectInvitation>()), Times.Never);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
         }
-
 		[Fact]
 		public async Task UpdateInvitationStatusAsync_ShouldAcceptInvitation_AndAddProjectMember()
 		{
@@ -690,7 +789,6 @@ namespace TaskForge.Tests.Application.Services
 			_unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
 			_transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
 		}
-
 		[Fact]
         public async Task UpdateInvitationStatusAsync_ShouldDeclineInvitation()
         {
@@ -731,7 +829,6 @@ namespace TaskForge.Tests.Application.Services
 	        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
 	        _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
-
 		[Fact]
         public async Task UpdateInvitationStatusAsync_ShouldThrowException_WhenSaveFails()
         {
@@ -770,7 +867,6 @@ namespace TaskForge.Tests.Application.Services
 	        _transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
 	        _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
-
         [Fact]
         public async Task UpdateInvitationStatusAsync_ShouldRollbackTransaction_WhenExceptionIsThrown()
         {
@@ -808,7 +904,6 @@ namespace TaskForge.Tests.Application.Services
 	        _transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
 	        _transactionMock.Verify(t => t.DisposeAsync(), Times.Once);
         }
-
         [Fact]
         public async Task UpdateInvitationStatusAsync_ShouldDisposeTransaction()
         {
@@ -845,125 +940,6 @@ namespace TaskForge.Tests.Application.Services
 
 	        // Assert
 	        _transactionMock.Verify(t => t.DisposeAsync(), Times.Once);
-        }
-
-
-
-
-		[Fact]
-        public async Task GetInvitationsForUserAsync_ShouldReturnEmpty_WhenUserProfileIdIsNull()
-        {
-            // Act
-            var result = await _projectInvitationService.GetInvitationsForUserAsync(null, 1, 10);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Empty(result.Items);
-            Assert.Equal(0, result.TotalCount);
-        }
-
-        [Fact]
-        public async Task GetInvitationsForUserAsync_ShouldReturnPaginatedInvitations_WhenUserProfileIdIsValid()
-        {
-            // Arrange
-            var userProfileId = 1;
-            var pageIndex = 2;
-            var pageSize = 2;
-
-            var allInvitations = new List<ProjectInvitation>
-            {
-                new ProjectInvitation { Id = 1, InvitedUserProfileId = userProfileId },
-                new ProjectInvitation { Id = 2, InvitedUserProfileId = userProfileId },
-                new ProjectInvitation { Id = 3, InvitedUserProfileId = 99 } // should be filtered out
-            };
-
-            var expectedFiltered = allInvitations
-                .Where(i => i.InvitedUserProfileId == userProfileId)
-                .ToList();
-
-            var expectedPaged = expectedFiltered
-                .Take(pageSize)
-                .Skip((pageIndex - 1) * pageSize)
-                .ToList();
-
-            // Mock setup with expression matching to ensure proper filtering
-            _projectInvitationRepositoryMock.Setup(u => u.GetPaginatedListAsync(
-                    It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
-                    null,
-                    It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
-                    pageSize,
-                    (pageIndex - 1) * pageSize))
-                .ReturnsAsync((expectedPaged, expectedFiltered.Count));
-            // Ensure mock returns paginated results
-
-            // Act
-            var result = await _projectInvitationService.GetInvitationsForUserAsync(userProfileId, pageIndex, pageSize);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(expectedPaged.Count, result.Items.Count);
-            Assert.Equal(expectedFiltered.Count, result.TotalCount);
-            Assert.All(result.Items, i => Assert.Equal(userProfileId, i.InvitedUserProfileId));
-        }
-
-        [Fact]
-        public async Task GetInvitationsForUserAsync_ShouldReturnEmptyList_WhenNoInvitationsExist()
-        {
-            // Arrange
-            var userProfileId = 99;
-            var pageIndex = 1;
-            var pageSize = 5;
-
-            _projectInvitationRepositoryMock.Setup(u => u.GetPaginatedListAsync(
-                    It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
-                    null,
-                    It.IsAny<Func<IQueryable<ProjectInvitation>, IIncludableQueryable<ProjectInvitation, object>>>(),
-                    pageSize,
-                    (pageIndex - 1) * pageSize))
-                .ReturnsAsync((new List<ProjectInvitation>(), 0));
-
-            // Act
-            var result = await _projectInvitationService.GetInvitationsForUserAsync(userProfileId, pageIndex, pageSize);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Empty(result.Items);
-            Assert.Equal(0, result.TotalCount);
-        }
-
-        [Fact]
-        public async Task GetInvitationsForUserAsync_SetsHasPreviousAndNext_OnMiddlePage()
-        {
-            // Arrange
-            var userProfileId = 1;
-            var pageIndex = 2;
-            var pageSize = 2;
-            var skip = (pageIndex - 1) * pageSize;
-            var totalCount = 5; // 3 pages in total
-
-            var mockInvitations = new List<ProjectInvitation>
-            {
-                new ProjectInvitation { Id = 3, InvitedUserProfileId = userProfileId },
-                new ProjectInvitation { Id = 4, InvitedUserProfileId = userProfileId }
-            };
-
-            _projectInvitationRepositoryMock.Setup(u => u.GetPaginatedListAsync(
-                    It.IsAny<Expression<Func<ProjectInvitation, bool>>>(),
-                    null,
-                    It.IsAny<Func<IQueryable<ProjectInvitation>, IQueryable<ProjectInvitation>>>(),
-                    pageSize,
-                    skip
-                ))
-                .ReturnsAsync((mockInvitations, totalCount));
-
-            // Act
-            var result = await _projectInvitationService.GetInvitationsForUserAsync(userProfileId, pageIndex, pageSize);
-
-            // Assert
-            Assert.Equal(2, result.Items.Count);
-            Assert.Equal(totalCount, result.TotalCount);
-            Assert.True(result.HasPreviousPage, "PageIndex > 1 => HasPreviousPage should be true");
-            Assert.True(result.HasNextPage, "PageIndex < TotalPages => HasNextPage should be true");
         }
 
     }

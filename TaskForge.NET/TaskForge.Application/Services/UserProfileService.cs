@@ -15,7 +15,19 @@ namespace TaskForge.Application.Services
             _userProfileRepository = userProfileRepository;
         }
 
-        public async Task CreateUserProfileAsync(string userId, string fullName)
+
+        public async Task<int?> GetByUserIdAsync(string userId)
+        {
+	        var userProfiles = await _userProfileRepository
+		        .FindByExpressionAsync(up => up.UserId == userId);
+
+	        var userProfile = userProfiles.FirstOrDefault();
+
+	        return userProfile?.Id; // This returns null if userProfile is null
+        }
+
+
+		public async Task CreateUserProfileAsync(string userId, string fullName)
         {
             var userProfile = new UserProfile
             {
@@ -25,15 +37,5 @@ namespace TaskForge.Application.Services
             await _userProfileRepository.AddAsync(userProfile);
             await _unitOfWork.SaveChangesAsync();
         }
-
-		public async Task<int?> GetByUserIdAsync(string userId)
-		{
-			var userProfiles = await _userProfileRepository
-				.FindByExpressionAsync(up => up.UserId == userId);
-
-			var userProfile = userProfiles.FirstOrDefault();
-
-			return userProfile?.Id; // This returns null if userProfile is null
-		}
 	}
 }
