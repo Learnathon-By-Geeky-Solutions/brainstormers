@@ -77,28 +77,15 @@ jobs:
     needs: build-and-analyze
     runs-on: ubuntu-latest
     if: always()
-
+    container: ghcr.io/railwayapp/cli:latest
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: "8.0.x"
-
-      - name: Restore dependencies
-        run: dotnet restore TaskForge.NET/TaskForge.NET.sln
-
-      - name: Publish .NET MVC App
-        run: |
-          dotnet publish TaskForge.NET/TaskForge.WebUI/TaskForge.WebUI.csproj -c Release -o ./publish
-
-      - name: Install Railway CLI
-        run: |
-          curl -fsSL https://railway.app/install.sh | sh
-          echo "$HOME/.railway/bin" >> $GITHUB_PATH
-
+          
+      - name: Navigate to Project Directory
+        run: cd TaskForge.NET/TaskForge.WebUI/
+        
       - name: Deploy to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
