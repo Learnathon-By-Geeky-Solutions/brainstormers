@@ -132,9 +132,6 @@ namespace TaskForge.WebUI.Areas.Identity.Pages.Account
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
-                    await _userProfileService.CreateUserProfileAsync(userId, Input.Email.Split('@')[0]);
-
-
                     // Optionally: Add user to roles
                     await _userManager.AddToRoleAsync(user, "User"); // Ensure the role exists
 
