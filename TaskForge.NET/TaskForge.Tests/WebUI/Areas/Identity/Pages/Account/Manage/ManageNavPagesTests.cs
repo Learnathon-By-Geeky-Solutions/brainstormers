@@ -80,17 +80,8 @@ namespace TaskForge.Tests.WebUI.Areas.Identity.Pages.Account.Manage
             // Arrange
             var context = GetViewContextWithActivePage(activePage);
             // Act
-            string? result = methodName switch
-            {
-                nameof(ManageNavPages.EmailNavClass) => ManageNavPages.EmailNavClass(context),
-                nameof(ManageNavPages.ChangePasswordNavClass) => ManageNavPages.ChangePasswordNavClass(context),
-                nameof(ManageNavPages.DownloadPersonalDataNavClass) => ManageNavPages.DownloadPersonalDataNavClass(context),
-                nameof(ManageNavPages.DeletePersonalDataNavClass) => ManageNavPages.DeletePersonalDataNavClass(context),
-                nameof(ManageNavPages.ExternalLoginsNavClass) => ManageNavPages.ExternalLoginsNavClass(context),
-                nameof(ManageNavPages.PersonalDataNavClass) => ManageNavPages.PersonalDataNavClass(context),
-                nameof(ManageNavPages.TwoFactorAuthenticationNavClass) => ManageNavPages.TwoFactorAuthenticationNavClass(context),
-                _ => null
-            };
+            var method = typeof(ManageNavPages).GetMethod(methodName);
+            string ? result = method?.Invoke(null, new object[] { context }) as string;
             // Assert
             Assert.Equal("active", result);
         }
@@ -107,6 +98,26 @@ namespace TaskForge.Tests.WebUI.Areas.Identity.Pages.Account.Manage
             Assert.Equal("ExternalLogins", ManageNavPages.ExternalLogins);
             Assert.Equal("PersonalData", ManageNavPages.PersonalData);
             Assert.Equal("TwoFactorAuthentication", ManageNavPages.TwoFactorAuthentication);
+        }
+
+        [Theory]
+        [InlineData("Index", nameof(ManageNavPages.EmailNavClass), null)]
+        [InlineData("ChangePassword", nameof(ManageNavPages.EmailNavClass), null)]
+        public void NavClassHelpers_ShouldReturnNull_WhenActivePageDoesNotMatch(string activePage, string methodName, string? expected)
+        {
+            // Arrange
+            var context = GetViewContextWithActivePage(activePage);
+
+            // Act
+            string? result = methodName switch
+            {
+                nameof(ManageNavPages.EmailNavClass) => ManageNavPages.EmailNavClass(context),
+                nameof(ManageNavPages.ChangePasswordNavClass) => ManageNavPages.ChangePasswordNavClass(context),
+                _ => throw new ArgumentException($"Method {methodName} not supported in this test")
+            };
+
+            // Assert
+            Assert.Equal(expected, result);
         }
     }
 }

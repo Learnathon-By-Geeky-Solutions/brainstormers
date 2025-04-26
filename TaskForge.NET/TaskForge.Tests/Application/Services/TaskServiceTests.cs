@@ -1,6 +1,6 @@
-﻿using System.Data;
-using Microsoft.EntityFrameworkCore.Storage;
+﻿using Microsoft.EntityFrameworkCore.Storage;
 using Moq;
+using System.Data;
 using System.Linq.Expressions;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Helpers.DependencyResolvers;
@@ -57,8 +57,7 @@ namespace TaskForge.Tests.Application.Services
                 UserProfileRepository = _userProfileRepositoryMock.Object,
                 TaskAssignmentRepository = _taskAssignmentRepositoryMock.Object,
                 TaskAttachmentRepository = _taskAttachmentRepositoryMock.Object,
-                Logger = _loggerMock.Object,
-                Transaction = _transactionMock.Object
+                Logger = _loggerMock.Object
             };
 
             _taskService = new TaskService(dependencies);
@@ -771,20 +770,20 @@ namespace TaskForge.Tests.Application.Services
 
             _taskRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<TaskItem>()), Times.Once);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
-            _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once); 
+            _transactionMock.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
             _userProfileRepositoryMock.Verify(x => x.FindByExpressionAsync(
-                It.IsAny<Expression<Func<UserProfile, bool>>>(), 
+                It.IsAny<Expression<Func<UserProfile, bool>>>(),
                 null, null, null, null), Times.Once);
 
             _taskRepositoryMock.Verify(x => x.FindByExpressionAsync(
-                It.IsAny<Expression<Func<TaskItem, bool>>>(), null, 
-                It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(), 
+                It.IsAny<Expression<Func<TaskItem, bool>>>(), null,
+                It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
                 null, null), Times.Once);
 
             _unitOfWorkMock.Verify(x => x.BeginTransactionAsync(), Times.Once);
 
         }
-        
+
 
 
 

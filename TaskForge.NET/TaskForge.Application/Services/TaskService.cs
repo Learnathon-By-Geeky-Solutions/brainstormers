@@ -15,7 +15,7 @@ using TaskForge.Domain.Enums;
 
 namespace TaskForge.Application.Services
 {
-    public class TaskServiceDependencies
+    public sealed record TaskServiceDependencies
     {
         public IUnitOfWork UnitOfWork { get; set; } = null!;
         public ITaskRepository TaskRepository { get; set; } = null!;
@@ -27,7 +27,6 @@ namespace TaskForge.Application.Services
         public ITaskSorter TaskSorter { get; set; } = null!;
         public IDependentTaskStrategy DependentTaskStrategy { get; set; } = null!;
         public ILogger<TaskService> Logger { get; set; } = null!;
-        public IDbContextTransaction Transaction { get; set; }
     }
 
     public static class TaskUpdateHelper
@@ -76,6 +75,17 @@ namespace TaskForge.Application.Services
         private readonly ILogger<TaskService> _logger;
         public TaskService(TaskServiceDependencies dependencies)
         {
+            ArgumentNullException.ThrowIfNull(dependencies.UnitOfWork);
+            ArgumentNullException.ThrowIfNull(dependencies.TaskRepository);
+            ArgumentNullException.ThrowIfNull(dependencies.ProjectMemberRepository);
+            ArgumentNullException.ThrowIfNull(dependencies.UserProfileRepository);
+            ArgumentNullException.ThrowIfNull(dependencies.TaskAssignmentRepository);
+            ArgumentNullException.ThrowIfNull(dependencies.TaskAttachmentRepository);
+            ArgumentNullException.ThrowIfNull(dependencies.FileService);
+            ArgumentNullException.ThrowIfNull(dependencies.TaskSorter);
+            ArgumentNullException.ThrowIfNull(dependencies.DependentTaskStrategy);
+            ArgumentNullException.ThrowIfNull(dependencies.Logger);
+
             _unitOfWork = dependencies.UnitOfWork;
             _taskRepository = dependencies.TaskRepository;
             _projectMemberRepository = dependencies.ProjectMemberRepository;
@@ -120,7 +130,8 @@ namespace TaskForge.Application.Services
             if (userProfileId == null) return new PaginatedList<TaskDto>(new List<TaskDto>(), 0, pageIndex, pageSize);
 
             var userProjectList = await _projectMemberRepository.FindByExpressionAsync(pm => pm.UserProfileId == userProfileId);
-            var userProjectIds = userProjectList.Select(pm => pm.ProjectId).ToList();
+            var userProjectIds = (userProjectList ?? Enumerable.Empty<ProjectMember>())
+                .Select(pm => pm.UserProfileId).ToList();
 
             Expression<Func<TaskItem, bool>> _predicate = t => userProjectIds.Contains(t.ProjectId);
             Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>> _orderBy = query => query.OrderByDescending(t => t.UpdatedDate);
