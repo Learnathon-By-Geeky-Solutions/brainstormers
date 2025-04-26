@@ -94,10 +94,12 @@ jobs:
         run: |
           dotnet publish TaskForge.NET/TaskForge.NET.csproj -c Release -o ./publish
 
-      - name: Run Railway CLI
+      - name: Setup Railway CLI
         uses: ghcr.io/railwayapp/cli:latest
         env:
           railwayToken: ${{ secrets.RAILWAY_TOKEN }}
           SVC_ID: a5801c42-fe28-41f6-965c-17de80c2b789
+
+      - name: Run Railway
         run: |
           railway up --service=${{ env.SVC_ID }} --directory=./publish
