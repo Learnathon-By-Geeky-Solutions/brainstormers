@@ -92,7 +92,7 @@ jobs:
 
       - name: Publish .NET MVC App
         run: |
-          dotnet publish TaskForge.NET/TaskForge.NET.csproj -c Release -o ./publish
+          dotnet publish TaskForge.NET/TaskForge.WebUI/TaskForge.WebUI.csproj -c Release -o ./publish
 
       - name: Install Railway CLI
         run: |
