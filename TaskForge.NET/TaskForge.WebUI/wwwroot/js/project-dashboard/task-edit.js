@@ -129,7 +129,14 @@ function GetTaskDetails(taskId) {
             // Attachments
             $('#task-attachment-list').empty();
             data.attachments.forEach(att => {
-                $('#task-attachment-list').append(`
+                if (isReadOnly) {
+                    $('#task-attachment-list').append(`
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <a href="${att.downloadUrl}" target="_blank">${att.fileName}</a>
+                                    </li>`);
+                }
+                else {
+                    $('#task-attachment-list').append(`
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <a href="${att.downloadUrl}" target="_blank">${att.fileName}</a>
                                         <button type="button" class="btn btn-sm btn-danger" onclick="RemoveAttachment(${att.id})">
@@ -137,6 +144,7 @@ function GetTaskDetails(taskId) {
                                         </button>
                                     </li>
                                 `);
+                }
             });
         },
         error: function (xhr) {

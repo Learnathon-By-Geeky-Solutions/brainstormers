@@ -5,6 +5,10 @@
     ViewData["Title"] = "Project Dashboard - " + Model.ProjectTitle;
     var isReadOnly = (Model.UserRoleInThisProject == ProjectRole.Viewer);
 }
+<script>
+    var isReadOnly = @isReadOnly.ToString().ToLower();
+</script>
+
 
 <div class="container mt-4">
     <!-- Hidden form to inject AntiForgeryToken -->
