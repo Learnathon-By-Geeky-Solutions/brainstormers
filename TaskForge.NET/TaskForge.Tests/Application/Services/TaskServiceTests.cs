@@ -15,47 +15,50 @@ namespace TaskForge.Tests.Application.Services
 {
     public class TaskServiceTests
     {
-		private readonly Mock<IUnitOfWork> _unitOfWorkMock;
-		private readonly Mock<IFileService> _fileServiceMock;
-		private readonly Mock<IDependentTaskStrategy> _dependentTaskStrategyMock;
-		private readonly Mock<ITaskSorter> _taskSorterMock;
-		private readonly Mock<ITaskRepository> _taskRepositoryMock;
-		private readonly Mock<IProjectMemberRepository> _projectMemberRepositoryMock;
-		private readonly Mock<IUserProfileRepository> _userProfileRepositoryMock;
-		private readonly Mock<ITaskAssignmentRepository> _taskAssignmentRepositoryMock;
-		private readonly Mock<ITaskAttachmentRepository> _taskAttachmentRepositoryMock;
-		private readonly Mock<ILogger<TaskService>> _loggerMock;
+        private readonly Mock<IUnitOfWork> _unitOfWorkMock;
+        private readonly Mock<IFileService> _fileServiceMock;
+        private readonly Mock<IDependentTaskStrategy> _dependentTaskStrategyMock;
+        private readonly Mock<ITaskSorter> _taskSorterMock;
+        private readonly Mock<ITaskRepository> _taskRepositoryMock;
+        private readonly Mock<IProjectMemberRepository> _projectMemberRepositoryMock;
+        private readonly Mock<IUserProfileRepository> _userProfileRepositoryMock;
+        private readonly Mock<ITaskAssignmentRepository> _taskAssignmentRepositoryMock;
+        private readonly Mock<ITaskAttachmentRepository> _taskAttachmentRepositoryMock;
+        private readonly Mock<ILogger<TaskService>> _loggerMock;
 
-		private readonly TaskService _taskService;
+        private readonly TaskService _taskService;
 
-		public TaskServiceTests()
-		{
-			_unitOfWorkMock = new Mock<IUnitOfWork>();
-			_fileServiceMock = new Mock<IFileService>();
-			_dependentTaskStrategyMock = new Mock<IDependentTaskStrategy>();
-			_taskSorterMock = new Mock<ITaskSorter>();
-			_taskRepositoryMock = new Mock<ITaskRepository>();
-			_projectMemberRepositoryMock = new Mock<IProjectMemberRepository>();
-			_userProfileRepositoryMock = new Mock<IUserProfileRepository>();
-			_taskAssignmentRepositoryMock = new Mock<ITaskAssignmentRepository>();
-			_taskAttachmentRepositoryMock = new Mock<ITaskAttachmentRepository>();
-			_loggerMock = new Mock<ILogger<TaskService>>();
+        public TaskServiceTests()
+        {
+            _unitOfWorkMock = new Mock<IUnitOfWork>();
+            _fileServiceMock = new Mock<IFileService>();
+            _dependentTaskStrategyMock = new Mock<IDependentTaskStrategy>();
+            _taskSorterMock = new Mock<ITaskSorter>();
+            _taskRepositoryMock = new Mock<ITaskRepository>();
+            _projectMemberRepositoryMock = new Mock<IProjectMemberRepository>();
+            _userProfileRepositoryMock = new Mock<IUserProfileRepository>();
+            _taskAssignmentRepositoryMock = new Mock<ITaskAssignmentRepository>();
+            _taskAttachmentRepositoryMock = new Mock<ITaskAttachmentRepository>();
+            _loggerMock = new Mock<ILogger<TaskService>>();
 
-			_taskService = new TaskService(
-				_unitOfWorkMock.Object,
-				_fileServiceMock.Object,
-				_dependentTaskStrategyMock.Object,
-				_taskSorterMock.Object,
-				_taskRepositoryMock.Object,
-				_projectMemberRepositoryMock.Object,
-				_userProfileRepositoryMock.Object,
-				_taskAssignmentRepositoryMock.Object,
-				_taskAttachmentRepositoryMock.Object,
-				_loggerMock.Object
-			);
-		}
+            var dependencies = new TaskServiceDependencies
+            {
+                UnitOfWork = _unitOfWorkMock.Object,
+                FileService = _fileServiceMock.Object,
+                DependentTaskStrategy = _dependentTaskStrategyMock.Object,
+                TaskSorter = _taskSorterMock.Object,
+                TaskRepository = _taskRepositoryMock.Object,
+                ProjectMemberRepository = _projectMemberRepositoryMock.Object,
+                UserProfileRepository = _userProfileRepositoryMock.Object,
+                TaskAssignmentRepository = _taskAssignmentRepositoryMock.Object,
+                TaskAttachmentRepository = _taskAttachmentRepositoryMock.Object,
+                Logger = _loggerMock.Object
+            };
 
-		[Fact]
+            _taskService = new TaskService(dependencies);
+        }
+
+        [Fact]
         public async Task GetTaskListAsync_ReturnsTasksForProject()
         {
             // Arrange
@@ -77,8 +80,94 @@ namespace TaskForge.Tests.Application.Services
             Assert.NotNull(result);
             Assert.Single(result);
         }
+        [Fact]
+        public async Task GetTaskListAsync_ReturnsVerifiesIncludesAndOrdering()
+        {
+            // Arrange
+            var projectId = 1;
+            var dueDate1 = new DateTime(2023, 10, 5, 0, 0, 0, DateTimeKind.Utc);
+            var dueDate2 = new DateTime(2023, 11, 5, 0, 0, 0, DateTimeKind.Utc);
 
+            var taskList = new List<TaskItem>();
 
+            var task1 = new TaskItem { Id = 1, ProjectId = projectId };
+            task1.SetDueDate(dueDate1);
+            task1.AssignedUsers.Add(new TaskAssignment
+            {
+                UserProfile = new UserProfile { Id = 1, FullName = "User 1" }
+            });
+            taskList.Add(task1);
+
+            var task2 = new TaskItem { Id = 2, ProjectId = projectId };
+            task2.SetDueDate(dueDate2);
+            task2.AssignedUsers.Add(new TaskAssignment
+            {
+                UserProfile = new UserProfile { Id = 2, FullName = "User 2" }
+            });
+            taskList.Add(task2);
+
+            var orderedTaskList = taskList.OrderBy(t => t.DueDate).ToList();
+
+            Expression<Func<TaskItem, bool>> capturedPredicate = null!;
+            Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>> capturedOrderBy = null!;
+            Func<IQueryable<TaskItem>, IQueryable<TaskItem>> capturedIncludes = null!;
+
+            _taskRepositoryMock.Setup(r => r.FindByExpressionAsync(
+                It.IsAny<Expression<Func<TaskItem, bool>>>(),
+                It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(),
+                It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
+                null,
+                null
+            )).Callback<Expression<Func<TaskItem, bool>>,
+                      Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>,
+                      Func<IQueryable<TaskItem>, IQueryable<TaskItem>>,
+                      int?, int?>(
+                (pred, ord, incl, _, _) =>
+                {
+                    capturedPredicate = pred;
+                    capturedOrderBy = ord;
+                    capturedIncludes = incl;
+                })
+            .ReturnsAsync(orderedTaskList);
+
+            // Act
+            var result = (await _taskService.GetTaskListAsync(projectId)).ToList();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
+            Assert.All(result, r => Assert.Equal(projectId, r.ProjectId));
+            Assert.All(result, t => Assert.NotNull(t.AssignedUsers));
+            Assert.All(result.SelectMany(t => t.AssignedUsers), au => Assert.NotNull(au.UserProfile));
+            Assert.True(result.SequenceEqual(result.OrderBy(t => t.DueDate)));
+
+            // Validate capturedPredicate
+            Assert.NotNull(capturedPredicate);
+            var predicateFunc = capturedPredicate.Compile();
+            Assert.True(predicateFunc(new TaskItem { ProjectId = projectId }));
+            Assert.False(predicateFunc(new TaskItem { ProjectId = 999 }));
+
+            // Validate capturedOrderBy
+            Assert.NotNull(capturedOrderBy);
+
+            var taskA = new TaskItem { Id = 1, ProjectId = projectId };
+            taskA.SetDueDate(dueDate2);
+
+            var taskB = new TaskItem { Id = 2, ProjectId = projectId };
+            taskB.SetDueDate(dueDate1);
+
+            var unordered = new List<TaskItem> { taskA, taskB }.AsQueryable();
+#pragma warning disable S6966 // Use asynchronous counterparts
+            var ordered = capturedOrderBy(unordered).ToList();
+
+            Assert.Equal(taskB, ordered[0]);
+            Assert.Equal(taskA, ordered[1]);
+
+            Assert.NotNull(capturedIncludes);
+            var dummyQuery = new List<TaskItem>().AsQueryable();
+            var includedQuery = capturedIncludes(dummyQuery);
+            Assert.NotNull(includedQuery);
+        }
 
 
         [Fact]
@@ -149,7 +238,132 @@ namespace TaskForge.Tests.Application.Services
             // Assert
             Assert.Null(result);
         }
+        [Fact]
+        public async Task GetSortedTasksAsync_ReturnsSortedTasks_WhenValidProjectId()
+        {
+            // Arrange
+            int projectId = 1;
+            var status = TaskWorkflowStatus.ToDo;
+            var sortedTasks = new List<List<List<int>>>
+             {
+                 new List<List<int>> { new List<int> { 1, 2, 3 } }
+             };
 
+            _taskSorterMock.Setup(t => t.GetTopologicalOrderingsAsync(status, projectId))
+                           .ReturnsAsync(sortedTasks);
+
+            // Act
+            var result = await _taskService.GetSortedTasksAsync(status, projectId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(sortedTasks, result);
+        }
+        [Fact]
+        public async Task GetSortedTasksAsync_ReturnsEmptyList_WhenSortedTasksIsNull()
+        {
+            // Arrange
+            int projectId = 1;
+            var status = TaskWorkflowStatus.InProgress;
+
+            _taskSorterMock.Setup(t => t.GetTopologicalOrderingsAsync(status, projectId))
+                           .ReturnsAsync((List<List<List<int>>>)null!);
+
+            // Act
+            var result = await _taskService.GetSortedTasksAsync(status, projectId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+        [Fact]
+        public async Task GetSortedTasksAsync_ThrowsArgumentException_WhenProjectIdIsInvalid()
+        {
+            // Arrange
+            int invalidProjectId = 0;
+            var status = TaskWorkflowStatus.Done;
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(
+                () => _taskService.GetSortedTasksAsync(status, invalidProjectId));
+
+            Assert.Equal("Invalid project ID (Parameter 'projectId')", exception.Message);
+        }
+
+
+        [Fact]
+        public async Task GetDependentTaskIdsAsync_ReturnsDependentTaskIds_WhenValidIdAndStatus()
+        {
+            // Arrange
+            int taskId = 1;
+            var status = TaskWorkflowStatus.ToDo;
+            var dependentTaskIds = new List<int> { 101, 102, 103 };
+
+            _dependentTaskStrategyMock.Setup(d => d.InitializeAsync(status))
+                .Returns(Task.CompletedTask);
+            _dependentTaskStrategyMock.Setup(d => d.GetDependentTaskIdsAsync(taskId))
+                .ReturnsAsync(dependentTaskIds);
+
+            // Act
+            var result = await _taskService.GetDependentTaskIdsAsync(taskId, status);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(dependentTaskIds.Count, result.Count);
+            Assert.Equal(dependentTaskIds, result);
+        }
+        [Fact]
+        public async Task GetDependentTaskIdsAsync_ReturnsEmptyList_WhenDependentTaskIdsIsNull()
+        {
+            // Arrange
+            int taskId = 1;
+            var status = TaskWorkflowStatus.InProgress;
+
+            _dependentTaskStrategyMock.Setup(d => d.InitializeAsync(status))
+                .Returns(Task.CompletedTask);
+            _dependentTaskStrategyMock.Setup(d => d.GetDependentTaskIdsAsync(taskId))
+                .ReturnsAsync(new List<int>());
+
+            // Act
+            var result = await _taskService.GetDependentTaskIdsAsync(taskId, status);
+
+            // Assert
+            Assert.Empty(result);
+        }
+        [Fact]
+        public async Task GetDependentTaskIdsAsync_ThrowsException_WhenInitializationFails()
+        {
+            // Arrange
+            int taskId = 1;
+            var status = TaskWorkflowStatus.Done;
+
+            _dependentTaskStrategyMock.Setup(d => d.InitializeAsync(status))
+                .ThrowsAsync(new InvalidOperationException("Initialization failed"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _taskService.GetDependentTaskIdsAsync(taskId, status));
+
+            Assert.Equal("Initialization failed", exception.Message);
+        }
+        [Fact]
+        public async Task GetDependentTaskIdsAsync_ThrowsException_WhenGetDependentTaskIdsFails()
+        {
+            // Arrange
+            int taskId = 1;
+            var status = TaskWorkflowStatus.ToDo;
+
+            _dependentTaskStrategyMock.Setup(d => d.InitializeAsync(status))
+                .Returns(Task.CompletedTask);
+            _dependentTaskStrategyMock.Setup(d => d.GetDependentTaskIdsAsync(taskId))
+                .ThrowsAsync(new InvalidOperationException("Failed to get dependent task IDs"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _taskService.GetDependentTaskIdsAsync(taskId, status));
+
+            Assert.Equal("Failed to get dependent task IDs", exception.Message);
+        }
 
 
 
@@ -160,12 +374,6 @@ namespace TaskForge.Tests.Application.Services
             int userProfileId = 1;
             int pageIndex = 1;
             int pageSize = 2;
-
-            var projectMembers = new List<ProjectMember>
-            {
-                new ProjectMember { ProjectId = 10, UserProfileId = userProfileId },
-                new ProjectMember { ProjectId = 20, UserProfileId = userProfileId }
-            };
 
             var task1 = new TaskItem
             {
@@ -191,17 +399,26 @@ namespace TaskForge.Tests.Application.Services
 
             var tasks = new List<TaskItem> { task1, task2 };
 
-            _projectMemberRepositoryMock.Setup(u => u.FindByExpressionAsync(
-                It.IsAny<Expression<Func<ProjectMember, bool>>>(),
-                null, null, null, null))
-                .ReturnsAsync(projectMembers);
+            Expression<Func<TaskItem, bool>> capturedPredicate = null!;
+            Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>> capturedOrderBy = null!;
+            Func<IQueryable<TaskItem>, IQueryable<TaskItem>> capturedIncludes = null!;
 
             _taskRepositoryMock.Setup(u => u.GetPaginatedListAsync(
                 It.IsAny<Expression<Func<TaskItem, bool>>>(),
                 It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(),
                 It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
-                pageSize, 0))
-                .ReturnsAsync((tasks, tasks.Count));
+                It.IsAny<int>(), It.IsAny<int>()))
+             .Callback<Expression<Func<TaskItem, bool>>,
+                       Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>,
+                       Func<IQueryable<TaskItem>, IQueryable<TaskItem>>,
+                       int?, int?>(
+                 (pred, ord, incl, _, _) =>
+                 {
+                     capturedPredicate = pred;
+                     capturedOrderBy = ord;
+                     capturedIncludes = incl;
+                 })
+             .ReturnsAsync((tasks, tasks.Count));
 
             // Act
             var result = await _taskService.GetUserTaskAsync(userProfileId, pageIndex, pageSize);
@@ -214,6 +431,33 @@ namespace TaskForge.Tests.Application.Services
             Assert.Equal("Project A", result.Items[0].ProjectTitle);
             Assert.Equal("Task 2", result.Items[1].Title);
             Assert.Equal("Project B", result.Items[1].ProjectTitle);
+
+            // Includes
+            Assert.NotNull(capturedIncludes);
+            var dummyQuery = new List<TaskItem>
+             {
+                 new TaskItem { Project = new Project { Title = "Dummy" } }
+             }.AsQueryable();
+            var queryWithIncludes = capturedIncludes(dummyQuery);
+            Assert.NotNull(queryWithIncludes);
+
+            // Predicate
+            Assert.NotNull(capturedPredicate);
+            var compiledPredicate = capturedPredicate.Compile();
+            Assert.False(compiledPredicate(task1));
+            Assert.False(compiledPredicate(task2));
+            Assert.False(compiledPredicate(new TaskItem { ProjectId = 99 }));
+
+            // OrderBy
+            Assert.NotNull(capturedOrderBy);
+            var unordered = new List<TaskItem>
+             {
+                 new TaskItem { UpdatedDate = DateTime.UtcNow.AddDays(-1) },
+                 new TaskItem { UpdatedDate = DateTime.UtcNow }
+             }.AsQueryable();
+
+            var ordered = capturedOrderBy(unordered).ToList();
+            Assert.True(ordered[0].UpdatedDate > ordered[1].UpdatedDate);
         }
         [Fact]
         public async Task GetUserTaskAsync_ReturnsEmptyPaginatedList_WhenUserProfileIdIsNull()
@@ -231,10 +475,219 @@ namespace TaskForge.Tests.Application.Services
             Assert.Empty(result.Items);
             Assert.Equal(0, result.TotalCount);
         }
+        [Fact]
+        public async Task GetUserTaskAsync_ThrowsException_WhenPageIndexIsLessThan1()
+        {
+            // Arrange
+            int? userProfileId = 1;
+            int invalidPageIndex = 0;
+            int pageSize = 10;
 
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+                _taskService.GetUserTaskAsync(userProfileId, invalidPageIndex, pageSize));
 
+            Assert.Equal("pageIndex", exception.ParamName);
+            Assert.Contains("Page index must be greater than zero.", exception.Message);
+        }
+        [Fact]
+        public async Task GetUserTaskAsync_ThrowsException_WhenPageSizeIsLessThan1()
+        {
+            // Arrange
+            int? userProfileId = 1;
+            int pageIndex = 1;
+            int invalidPageSize = 0;
 
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+                _taskService.GetUserTaskAsync(userProfileId, pageIndex, invalidPageSize));
 
+            Assert.Equal("pageSize", exception.ParamName);
+            Assert.Contains("Page size must be greater than zero.", exception.Message);
+        }
+        [Fact]
+        public async Task CreateTaskAsync_CreatesTask_WhenNoAttachments()
+        {
+            // Arrange
+            var taskDto = new TaskDto
+            {
+                ProjectId = 1,
+                Title = "No Attachments Task",
+                Description = "No attachments",
+                StartDate = DateTime.UtcNow,
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.Medium,
+                Attachments = new List<IFormFile>()
+            };
+
+            // Act
+            await _taskService.CreateTaskAsync(taskDto);
+
+            // Assert
+            _taskRepositoryMock.Verify(r => r.AddAsync(It.IsAny<TaskItem>()), Times.Once);
+            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+        }
+        [Fact]
+        public async Task CreateTaskAsync_SetsDueDate_WhenProvided()
+        {
+            // Arrange
+            var dueDate = DateTime.UtcNow.AddDays(5);
+            var taskDto = new TaskDto
+            {
+                ProjectId = 1,
+                Title = "Test Task",
+                Description = "Test Description",
+                StartDate = DateTime.UtcNow,
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.Medium,
+                DueDate = dueDate,
+                Attachments = new List<IFormFile>()
+            };
+
+            // Act
+            await _taskService.CreateTaskAsync(taskDto);
+
+            // Assert
+            _taskRepositoryMock.Verify(r => r.AddAsync(It.IsAny<TaskItem>()), Times.Once);
+            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+            _taskRepositoryMock.Verify(r => r.AddAsync(It.Is<TaskItem>(t => t.DueDate == dueDate)), Times.Once);
+        }
+        [Fact]
+        public async Task CreateTaskAsync_DoesNotSetDueDate_WhenNotProvided()
+        {
+            // Arrange
+            var taskDto = new TaskDto
+            {
+                ProjectId = 1,
+                Title = "Test Task",
+                Description = "Test Description",
+                StartDate = DateTime.UtcNow,
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.Medium,
+                Attachments = new List<IFormFile>()
+            };
+
+            // Act
+            await _taskService.CreateTaskAsync(taskDto);
+
+            // Assert
+            _taskRepositoryMock.Verify(r => r.AddAsync(It.IsAny<TaskItem>()), Times.Once);
+            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+            _taskRepositoryMock.Verify(r => r.AddAsync(It.Is<TaskItem>(t => t.DueDate == null)), Times.Once);
+        }
+        [Fact]
+        public async Task CreateTaskAsync_ThrowsIOException_WhenSavingAttachmentFails()
+        {
+            // Arrange
+            var fileMock = new Mock<IFormFile>();
+            fileMock.Setup(f => f.Length).Returns(3);
+            fileMock.Setup(f => f.FileName).Returns("testfile.txt");
+            fileMock.Setup(f => f.ContentType).Returns("text/plain");
+
+            fileMock
+                .Setup(f => f.CopyToAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new IOException("Disk error"));
+
+            var taskDto = new TaskDto
+            {
+                ProjectId = 1,
+                Title = "Task with bad file",
+                Description = "Description",
+                StartDate = DateTime.UtcNow,
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.High,
+                Attachments = new List<IFormFile> { fileMock.Object }
+            };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<IOException>(() => _taskService.CreateTaskAsync(taskDto));
+            Assert.Contains("An error occurred while saving the attachment", ex.Message);
+
+            _loggerMock.Verify(
+                l => l.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, _) => v.ToString()!.Contains("Failed to save file")),
+                    It.Is<IOException>(e => e.Message == "Disk error"),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                Times.Once);
+        }
+        [Fact]
+        public async Task CreateTaskAsync_ThrowsInvalidOperationException_WhenAttachmentsExceedLimit()
+        {
+            // Arrange
+            var attachments = Enumerable.Range(0, 11).Select(i =>
+                new FormFile(Stream.Null, 0, 1, $"file{i}", $"file{i}.txt")
+            ).Cast<IFormFile>().ToList();
+
+            var taskDto = new TaskDto
+            {
+                Title = "Excess Attachments",
+                Attachments = attachments
+            };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _taskService.CreateTaskAsync(taskDto));
+
+            Assert.Equal("You can only attach up to 10 files.", ex.Message);
+        }
+        [Fact]
+        public async Task CreateTaskAsync_SkipsEmptyAttachments()
+        {
+            // Arrange
+            var emptyFile = new FormFile(Stream.Null, 0, 0, "file", "empty.txt");
+
+            var taskDto = new TaskDto
+            {
+                ProjectId = 1,
+                Title = "Task With Empty File",
+                Description = "Should skip",
+                StartDate = DateTime.UtcNow,
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.Medium,
+                Attachments = new List<IFormFile> { emptyFile }
+            };
+
+            // Act
+            await _taskService.CreateTaskAsync(taskDto);
+
+            // Assert
+            _taskRepositoryMock.Verify(r => r.AddAsync(It.IsAny<TaskItem>()), Times.Once);
+            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+            // No attachment added
+            _taskRepositoryMock.Verify(r =>
+                r.AddAsync(It.Is<TaskItem>(t => t.Attachments.Count == 0)), Times.Once);
+        }
+        [Fact]
+        public async Task CreateTaskAsync_AddsAttachment_WhenFileIsValid()
+        {
+            // Arrange
+            var fileContent = new MemoryStream(new byte[] { 1, 2, 3 });
+            var formFile = new FormFile(fileContent, 0, fileContent.Length, "file", "test.txt")
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = "text/plain"
+            };
+
+            var taskDto = new TaskDto
+            {
+                ProjectId = 1,
+                Title = "Task With Valid File",
+                Description = "Should attach",
+                StartDate = DateTime.UtcNow,
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.Medium,
+                Attachments = new List<IFormFile> { formFile }
+            };
+
+            // Act
+            await _taskService.CreateTaskAsync(taskDto);
+
+            // Assert
+            _taskRepositoryMock.Verify(r =>
+                r.AddAsync(It.Is<TaskItem>(t => t.Attachments.Count == 1)), Times.Once);
+        }
         [Fact]
         public async Task CreateTaskAsync_ThrowsIfAttachmentsExceedLimit()
         {
@@ -254,7 +707,7 @@ namespace TaskForge.Tests.Application.Services
 
 
         [Fact]
-        public async Task UpdateTaskAsync_SuccessfullyUpdatesTask()
+        public async Task UpdateTaskAsync_SuccessfullyUpdatesTask_WithAttachments()
         {
             // Arrange
             var taskId = 1;
@@ -288,7 +741,6 @@ namespace TaskForge.Tests.Application.Services
                 Attachments = new List<TaskAttachment>()
             };
 
-            // Corrected the mock setup to use Expression<Func<TaskItem, bool>> instead of Func<TaskItem, bool>
             _taskRepositoryMock.Setup(r => r.FindByExpressionAsync(
                 It.IsAny<Expression<Func<TaskItem, bool>>>(),
                 It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(),
@@ -311,8 +763,59 @@ namespace TaskForge.Tests.Application.Services
             // Assert
             _taskRepositoryMock.Verify(r => r.UpdateAsync(It.Is<TaskItem>(t => t.Id == taskId && t.Title == dto.Title)), Times.Once);
         }
+        [Fact]
+        public async Task UpdateTaskAsync_SuccessfullyUpdatesTask_WithoutAttachments()
+        {
+            // Arrange
+            var taskId = 1;
+            var userId = 1;
+            var dto = new TaskUpdateDto
+            {
+                Id = taskId,
+                Title = "Updated Task",
+                Description = "Updated Task Description",
+                Status = (int)TaskWorkflowStatus.InProgress,
+                Priority = (int)TaskPriority.High,
+                StartDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(5),
+                AssignedUserIds = new List<int> { userId },
+                Attachments = null, // No attachments
+                DependsOnTaskIds = new List<int> { 2, 3 },
+                DependentTaskIds = new List<int> { 4, 5 }
+            };
 
+            var existingTask = new TaskItem
+            {
+                Id = taskId,
+                IsDeleted = false,
+                Title = "Old Task",
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.Medium,
+                Attachments = new List<TaskAttachment>()
+            };
 
+            _taskRepositoryMock.Setup(r => r.FindByExpressionAsync(
+                It.IsAny<Expression<Func<TaskItem, bool>>>(),
+                It.IsAny<Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>>(),
+                It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
+                null, null
+            )).ReturnsAsync(new List<TaskItem> { existingTask });
+
+            var user = new UserProfile
+            {
+                Id = userId,
+                FullName = "Test User"
+            };
+
+            _userProfileRepositoryMock.Setup(r => r.FindByExpressionAsync(It.IsAny<Expression<Func<UserProfile, bool>>>(), null, null, null, null))
+                .ReturnsAsync(new List<UserProfile> { user });
+
+            // Act
+            await _taskService.UpdateTaskAsync(dto);
+
+            // Assert
+            _taskRepositoryMock.Verify(r => r.UpdateAsync(It.Is<TaskItem>(t => t.Id == taskId && t.Title == dto.Title)), Times.Once);
+        }
         [Fact]
         public async Task UpdateTaskAsync_TaskNotFound_ThrowsKeyNotFoundException()
         {
@@ -325,7 +828,6 @@ namespace TaskForge.Tests.Application.Services
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() => _taskService.UpdateTaskAsync(dto));
         }
-
         [Fact]
         public async Task UpdateTaskAsync_TooManyAttachments_ThrowsInvalidOperationException()
         {
@@ -361,7 +863,6 @@ namespace TaskForge.Tests.Application.Services
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() => _taskService.UpdateTaskAsync(dto));
         }
-
         [Fact]
         public async Task UpdateTaskAsync_UpdatesAssignedUsersCorrectly()
         {
@@ -427,7 +928,118 @@ namespace TaskForge.Tests.Application.Services
                      t.AssignedUsers[0].UserProfile.Id == userId
             )), Times.Once);
         }
+        [Fact]
+        public async Task UpdateTaskAsync_ShouldUpdateTask_WhenTaskExists()
+        {
+            // Arrange
+            var taskId = 1;
+            var taskUpdateDto = new TaskUpdateDto
+            {
+                Id = taskId,
+                Title = "Updated Task",
+                Description = "Updated description",
+                Status = (int)TaskWorkflowStatus.InProgress,
+                Priority = (int)TaskPriority.Medium,
+                StartDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(5),
+                AssignedUserIds = new List<int> { 1, 2 },
+                DependsOnTaskIds = new List<int> { 3 }
+            };
 
+            var existingTask = new TaskItem
+            {
+                Id = taskId,
+                Title = "Old Task",
+                Description = "Old description",
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.Low,
+                StartDate = DateTime.UtcNow,
+                AssignedUsers = new List<TaskAssignment>(),
+                Dependencies = new List<TaskDependency>()
+            };
+            existingTask.SetDueDate(DateTime.UtcNow.AddDays(10));
+
+            Expression<Func<TaskItem, bool>> capturedPredicate = null!;
+            Func<IQueryable<TaskItem>, IQueryable<TaskItem>> capturedIncludes = null!;
+
+            _taskRepositoryMock.Setup(x => x.FindByExpressionAsync(
+                It.IsAny<Expression<Func<TaskItem, bool>>>(),
+                null,
+                It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
+                null,
+                null))
+            .Callback<Expression<Func<TaskItem, bool>>,
+                      Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>?,
+                      Func<IQueryable<TaskItem>, IQueryable<TaskItem>>?,
+                      int?, int?>(
+                (pred, _, incl, _, _) =>
+                {
+                    capturedPredicate = pred;
+                    capturedIncludes = incl!;
+                })
+            .ReturnsAsync(new List<TaskItem> { existingTask });
+
+            // Act
+            await _taskService.UpdateTaskAsync(taskUpdateDto);
+
+            // Assert
+            Assert.NotNull(capturedPredicate);
+            Assert.True(capturedPredicate.Compile()(existingTask));
+            Assert.False(capturedPredicate.Compile()(new TaskItem { Id = 999 }));
+
+            Assert.NotNull(capturedIncludes);
+            var dummyQuery = new List<TaskItem>().AsQueryable();
+            var resultWithIncludes = capturedIncludes(dummyQuery);
+            Assert.NotNull(resultWithIncludes); // Only a minimal include verification since it's a mock
+
+            _taskRepositoryMock.Verify(x => x.UpdateAsync(It.Is<TaskItem>(t =>
+                t.Id == taskId &&
+                t.Title == taskUpdateDto.Title &&
+                t.Description == taskUpdateDto.Description &&
+                t.Status == (TaskWorkflowStatus)taskUpdateDto.Status &&
+                t.Priority == (TaskPriority)taskUpdateDto.Priority)), Times.Once);
+
+            _unitOfWorkMock.Verify(x => x.SaveChangesAsync(), Times.Once);
+        }
+        [Fact]
+        public async Task UpdateTaskAsync_ShouldThrowNotFound_WhenTaskDoesNotExist()
+        {
+            // Arrange
+            var taskUpdateDto = new TaskUpdateDto
+            {
+                Id = 999,
+                Title = "Updated Task",
+                Description = "Updated description"
+            };
+
+            Expression<Func<TaskItem, bool>> capturedPredicate = null!;
+            Func<IQueryable<TaskItem>, IQueryable<TaskItem>> capturedIncludes = null!;
+
+            _taskRepositoryMock.Setup(x => x.FindByExpressionAsync(
+                It.IsAny<Expression<Func<TaskItem, bool>>>(),
+                null,
+                It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
+                null,
+                null))
+            .Callback<Expression<Func<TaskItem, bool>>,
+                      Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>?,
+                      Func<IQueryable<TaskItem>, IQueryable<TaskItem>>?,
+                      int?, int?>(
+                (pred, _, incl, _, _) =>
+                {
+                    capturedPredicate = pred;
+                    capturedIncludes = incl!;
+                })
+            .ReturnsAsync(new List<TaskItem>());
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+                _taskService.UpdateTaskAsync(taskUpdateDto));
+
+            Assert.NotNull(capturedPredicate);
+            Assert.True(capturedPredicate.Compile()(new TaskItem { Id = 999 }));
+            Assert.NotNull(capturedIncludes);
+        }
 
 
 
@@ -492,6 +1104,80 @@ namespace TaskForge.Tests.Application.Services
             // Act & Assert
             var ex = await Assert.ThrowsAsync<KeyNotFoundException>(() => _taskService.RemoveTaskAsync(999));
             Assert.Equal("Task not found", ex.Message);
+        }
+        [Fact]
+        public async Task RemoveTaskAsync_ShouldRemoveTask_WhenTaskExists()
+        {
+            // Arrange
+            var taskId = 1;
+            var attachments = new List<TaskAttachment>
+             {
+                 new TaskAttachment { Id = 10, FilePath = "file1.txt" },
+                 new TaskAttachment { Id = 11, FilePath = "file2.txt" }
+             };
+
+            var assignments = new List<TaskAssignment>
+             {
+                 new TaskAssignment { Id = 20 },
+                 new TaskAssignment { Id = 21 }
+             };
+
+            var taskItem = new TaskItem
+            {
+                Id = taskId,
+                Attachments = attachments,
+                AssignedUsers = assignments
+            };
+
+            Expression<Func<TaskItem, bool>>? capturedPredicate = null;
+            Func<IQueryable<TaskItem>, IQueryable<TaskItem>>? capturedIncludes = null;
+
+            _taskRepositoryMock.Setup(x => x.FindByExpressionAsync(
+                It.IsAny<Expression<Func<TaskItem, bool>>>(),
+                null,
+                It.IsAny<Func<IQueryable<TaskItem>, IQueryable<TaskItem>>>(),
+                null, null))
+                .Callback<Expression<Func<TaskItem, bool>>,
+                          Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>>?,
+                          Func<IQueryable<TaskItem>, IQueryable<TaskItem>>?,
+                          int?, int?>(
+                    (predicate, _, includes, _, _) =>
+                    {
+                        capturedPredicate = predicate;
+                        capturedIncludes = includes;
+                    })
+                .ReturnsAsync(new List<TaskItem> { taskItem });
+
+            // Act
+            await _taskService.RemoveTaskAsync(taskId);
+
+            // Assert - predicate
+            Assert.NotNull(capturedPredicate);
+            var predicate = capturedPredicate!.Compile();
+            Assert.True(predicate(new TaskItem { Id = taskId }));
+            Assert.False(predicate(new TaskItem { Id = 999 }));
+
+            // Assert - includes
+            Assert.NotNull(capturedIncludes);
+            var dummyQuery = new List<TaskItem>().AsQueryable();
+            var resultQuery = capturedIncludes!(dummyQuery);
+            Assert.NotNull(resultQuery);
+
+            // Verify file deletions
+            foreach (var attachment in attachments)
+            {
+                _fileServiceMock.Verify(f => f.DeleteFileAsync(attachment.FilePath), Times.Once);
+            }
+
+            // Verify soft deletions
+            _taskRepositoryMock.Verify(r => r.DeleteByIdAsync(taskId), Times.Once);
+            _taskAttachmentRepositoryMock.Verify(r => r.DeleteByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(attachments.Select(a => a.Id)))), Times.Once);
+            _taskAssignmentRepositoryMock.Verify(r => r.DeleteByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(assignments.Select(a => a.Id)))), Times.Once);
+
+            // Verify save
+            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
 
 
