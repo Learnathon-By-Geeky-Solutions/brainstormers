@@ -8,11 +8,11 @@ using TaskForge.WebUI.Models;
 namespace TaskForge.WebUI.Controllers;
 
 [Authorize(Roles = "Admin,Operator")]
-public class UserManagementController : Controller
+public class UserController : Controller
 {
     private readonly IUserService _userService;
 
-    public UserManagementController(IUserService userService)
+    public UserController(IUserService userService)
     {
         _userService = userService;
     }
