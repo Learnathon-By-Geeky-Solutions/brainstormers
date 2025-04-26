@@ -103,4 +103,4 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway up ./publish --service=a5801c42-fe28-41f6-965c-17de80c2b789
+          railway up --service=a5801c42-fe28-41f6-965c-17de80c2b789
