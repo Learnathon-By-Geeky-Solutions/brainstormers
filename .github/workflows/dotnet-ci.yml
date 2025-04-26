@@ -76,7 +76,6 @@ jobs:
     name: Deploy to Railway
     needs: build-and-analyze
     runs-on: ubuntu-latest
-    if: success()
 
     steps:
       - name: Checkout repository

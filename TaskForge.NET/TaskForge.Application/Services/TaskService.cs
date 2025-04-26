@@ -11,7 +11,6 @@ using TaskForge.Application.Helpers.TaskSorters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using TaskForge.Application.Interfaces.Repositories;
-using Microsoft.AspNetCore.Identity;
 
 namespace TaskForge.Application.Services
 {
@@ -62,7 +61,7 @@ namespace TaskForge.Application.Services
 		{
 			return await _taskRepository.FindByExpressionAsync(
 				predicate: t => t.ProjectId == projectId,
-				includes: t => t.Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile),
+				includes: q => q.Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile),
 				orderBy: q => q.OrderBy(t => t.DueDate)
 			);
 		}
@@ -92,12 +91,12 @@ namespace TaskForge.Application.Services
 			var userProjectIds = userProjectList.Select(pm => pm.ProjectId).ToList();
 
 
-			Expression<Func<TaskItem, bool>> _predicate = t => userProjectIds.Contains(t.ProjectId);
-			Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>> _orderBy = query => query.OrderByDescending(t => t.UpdatedDate);
+			Expression<Func<TaskItem, bool>> predicate = t => userProjectIds.Contains(t.ProjectId);
+			Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>> orderBy = query => query.OrderByDescending(t => t.UpdatedDate);
 
 			var (taskList, totalCount) = await _taskRepository.GetPaginatedListAsync(
-				predicate: _predicate,
-				orderBy: _orderBy,
+				predicate: predicate,
+				orderBy: orderBy,
 				includes: query => query.Include(t => t.Project),
 				skip: (pageIndex - 1) * pageSize,
 				take: pageSize
@@ -123,7 +122,7 @@ namespace TaskForge.Application.Services
 				throw new ArgumentException("Invalid project ID", nameof(projectId));
 
 			var sortedTasks = await _taskSorter.GetTopologicalOrderingsAsync(status, projectId);
-			return sortedTasks ?? new List<List<List<int>>>();
+			return sortedTasks;
 		}
 		public async Task<List<int>> GetDependentTaskIdsAsync(int id, TaskWorkflowStatus status)
 		{
@@ -353,7 +352,7 @@ namespace TaskForge.Application.Services
 			var task = await _taskRepository.GetByIdAsync(attachment.TaskId);
 
             var projectMember = (await _projectMemberRepository.FindByExpressionAsync(
-                pm => pm.UserProfile.UserId == userId && pm.ProjectId == task.ProjectId
+                pm => pm.UserProfile.UserId == userId && pm.ProjectId == task!.ProjectId
             )).FirstOrDefault();
 
             if (projectMember == null) throw new KeyNotFoundException("Project member not found");

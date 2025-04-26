@@ -105,7 +105,7 @@ namespace TaskForge.Application.Services
 
 		private static Func<IQueryable<ProjectMember>, IOrderedQueryable<ProjectMember>> BuildOrderBy(ProjectFilterDto filter)
 		{
-			var sortOrder = filter.SortOrder?.ToLower() ?? "asc";
+			var sortOrder = "asc";
 			var sortBy = filter.SortBy?.ToLower();
 
 			return query => (sortBy, sortOrder) switch
@@ -187,15 +187,15 @@ namespace TaskForge.Application.Services
 		{
 			var existingProject = await _projectRepository.GetByIdAsync(dto.Id);
 
-			existingProject.Title = dto.Title;
-			existingProject.Description = dto.Description;
-			existingProject.Status = dto.Status;
-			existingProject.StartDate = dto.StartDate;
-			existingProject.UpdatedBy = dto.UpdatedBy;
-			existingProject.UpdatedDate = dto.UpdatedDate;
-			existingProject.SetEndDate(dto.EndDate);
+            existingProject!.Title = dto.Title;
+            existingProject.Description = dto.Description;
+            existingProject.Status = dto.Status;
+            existingProject.StartDate = dto.StartDate;
+            existingProject.UpdatedBy = dto.UpdatedBy;
+            existingProject.UpdatedDate = dto.UpdatedDate;
+            existingProject.SetEndDate(dto.EndDate);
 
-			await _projectRepository.UpdateAsync(existingProject);
+            await _projectRepository.UpdateAsync(existingProject);
 			await _unitOfWork.SaveChangesAsync();
 		}
 
