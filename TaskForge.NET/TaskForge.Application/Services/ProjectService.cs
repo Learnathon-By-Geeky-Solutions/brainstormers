@@ -185,12 +185,7 @@ namespace TaskForge.Application.Services
 
 		public async Task UpdateProjectAsync(Project dto)
 		{
-			if (dto == null)
-				throw new ArgumentNullException(nameof(dto), "Project cannot be null.");
-
 			var existingProject = await _projectRepository.GetByIdAsync(dto.Id);
-			if (existingProject == null)
-				throw new InvalidOperationException($"Project with ID {dto.Id} not found.");
 
 			existingProject.Title = dto.Title;
 			existingProject.Description = dto.Description;

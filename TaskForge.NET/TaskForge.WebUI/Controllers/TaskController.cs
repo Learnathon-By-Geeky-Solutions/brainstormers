@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
+using TaskForge.Domain.Enums;
 using TaskForge.WebUI.Models;
 
 namespace TaskForge.WebUI.Controllers
@@ -11,11 +13,13 @@ namespace TaskForge.WebUI.Controllers
     {
         private readonly ITaskService _taskService;
         private readonly IProjectMemberService _projectMemberService;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public TaskController(ITaskService taskService, IProjectMemberService projectMemberService)
+        public TaskController(ITaskService taskService, IProjectMemberService projectMemberService, UserManager<IdentityUser> userManager)
         {
             _taskService = taskService;
             _projectMemberService = projectMemberService;
+            _userManager = userManager;
         }
 
 
@@ -28,6 +32,11 @@ namespace TaskForge.WebUI.Controllers
                 {
                     return Json(new { success = false, message = "Invalid data." });
                 }
+
+                var user = await _userManager.GetUserAsync(User);
+
+                var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, model.ProjectId);
+                if (member == null || member.Role == ProjectRole.Viewer) return Json(new { success = false, message = "You do not have permission to create tasks in this project." });
 
                 var taskDto = new TaskDto
                 {
@@ -54,7 +63,7 @@ namespace TaskForge.WebUI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTask(int id)
         {
-            if (!ModelState.IsValid) return View();
+            if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid Data" });
 
             var task = await _taskService.GetTaskByIdAsync(id);
             if (task == null) return NotFound();
@@ -94,6 +103,15 @@ namespace TaskForge.WebUI.Controllers
                 if (!ModelState.IsValid)
                     return Json(new { success = false, message = "Invalid data." });
 
+                var user = await _userManager.GetUserAsync(User);
+
+                var task = await _taskService.GetTaskByIdAsync(dto.Id);
+                if (task == null) return Json(new { success = false, message = "Task not found." });
+
+                var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, task.ProjectId);
+                if (member == null || member.Role == ProjectRole.Viewer) return Json(new { success = false, message = "You do not have permission to update tasks in this project." });
+
+
                 await _taskService.UpdateTaskAsync(dto);
 
                 return Json(new { success = true, message = "Task updated successfully." });
@@ -115,6 +133,15 @@ namespace TaskForge.WebUI.Controllers
             }
             try
             {
+                var user = await _userManager.GetUserAsync(User);
+
+                var task = await _taskService.GetTaskByIdAsync(id);
+                if (task == null) return Json(new { success = false, message = "Task not found." });
+
+                var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, task.ProjectId);
+                if (member == null || member.Role == ProjectRole.Viewer) return Json(new { success = false, message = "You do not have permission to delete tasks in this project." });
+
+
                 await _taskService.RemoveTaskAsync(id);
                 return Json(new { success = true, message = "Task deleted successfully." });
             }
@@ -129,11 +156,13 @@ namespace TaskForge.WebUI.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAttachment(int id)
         {
-            if (!ModelState.IsValid) return View();
+            if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid Data" });
 
             try
             {
-                await _taskService.DeleteAttachmentAsync(id);
+                var user = await _userManager.GetUserAsync(User);
+
+                await _taskService.DeleteAttachmentAsync(id, user.Id);
                 return Json(new { success = true, message = "TaskAttachment deleted successfully." });
             }
             catch (Exception ex)
