@@ -77,10 +77,6 @@ jobs:
     needs: build-and-analyze
     runs-on: ubuntu-latest
     if: always()
-    container: ghcr.io/railwayapp/cli:latest
-    env:
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-      SVC_ID: taskforge-web
 
     steps:
       - name: Checkout repository
@@ -98,6 +94,13 @@ jobs:
         run: |
           dotnet publish TaskForge.NET/TaskForge.NET.csproj -c Release -o ./publish
 
-      - name: Deploy to Railway
+      - name: Install Railway CLI
         run: |
-          railway up --service=${{ env.SVC_ID }} --directory=./publish
+          curl -fsSL https://railway.app/install.sh | sh
+          echo "$HOME/.railway/bin" >> $GITHUB_PATH
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up --service=a5801c42-fe28-41f6-965c-17de80c2b789 --directory=./publish
