@@ -12,6 +12,7 @@ using TaskForge.Application.Helpers.TaskSorters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using TaskForge.Application.Interfaces.Repositories;
+using Microsoft.AspNetCore.Identity;
 
 namespace TaskForge.Application.Services
 {
@@ -72,7 +73,7 @@ namespace TaskForge.Application.Services
 
 			Func<IQueryable<TaskItem>, IQueryable<TaskItem>> includes = query =>
 				query.Include(t => t.Attachments.Where(a => !a.IsDeleted))
-					 .Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile)
+					 .Include(t => t.AssignedUsers.Where(a => !a.IsDeleted)).ThenInclude(au => au.UserProfile)
 					 .Include(t => t.Dependencies)
 					 .Include(t => t.Project);
 
@@ -298,19 +299,26 @@ namespace TaskForge.Application.Services
 					includes: query => query
 						.Include(t => t.Attachments)
 						.Include(t => t.AssignedUsers)
-				);
+                        .Include(t => t.Dependencies)
+                        .Include(t => t.DependentOnThis)
+                );
 
 				var taskItem = task.FirstOrDefault();
 				if (taskItem == null)
 					throw new KeyNotFoundException("Task not found");
 
-				await _taskRepository.DeleteByIdAsync(id);
+				if(taskItem.DependentOnThis.Any())
+                    throw new InvalidOperationException("Cannot delete task with dependencies.");
+
+                await _taskRepository.DeleteByIdAsync(id);
 
 				var attachmentIds = taskItem.Attachments.Select(a => a.Id);
 				await _taskAttachmentRepository.DeleteByIdsAsync(attachmentIds);
 
 				var assignmentIds = taskItem.AssignedUsers.Select(a => a.Id);
 				await _taskAssignmentRepository.DeleteByIdsAsync(assignmentIds);
+
+				taskItem.Dependencies.Clear();
 
 				await _unitOfWork.SaveChangesAsync();
 
@@ -335,7 +343,7 @@ namespace TaskForge.Application.Services
 			}
 		}
 
-		public async Task DeleteAttachmentAsync(int attachmentId)
+		public async Task DeleteAttachmentAsync(int attachmentId, string userId)
 		{
 			var attachment = await _taskAttachmentRepository.GetByIdAsync(attachmentId);
 			if (attachment == null)
@@ -343,7 +351,19 @@ namespace TaskForge.Application.Services
 				throw new KeyNotFoundException("Attachment not found");
 			}
 
-			await _fileService.DeleteFileAsync(attachment.FilePath);
+			var task = await _taskRepository.GetByIdAsync(attachment.TaskId);
+
+            var projectMember = (await _projectMemberRepository.FindByExpressionAsync(
+                pm => pm.UserProfile.UserId == userId && pm.ProjectId == task.ProjectId
+            )).FirstOrDefault();
+
+            if (projectMember == null) throw new KeyNotFoundException("Project member not found");
+
+            if (projectMember.Role == ProjectRole.Viewer) 
+                throw new UnauthorizedAccessException("You do not have permission to delete attachments in this project.");
+
+
+            await _fileService.DeleteFileAsync(attachment.FilePath);
 			await _taskAttachmentRepository.DeleteByIdAsync(attachmentId);
 			await _unitOfWork.SaveChangesAsync();
 		}

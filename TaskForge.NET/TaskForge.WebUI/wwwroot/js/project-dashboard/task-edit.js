@@ -158,11 +158,16 @@ function RemoveAttachment(attachmentId) {
         headers: {
             'RequestVerificationToken': token
         },
-        success: function () {
+        success: function (response) {
             // remove the list item from UI without full reload
-            $(`#task-attachment-list button[onclick="RemoveAttachment(${attachmentId})"]`)
-                .closest('li')
-                .remove();
+            if (response.success) {
+                $(`#task-attachment-list button[onclick="RemoveAttachment(${attachmentId})"]`)
+                    .closest('li')
+                    .remove();
+            }
+            else {
+                alert("Failed to delete attachment: " + response.message);
+            }
         },
         error: function (xhr) {
             console.error("Failed to delete attachment:", xhr.responseText);
