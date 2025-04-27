@@ -15,7 +15,7 @@ namespace TaskForge.Application.Interfaces.Services
         Task CreateTaskAsync(TaskDto taskDto);
         Task UpdateTaskAsync(TaskUpdateDto dto);
         Task RemoveTaskAsync(int id);
-        Task DeleteAttachmentAsync(int attachmentId, string userId);
+        Task DeleteAttachmentAsync(int attachmentId);
 
     }
 }
