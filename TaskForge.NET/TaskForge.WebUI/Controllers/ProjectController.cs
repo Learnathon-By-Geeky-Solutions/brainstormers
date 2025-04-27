@@ -36,6 +36,7 @@ public class ProjectController : Controller
     public async Task<IActionResult> Index(ProjectFilterDto filter, int pageIndex = 1, int pageSize = 10)
     {
         if (!ModelState.IsValid) return RedirectToAction("Index");
+
         var user = await _userManager.GetUserAsync(User);
         if (user == null) return Unauthorized();
 
@@ -54,7 +55,6 @@ public class ProjectController : Controller
 
         return View(projectList);
     }
-
 
     // GET: Project/Create
     [HttpGet]
@@ -97,28 +97,8 @@ public class ProjectController : Controller
         };
 
         await _projectService.CreateProjectAsync(createNewProject);
+
         return RedirectToAction("Index");
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> Update(int id)
-    {
-        if (!ModelState.IsValid) return View();
-
-        var project = await _projectService.GetProjectByIdAsync(id);
-        if (project == null) return NotFound();
-
-        var projectUpdate = new ProjectUpdateViewModel
-        {
-            Id = project.Id,
-            Title = project.Title,
-            Description = project.Description,
-            StartDate = project.StartDate,
-            Status = project.Status,
-            EndDateInput = project.EndDate
-        };
-
-        return PartialView("_EditProjectForm", projectUpdate);
     }
 
     // POST: Projects/Update
@@ -128,10 +108,14 @@ public class ProjectController : Controller
     {
         if (!ModelState.IsValid)
         {
-            foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
-                Console.WriteLine($"ModelState Error: {error.ErrorMessage}");
+            var errorMessages = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
 
-            return PartialView("_EditProjectForm", viewModel); // Return form with errors
+            TempData["ValidationErrors"] = string.Join(" | ", errorMessages);
+
+            return RedirectToAction("Dashboard");
         }
 
         var user = await _userManager.GetUserAsync(User);
@@ -139,6 +123,9 @@ public class ProjectController : Controller
 
         var existingProject = await _projectService.GetProjectByIdAsync(viewModel.Id);
         if (existingProject == null) return NotFound();
+
+        var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, existingProject.Id);
+        if (member == null || member.Role != ProjectRole.Admin) return Forbid();
 
         // Update properties
         existingProject.Title = viewModel.Title;
@@ -255,7 +242,7 @@ public class ProjectController : Controller
         if (user == null) return Unauthorized();
 
         var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, Id);
-        if (member == null || member.Role != ProjectRole.Admin) return Forbid(); // User is not an Admin, access denied
+        if (member == null || member.Role != ProjectRole.Admin) return Forbid();
 
         var project = await _projectService.GetProjectByIdAsync(Id);
         if (project == null) return NotFound();
@@ -298,7 +285,17 @@ public class ProjectController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RemoveMember(int id)
     {
-        if (!ModelState.IsValid) return View();
+        if (!ModelState.IsValid)
+        {
+            var errorMessages = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+
+            TempData["ValidationErrors"] = string.Join(" | ", errorMessages);
+
+            return RedirectToAction("ManageMembers");
+        }
 
         // Fetch the member
         var member = await _projectMemberService.GetByIdAsync(id);
@@ -324,7 +321,18 @@ public class ProjectController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CancelInvitation(int id)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+        if (!ModelState.IsValid)
+        {
+            var errorMessages = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+
+            TempData["ValidationErrors"] = string.Join(" | ", errorMessages);
+
+            return RedirectToAction("ManageMembers");
+        }
+
         // Fetch the invitation
         var invitation = await _invitationService.GetByIdAsync(id);
         if (invitation == null) return NotFound("Invitation not found.");

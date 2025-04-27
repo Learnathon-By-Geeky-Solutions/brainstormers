@@ -11,7 +11,7 @@ namespace TaskForge.Application.Helpers.DependencyResolvers
         public RecursiveDependentTaskStrategy(ITaskDependencyRepository taskDependencyRepository)
         {
             _taskDependencyRepository = taskDependencyRepository;
-            _adjacencyList = [];
+            _adjacencyList = new Dictionary<int, List<int>>();
         }
 
         public async Task InitializeAsync(TaskWorkflowStatus taskWorkflowStatus)
@@ -26,7 +26,7 @@ namespace TaskForge.Application.Helpers.DependencyResolvers
             {
                 if (!_adjacencyList.TryGetValue(taskDependency.Item1, out List<int>? value))
                 {
-                    value = [];
+                    value = new List<int>();
                     _adjacencyList[taskDependency.Item1] = value;
                 }
 

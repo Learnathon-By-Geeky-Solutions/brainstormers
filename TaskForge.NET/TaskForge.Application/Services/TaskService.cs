@@ -103,7 +103,7 @@ namespace TaskForge.Application.Services
         {
             return await _taskRepository.FindByExpressionAsync(
                 predicate: t => t.ProjectId == projectId,
-                includes: t => t.Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile),
+                includes: q => q.Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile),
                 orderBy: q => q.OrderBy(t => t.DueDate)
             );
         }
@@ -113,7 +113,7 @@ namespace TaskForge.Application.Services
 
             Func<IQueryable<TaskItem>, IQueryable<TaskItem>> includes = query =>
                 query.Include(t => t.Attachments.Where(a => !a.IsDeleted))
-                     .Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile)
+                     .Include(t => t.AssignedUsers.Where(a => !a.IsDeleted)).ThenInclude(au => au.UserProfile)
                      .Include(t => t.Dependencies)
                      .Include(t => t.Project);
 
@@ -130,15 +130,14 @@ namespace TaskForge.Application.Services
             if (userProfileId == null) return new PaginatedList<TaskDto>(new List<TaskDto>(), 0, pageIndex, pageSize);
 
             var userProjectList = await _projectMemberRepository.FindByExpressionAsync(pm => pm.UserProfileId == userProfileId);
-            var userProjectIds = (userProjectList ?? Enumerable.Empty<ProjectMember>())
-                .Select(pm => pm.UserProfileId).ToList();
+            var userProjectIds = userProjectList.Select(pm => pm.ProjectId).ToList();
 
-            Expression<Func<TaskItem, bool>> _predicate = t => userProjectIds.Contains(t.ProjectId);
-            Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>> _orderBy = query => query.OrderByDescending(t => t.UpdatedDate);
+            Expression<Func<TaskItem, bool>> predicate = t => userProjectIds.Contains(t.ProjectId);
+            Func<IQueryable<TaskItem>, IOrderedQueryable<TaskItem>> orderBy = query => query.OrderByDescending(t => t.UpdatedDate);
 
             var (taskList, totalCount) = await _taskRepository.GetPaginatedListAsync(
-                predicate: _predicate,
-                orderBy: _orderBy,
+                predicate: predicate,
+                orderBy: orderBy,
                 includes: query => query.Include(t => t.Project),
                 skip: (pageIndex - 1) * pageSize,
                 take: pageSize
@@ -164,7 +163,7 @@ namespace TaskForge.Application.Services
                 throw new ArgumentException("Invalid project ID", nameof(projectId));
 
             var sortedTasks = await _taskSorter.GetTopologicalOrderingsAsync(status, projectId);
-            return sortedTasks ?? new List<List<List<int>>>();
+            return sortedTasks;
         }
         public async Task<List<int>> GetDependentTaskIdsAsync(int id, TaskWorkflowStatus status)
         {
@@ -242,7 +241,7 @@ namespace TaskForge.Application.Services
         private async Task<TaskItem?> GetTaskWithRelations(int taskId)
         {
             var taskList = await _taskRepository.FindByExpressionAsync(
-                t => t.Id == taskId && !t.IsDeleted,
+                t => t.Id == taskId,
                 includes: query => query
                     .Include(t => t.Attachments.Where(a => !a.IsDeleted))
                     .Include(t => t.AssignedUsers).ThenInclude(au => au.UserProfile)
@@ -316,11 +315,16 @@ namespace TaskForge.Application.Services
                     includes: query => query
                         .Include(t => t.Attachments)
                         .Include(t => t.AssignedUsers)
+                        .Include(t => t.Dependencies)
+                        .Include(t => t.DependentOnThis)
                 );
 
                 var taskItem = task.FirstOrDefault();
                 if (taskItem == null)
                     throw new KeyNotFoundException("Task not found");
+
+                if (taskItem.DependentOnThis.Any())
+                    throw new InvalidOperationException("Cannot delete task with dependencies.");
 
                 await _taskRepository.DeleteByIdAsync(id);
 
@@ -329,6 +333,8 @@ namespace TaskForge.Application.Services
 
                 var assignmentIds = taskItem.AssignedUsers.Select(a => a.Id);
                 await _taskAssignmentRepository.DeleteByIdsAsync(assignmentIds);
+
+                taskItem.Dependencies.Clear();
 
                 await _unitOfWork.SaveChangesAsync();
 
@@ -353,7 +359,7 @@ namespace TaskForge.Application.Services
             }
         }
 
-        public async Task DeleteAttachmentAsync(int attachmentId)
+        public async Task DeleteAttachmentAsync(int attachmentId, string userId)
         {
             var attachment = await _taskAttachmentRepository.GetByIdAsync(attachmentId);
             if (attachment == null)
@@ -361,11 +367,21 @@ namespace TaskForge.Application.Services
                 throw new KeyNotFoundException("Attachment not found");
             }
 
+            var task = await _taskRepository.GetByIdAsync(attachment.TaskId);
+
+            var projectMember = (await _projectMemberRepository.FindByExpressionAsync(
+                pm => pm.UserProfile.UserId == userId && pm.ProjectId == task!.ProjectId
+            )).FirstOrDefault();
+
+            if (projectMember == null) throw new KeyNotFoundException("Project member not found");
+
+            if (projectMember.Role == ProjectRole.Viewer)
+                throw new UnauthorizedAccessException("You do not have permission to delete attachments in this project.");
+
+
             await _fileService.DeleteFileAsync(attachment.FilePath);
             await _taskAttachmentRepository.DeleteByIdAsync(attachmentId);
             await _unitOfWork.SaveChangesAsync();
         }
-
     }
-
 }
