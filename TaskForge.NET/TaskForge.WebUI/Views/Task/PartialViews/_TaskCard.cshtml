@@ -1,9 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
 @using TaskForge.Domain.Enums
 @model TaskItemViewModel
-@{
-	var isReadOnly = ViewData["IsReadOnly"] as bool? ?? false;
-}
 
 <div class="task-card m-2" data-id="@Model.Id" style="width: 320px;font-size: 0.92rem;">
 	<div class="card border shadow-sm">
@@ -80,13 +77,9 @@
 				   data-bs-target="#taskDetailsModal">
 					<i class="bi bi-pencil"></i> Open
 				</a>
-
-				@if (!isReadOnly)
-				{
-					<button type="button" class="btn btn-sm btn-outline-danger delete-task-btn" data-id="@Model.Id">
-						<i class="bi bi-trash"></i> Delete
-					</button>
-				}
+				<button type="button" class="btn btn-sm btn-outline-danger delete-task-btn" data-id="@Model.Id">
+					<i class="bi bi-trash"></i> Delete
+				</button>
 			</div>
 		</div>
 	</div>

@@ -39,13 +39,6 @@ namespace TaskForge.WebUI.Models
 
     }
 
-    public class InvitationApprovalViewModel
-    {
-        public int Id { get; set; }
-        public int ProjectId { get; set; }
-        public InvitationStatus Status { get; set; }
-    }
-
     public class ProjectMemberViewModel
     {
         public int Id { get; set; }

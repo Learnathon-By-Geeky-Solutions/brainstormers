@@ -57,7 +57,7 @@ namespace TaskForge.Application.Helpers.TaskSorters
 			foreach (var dep in dependencies)
 			{
 				if (!adj.ContainsKey(dep.DependsOnTaskId))
-					adj[dep.DependsOnTaskId] = new List<int>();
+					adj[dep.DependsOnTaskId] = [];
 
 				adj[dep.DependsOnTaskId].Add(dep.TaskId);
 				inDegree[dep.TaskId] = inDegree.GetValueOrDefault(dep.TaskId) + 1;
@@ -84,7 +84,7 @@ namespace TaskForge.Application.Helpers.TaskSorters
 			{
 				int root = dsu.Find(task);
 				if (!components.ContainsKey(root))
-					components[root] = new List<int>();
+					components[root] = [];
 				components[root].Add(task);
 			}
 			return components;
@@ -100,7 +100,7 @@ namespace TaskForge.Application.Helpers.TaskSorters
 			{
 				subAdj[node] = fullAdj.TryGetValue(node, out List<int>? value)
 					? value.Where(component.Contains).ToList()
-					: new List<int>();
+					: [];
 
 				subInDegree[node] = fullInDegree.GetValueOrDefault(node);
 			}

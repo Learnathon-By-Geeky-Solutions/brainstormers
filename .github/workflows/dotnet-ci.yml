@@ -1,4 +1,4 @@
-name: .NET CI with SonarCloud Analysis and Railway Deploy
+name: .NET CI with SonarCloud Analysis
 
 on:
   push:
@@ -71,23 +71,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-
-  deploy:
-    name: Deploy to Railway
-    needs: build-and-analyze
-    runs-on: ubuntu-latest
-    if: always()
-    container: ghcr.io/railwayapp/cli:latest
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-          
-      - name: Navigate to Project Directory
-        run: cd TaskForge.NET/TaskForge.WebUI/
-        
-      - name: Deploy to Railway
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          railway up --service=a5801c42-fe28-41f6-965c-17de80c2b789

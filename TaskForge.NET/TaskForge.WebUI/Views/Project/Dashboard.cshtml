@@ -3,12 +3,7 @@
 
 @{
     ViewData["Title"] = "Project Dashboard - " + Model.ProjectTitle;
-    var isReadOnly = (Model.UserRoleInThisProject == ProjectRole.Viewer);
 }
-<script>
-    var isReadOnly = @isReadOnly.ToString().ToLower();
-</script>
-
 
 <div class="container mt-4">
     <!-- Hidden form to inject AntiForgeryToken -->
@@ -89,11 +84,14 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-							@await Html.PartialAsync("~/Views/Project/PartialViews/_EditProjectForm.cshtml", Model.UpdateViewModel, 
-								new ViewDataDictionary(ViewData) 
-								{
-									{ "IsReadOnly", (Model.UserRoleInThisProject == ProjectRole.Viewer) }
-								})
+                            @if (Model.UpdateViewModel != null)
+                            {
+                                @await Html.PartialAsync("~/Views/Project/PartialViews/_EditProjectForm.cshtml", Model.UpdateViewModel)
+                            }
+                            else
+                            {
+                                <p class="text-danger">Error loading project details.</p>
+                            }
                         </div>
                     </div>
                 </div>
@@ -177,7 +175,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @if (Model.Members.Any())
+                            @if (Model.Members != null && Model.Members.Any())
                             {
                                 var serial = 1;
                                 foreach (var member in Model.Members)
@@ -189,6 +187,12 @@
                                         <td>@member.Role</td>
                                     </tr>
                                 }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center">No members found.</td>
+                                </tr>
                             }
                         </tbody>
                     </table>
@@ -265,14 +269,9 @@
                                                 </div>
                                                 <div class="modal-body">
                                                     <!-- Render the Partial View for Task Form -->
-                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_AddTaskForm.cshtml", 
-                                                    new TaskItemViewModel
+                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_AddTaskForm.cshtml", new TaskItemViewModel
                                                     {
                                                         ProjectId = Model.ProjectId
-                                                    }, 
-                                                    new ViewDataDictionary(ViewData) 
-                                                    {
-	                                                    { "IsReadOnly", (Model.UserRoleInThisProject == ProjectRole.Viewer) }
                                                     })
                                                 </div>
                                             </div>
@@ -297,11 +296,7 @@
                                                                 @foreach (var taskId in taskPhase)
                                                                 {
                                                                     var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
-                                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task, 
-	                                                                    new ViewDataDictionary(ViewData) 
-	                                                                    {
-		                                                                    { "IsReadOnly", (Model.UserRoleInThisProject == ProjectRole.Viewer) }
-	                                                                    })
+                                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
                                                                 }
                                                             </div>
                                                         }
@@ -327,11 +322,7 @@
                                                                 @foreach (var taskId in taskPhase)
                                                                 {
                                                                     var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
-                                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task, 
-	                                                                    new ViewDataDictionary(ViewData) 
-	                                                                    {
-		                                                                    { "IsReadOnly", (Model.UserRoleInThisProject == ProjectRole.Viewer) }
-	                                                                    })
+                                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
                                                                 }
                                                             </div>
                                                         }
@@ -356,11 +347,7 @@
                                                                 @foreach (var taskId in taskPhase)
                                                                 {
                                                                     var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
-                                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task, 
-	                                                                    new ViewDataDictionary(ViewData) 
-	                                                                    {
-		                                                                    { "IsReadOnly", (Model.UserRoleInThisProject == ProjectRole.Viewer) }
-	                                                                    })
+                                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
                                                                 }
                                                             </div>
                                                         }
@@ -385,11 +372,7 @@
                                                                 @foreach (var taskId in taskPhase)
                                                                 {
                                                                     var task = Model.TaskItems.FirstOrDefault(t => t.Id == taskId);
-                                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task, 
-	                                                                    new ViewDataDictionary(ViewData) 
-	                                                                    {
-		                                                                    { "IsReadOnly", (Model.UserRoleInThisProject == ProjectRole.Viewer) }
-	                                                                    })
+                                                                    @await Html.PartialAsync("~/Views/Task/PartialViews/_TaskCard.cshtml", task)
                                                                 }
                                                             </div>
                                                         }
@@ -411,19 +394,12 @@
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">
-                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_OpenTaskForm.cshtml", Model,
-	                                                                    new ViewDataDictionary(ViewData) 
-	                                                                    {
-		                                                                    { "IsReadOnly", (Model.UserRoleInThisProject == ProjectRole.Viewer) }
-	                                                                    })
+                                            @await Html.PartialAsync("~/Views/Task/PartialViews/_OpenTaskForm.cshtml", Model)
                                         </div>
-                                        
-                                        @if (!isReadOnly)
-                                        {
-	                                        <div class="modal-footer py-1">
-		                                        <button type="submit" class="btn btn-primary mx-auto" form="taskEditForm">Save Changes</button>
-	                                        </div>
-                                        }
+
+                                        <div class="modal-footer py-1">
+                                            <button type="submit" class="btn btn-primary mx-auto" form="taskEditForm">Save Changes</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

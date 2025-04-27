@@ -689,7 +689,7 @@ namespace TaskForge.Tests.Application.Services
 
 			// Assert
 			Assert.False(result.Success);
-            Assert.StartsWith("Failed to send invitation.", result.Message);
+			Assert.Equal("Failed to send invitation.", result.Message);
 			_transactionMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
 		}
 		[Fact]

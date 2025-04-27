@@ -32,7 +32,7 @@ public class UserService : IUserService
         Expression<Func<UserProfile, bool>> predicate = user =>
             string.IsNullOrEmpty(filter.SearchTerm) ||
             user.FullName.Contains(filter.SearchTerm) ||
-            user.User.Email!.Contains(filter.SearchTerm);
+            user.User.Email.Contains(filter.SearchTerm);
 
         var (filteredUserList, totalCount) = await _userProfile.GetPaginatedListAsync(
             predicate,
