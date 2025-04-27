@@ -790,34 +790,43 @@ namespace TaskForge.Tests.Application.Services
         [Fact]
         public async Task DeleteAttachmentAsync_DeletesAttachmentFile()
         {
-            // Arrange
-            var attachmentId = 1;
-            var userId = "test01";
-            var attachment = new TaskAttachment { Id = attachmentId, FilePath = "somepath/file.txt" };
+	        // Arrange
+	        var attachmentId = 1;
+	        var userId = "test-user-id";
+	        var attachment = new TaskAttachment { Id = attachmentId, FilePath = "somepath/file.txt", TaskId = 1 };
 
-            _taskAttachmentRepositoryMock.Setup(u => u.GetByIdAsync(attachmentId))
-                .ReturnsAsync(attachment);
+	        var task = new TaskItem { Id = 1, ProjectId = 2 };
 
-            // Act
-            await _taskService.DeleteAttachmentAsync(attachmentId, userId);
+	        _taskAttachmentRepositoryMock.Setup(u => u.GetByIdAsync(attachmentId))
+		        .ReturnsAsync(attachment);
+	        _taskRepositoryMock.Setup(t => t.GetByIdAsync(1))
+		        .ReturnsAsync(task);
+	        _projectMemberRepositoryMock.Setup(pm => pm.FindByExpressionAsync(
+			        It.IsAny<Expression<Func<ProjectMember, bool>>>(), null, null, null, null))
+		        .ReturnsAsync(new List<ProjectMember> { new ProjectMember { Role = ProjectRole.Admin } });
 
-            // Assert
-            _fileServiceMock.Verify(f => f.DeleteFileAsync("somepath/file.txt"), Times.Once);
-            _taskAttachmentRepositoryMock.Verify(u => u.DeleteByIdAsync(attachmentId), Times.Once);
-            _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
+	        // Act
+	        await _taskService.DeleteAttachmentAsync(attachmentId, userId);
+
+	        // Assert
+	        _fileServiceMock.Verify(f => f.DeleteFileAsync("somepath/file.txt"), Times.Once);
+	        _taskAttachmentRepositoryMock.Verify(u => u.DeleteByIdAsync(attachmentId), Times.Once);
+	        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
+
         [Fact]
         public async Task DeleteAttachmentAsync_ThrowsIfNotFound()
         {
-            // Arrange
-            var attachmentId = 999;
-            var userId = "test01";
-            _taskAttachmentRepositoryMock.Setup(u => u.GetByIdAsync(attachmentId))
-                .ReturnsAsync(value: null);
+	        // Arrange
+	        var attachmentId = 999;
+	        var userId = "test-user-id";
 
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _taskService.DeleteAttachmentAsync(attachmentId, userId));
+	        _taskAttachmentRepositoryMock.Setup(u => u.GetByIdAsync(attachmentId))
+		        .ReturnsAsync(value: null);
+
+	        // Act & Assert
+	        await Assert.ThrowsAsync<KeyNotFoundException>(() => _taskService.DeleteAttachmentAsync(attachmentId, userId));
         }
-    }
+	}
 }
 
