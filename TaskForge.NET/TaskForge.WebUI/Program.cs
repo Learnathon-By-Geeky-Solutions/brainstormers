@@ -80,22 +80,18 @@ internal static class Program
 
         // Register the IdentitySeeder service
         builder.Services.AddTransient<IdentitySeeder>();
-        builder.Services.AddScoped<TaskServiceDependencies>();
 
-        // Add services for controllers and Razor Pages
-        builder.Services.AddControllersWithViews();
+		// Add services for controllers and Razor Pages
+		builder.Services.AddControllersWithViews();
         builder.Services.AddRazorPages();
-
-
-        builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
 
         // Register Generic Repository
         builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         builder.Services.AddScoped<IUserContextService, UserContextService>();
 
 
-        builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+        builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+		builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
         builder.Services.AddScoped<ITaskRepository, TaskRepository>();
         builder.Services.AddScoped<IProjectInvitationRepository, ProjectInvitationRepository>();
         builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
@@ -103,20 +99,30 @@ internal static class Program
         builder.Services.AddScoped<ITaskAttachmentRepository, TaskAttachmentRepository>();
         builder.Services.AddScoped<ITaskAssignmentRepository, TaskAssignmentRepository>();
         builder.Services.AddScoped<ITaskDependencyRepository, TaskDependencyRepository>();
-
-        builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IFileService, FileService>();
+        builder.Services.AddScoped<ITaskSorter, TopologicalTaskSorter>();
+        builder.Services.AddScoped<IDependentTaskStrategy, RecursiveDependentTaskStrategy>();
+		builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IUserProfileService, UserProfileService>();
         builder.Services.AddScoped<IProjectService, ProjectService>();
-        builder.Services.AddScoped<ITaskService, TaskService>();
         builder.Services.AddScoped<IProjectMemberService, ProjectMemberService>();
         builder.Services.AddScoped<IProjectInvitationService, ProjectInvitationService>();
-        builder.Services.AddScoped<IFileService, FileService>();
 
-
-        builder.Services.AddScoped<IDependentTaskStrategy, RecursiveDependentTaskStrategy>();
-        builder.Services.AddScoped<ITaskSorter, TopologicalTaskSorter>();
-
-        var app = builder.Build();
+		builder.Services.AddScoped<TaskServiceDependencies>(provider => new TaskServiceDependencies
+		{
+			UnitOfWork = provider.GetRequiredService<IUnitOfWork>(),
+			TaskRepository = provider.GetRequiredService<ITaskRepository>(),
+			ProjectMemberRepository = provider.GetRequiredService<IProjectMemberRepository>(),
+			UserProfileRepository = provider.GetRequiredService<IUserProfileRepository>(),
+			TaskAssignmentRepository = provider.GetRequiredService<ITaskAssignmentRepository>(),
+			TaskAttachmentRepository = provider.GetRequiredService<ITaskAttachmentRepository>(),
+			FileService = provider.GetRequiredService<IFileService>(),
+			TaskSorter = provider.GetRequiredService<ITaskSorter>(),
+			DependentTaskStrategy = provider.GetRequiredService<IDependentTaskStrategy>(),
+			Logger = provider.GetRequiredService<ILogger<TaskService>>()
+		});
+		builder.Services.AddScoped<ITaskService, TaskService>();
+		var app = builder.Build();
 
         // Configure the HTTP request pipeline
         if (!app.Environment.IsDevelopment())
