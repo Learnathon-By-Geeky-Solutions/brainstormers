@@ -29,7 +29,7 @@ namespace TaskForge.WebUI.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Index(int pageIndex = 1, int pageSize = 10)
         {
-            if (User?.Identity?.IsAuthenticated != true)
+            if (User?.Identity?.IsAuthenticated == false)
             {
                 return View("Welcome");
             }
@@ -39,7 +39,8 @@ namespace TaskForge.WebUI.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account");
 
-            string userId = user.Id;
+
+			var userId = user.Id;
 
             var userProfileId = await _userProfileService.GetByUserIdAsync(userId);
             if (userProfileId == null) return NotFound();

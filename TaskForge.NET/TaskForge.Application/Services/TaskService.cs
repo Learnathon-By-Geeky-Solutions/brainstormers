@@ -134,6 +134,7 @@ namespace TaskForge.Application.Services
 		}
 
 
+
 		public async Task CreateTaskAsync(TaskDto taskDto)
 		{
 			if (taskDto.Attachments != null && taskDto.Attachments.Count > MaxAttachments)
@@ -166,25 +167,36 @@ namespace TaskForge.Application.Services
 		}
 
 
+
 		public async Task UpdateTaskAsync(TaskUpdateDto dto)
 		{
-			var task = await GetTaskWithRelations(dto.Id);
-			if (task == null) throw new KeyNotFoundException("Task not found.");
+			await using var transaction = await _unitOfWork.BeginTransactionAsync();
 
-			var newAttachmentsCount = dto.Attachments?.Count ?? 0;
-			if (task.Attachments.Count + newAttachmentsCount > MaxAttachments)
-				throw new InvalidOperationException($"You can only attach up to {MaxAttachments} files.");
+			try
+			{
+				var task = await GetTaskWithRelations(dto.Id);
+				if (task == null) throw new KeyNotFoundException("Task not found.");
 
+				var newAttachmentsCount = dto.Attachments?.Count ?? 0;
+				if (task.Attachments.Count + newAttachmentsCount > MaxAttachments)
+					throw new InvalidOperationException($"You can only attach up to {MaxAttachments} files.");
 
-			UpdateBasicFields(task, dto);
-			await UpdateAssignedUsersAsync(task, dto.AssignedUserIds);
-			UpdateDependencies(task, dto.DependsOnTaskIds);
-			await HandleAttachmentsAsync(task, dto.Attachments);
+				UpdateBasicFields(task, dto);
+				await UpdateAssignedUsersAsync(task, dto.AssignedUserIds);
+				UpdateDependencies(task, dto.DependsOnTaskIds);
+				await HandleAttachmentsAsync(task, dto.Attachments);
 
-			await _taskRepository.UpdateAsync(task);
-			await _unitOfWork.SaveChangesAsync();
+				await _taskRepository.UpdateAsync(task);
+				await _unitOfWork.SaveChangesAsync();
+
+				await transaction.CommitAsync();
+			}
+			catch
+			{
+				await transaction.RollbackAsync();
+				throw;
+			}
 		}
-
 		private async Task<TaskItem?> GetTaskWithRelations(int taskId)
 		{
 			var taskList = await _taskRepository.FindByExpressionAsync(
@@ -197,7 +209,6 @@ namespace TaskForge.Application.Services
 
 			return taskList.FirstOrDefault();
 		}
-
 		private void UpdateBasicFields(TaskItem task, TaskUpdateDto dto)
 		{
 			task.Title = dto.Title;
@@ -207,7 +218,6 @@ namespace TaskForge.Application.Services
 			task.StartDate = dto.StartDate;
 			task.SetDueDate(dto.DueDate);
 		}
-
 		private async Task UpdateAssignedUsersAsync(TaskItem task, List<int>? userIds)
 		{
 			task.AssignedUsers.Clear();
@@ -221,7 +231,6 @@ namespace TaskForge.Application.Services
 				}
 			}
 		}
-
 		private void UpdateDependencies(TaskItem task, List<int>? dependencyIds)
 		{
 			task.Dependencies.Clear();
@@ -234,7 +243,6 @@ namespace TaskForge.Application.Services
 				}
 			}
 		}
-
 		private async Task HandleAttachmentsAsync(TaskItem task, List<IFormFile>? attachments)
 		{
 			if (attachments == null || attachments.Count == 0) return;
@@ -246,7 +254,6 @@ namespace TaskForge.Application.Services
 				task.Attachments.Add(attachment);
 			}
 		}
-
 		private async Task<TaskAttachment> SaveAttachmentAsync(IFormFile file)
 		{
 			if (file.Length == 0) throw new ArgumentException("File is empty.");
@@ -277,38 +284,54 @@ namespace TaskForge.Application.Services
 			};
 		}
 
+
+
 		public async Task RemoveTaskAsync(int id)
 		{
-			// Get the task with related data
-			var task = await _taskRepository.FindByExpressionAsync(
-				t => t.Id == id,
-				includes: query => query
-					.Include(t => t.Attachments)
-					.Include(t => t.AssignedUsers)
-			);
+			await using var transaction = await _unitOfWork.BeginTransactionAsync();
 
-			var taskItem = task.FirstOrDefault();
-			if (taskItem == null)
-				throw new KeyNotFoundException("Task not found");
-
-			// Delete media files associated with attachments
-			foreach (var attachment in taskItem.Attachments)
+			try
 			{
-				await _fileService.DeleteFileAsync(attachment.FilePath);
+				var task = await _taskRepository.FindByExpressionAsync(
+					t => t.Id == id,
+					includes: query => query
+						.Include(t => t.Attachments)
+						.Include(t => t.AssignedUsers)
+				);
+
+				var taskItem = task.FirstOrDefault();
+				if (taskItem == null)
+					throw new KeyNotFoundException("Task not found");
+
+				await _taskRepository.DeleteByIdAsync(id);
+
+				var attachmentIds = taskItem.Attachments.Select(a => a.Id);
+				await _taskAttachmentRepository.DeleteByIdsAsync(attachmentIds);
+
+				var assignmentIds = taskItem.AssignedUsers.Select(a => a.Id);
+				await _taskAssignmentRepository.DeleteByIdsAsync(assignmentIds);
+
+				await _unitOfWork.SaveChangesAsync();
+
+				await transaction.CommitAsync();
+
+				try
+				{
+					foreach (var attachment in taskItem.Attachments)
+					{
+						await _fileService.DeleteFileAsync(attachment.FilePath);
+					}
+				}
+				catch (Exception ex)
+				{
+					_logger.LogWarning(ex, "DB committed but failed to delete attachment file(s) for task {TaskId}", id);
+				}
 			}
-
-			// Soft delete the main task
-			await _taskRepository.DeleteByIdAsync(id);
-
-			// Soft delete attachments
-			var attachmentIds = taskItem.Attachments.Select(a => a.Id);
-			await _taskAttachmentRepository.DeleteByIdsAsync(attachmentIds);
-
-			// Soft delete assignments
-			var assignmentIds = taskItem.AssignedUsers.Select(a => a.Id);
-			await _taskAssignmentRepository.DeleteByIdsAsync(assignmentIds);
-
-			await _unitOfWork.SaveChangesAsync();
+			catch
+			{
+				await transaction.RollbackAsync();
+				throw;
+			}
 		}
 
 		public async Task DeleteAttachmentAsync(int attachmentId)

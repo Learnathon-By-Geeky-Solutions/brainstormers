@@ -42,7 +42,6 @@ namespace TaskForge.Tests.Application.Services
                 _emailSender.SendEmailAsync(email, subject, htmlMessage));
             Assert.Null(exception);
         }
-
         [Fact]
         public async Task SendEmailAsync_ShouldAllowNullHtmlMessage()
         {
@@ -62,7 +61,6 @@ namespace TaskForge.Tests.Application.Services
             var output = sw.ToString();
             Assert.Contains("Email sent to", output);
         }
-
         [Fact]
         public async Task SendEmailAsync_ShouldBeCallableMultipleTimes()
         {

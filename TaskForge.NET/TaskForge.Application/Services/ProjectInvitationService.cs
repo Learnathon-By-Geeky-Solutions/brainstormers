@@ -32,9 +32,28 @@ namespace TaskForge.Application.Services
 			_userManager = userManager;
 		}
 
+
+
 		public async Task<ProjectInvitation?> GetByIdAsync(int invitationId)
 		{
 			return await _projectInvitationRepo.GetByIdAsync(invitationId);
+		}
+
+		public async Task<PaginatedList<ProjectInvitation>> GetInvitationsForUserAsync(int? userProfileId, int pageIndex, int pageSize)
+		{
+			if (!userProfileId.HasValue)
+			{
+				return new PaginatedList<ProjectInvitation>(new List<ProjectInvitation>(), 0, pageIndex, pageSize);
+			}
+
+			var (projectInvitationList, totalCount) = await _projectInvitationRepo.GetPaginatedListAsync(
+				predicate: pi => pi.InvitedUserProfileId == userProfileId,
+				includes: query => query.Include(pi => pi.Project),
+				skip: (pageIndex - 1) * pageSize,
+				take: pageSize
+			);
+
+			return new PaginatedList<ProjectInvitation>(projectInvitationList, totalCount, pageIndex, pageSize);
 		}
 
 		public async Task<PaginatedList<ProjectInvitation>> GetInvitationListAsync(int projectId, int pageIndex, int pageSize)
@@ -44,12 +63,14 @@ namespace TaskForge.Application.Services
 				includes: query => query
 					.Include(pi => pi.InvitedUserProfile)
 						.ThenInclude(pi => pi.User),
-				skip: (pageIndex - 1) * pageSize,
-				take: pageSize
+				take: pageSize,
+				skip: (pageIndex - 1) * pageSize
 			);
 
 			return new PaginatedList<ProjectInvitation>(projectInvitationList, totalCount, pageIndex, pageSize);
 		}
+
+
 
 		public async Task<ServiceResult> AddAsync(int projectId, string invitedUserEmail, ProjectRole assignedRole)
 		{
@@ -110,6 +131,8 @@ namespace TaskForge.Application.Services
 			}
 		}
 
+
+
 		public async Task UpdateInvitationStatusAsync(int id, InvitationStatus status)
 		{
 			var invitation = await GetByIdAsync(id);
@@ -154,22 +177,5 @@ namespace TaskForge.Application.Services
 			}
 		}
 
-
-		public async Task<PaginatedList<ProjectInvitation>> GetInvitationsForUserAsync(int? userProfileId, int pageIndex, int pageSize)
-		{
-			if (!userProfileId.HasValue)
-			{
-				return new PaginatedList<ProjectInvitation>(new List<ProjectInvitation>(), 0, pageIndex, pageSize);
-			}
-
-			var (projectInvitationList, totalCount) = await _projectInvitationRepo.GetPaginatedListAsync(
-				predicate: pi => pi.InvitedUserProfileId == userProfileId,
-				includes: query => query.Include(pi => pi.Project),
-				skip: (pageIndex - 1) * pageSize,
-				take: pageSize
-			);
-
-			return new PaginatedList<ProjectInvitation>(projectInvitationList, totalCount, pageIndex, pageSize);
-		}
 	}
 }
