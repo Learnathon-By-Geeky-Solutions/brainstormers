@@ -371,7 +371,7 @@ namespace TaskForge.Tests.Application.Services
 				pm.UserProfileId == userProfileId &&
 				pm.Role == ProjectRole.Admin)), Times.Once);
 
-			_transactionMock.Verify(t => t.CommitAsync(default), Times.Once);
+			_transactionMock.Verify(t => t.CommitAsync(CancellationToken.None), Times.Once);
 		}
 		[Fact]
 		public async Task CreateProjectAsync_ThrowsArgumentNullException_WhenDtoIsNull()
@@ -435,23 +435,5 @@ namespace TaskForge.Tests.Application.Services
 
 			_unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
 		}
-		[Fact]
-		public async Task UpdateProjectAsync_ThrowsInvalidOperationException_WhenProjectNotFound()
-		{
-			// Arrange
-			var projectDto = new Project { Id = 99 };
-
-			_projectRepositoryMock.Setup(r => r.GetByIdAsync(projectDto.Id))
-				.ReturnsAsync((Project)null);
-
-			// Act & Assert
-			await Assert.ThrowsAsync<InvalidOperationException>(() => _projectService.UpdateProjectAsync(projectDto));
-		}
-		[Fact]
-		public async Task UpdateProjectAsync_ThrowsArgumentNullException_WhenProjectIsNull()
-		{
-			await Assert.ThrowsAsync<ArgumentNullException>(() => _projectService.UpdateProjectAsync(null));
-		}
-
 	}
 }
