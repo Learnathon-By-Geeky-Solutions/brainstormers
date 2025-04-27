@@ -80,7 +80,6 @@ internal static class Program
 
         // Register the IdentitySeeder service
         builder.Services.AddTransient<IdentitySeeder>();
-		builder.Services.AddScoped<TaskServiceDependencies>();
 
 		// Add services for controllers and Razor Pages
 		builder.Services.AddControllersWithViews();
@@ -109,19 +108,20 @@ internal static class Program
         builder.Services.AddScoped<IProjectMemberService, ProjectMemberService>();
         builder.Services.AddScoped<IProjectInvitationService, ProjectInvitationService>();
 
-        builder.Services.AddScoped<ITaskService>(provider => new TaskService(new TaskServiceDependencies
-        {
-	        UnitOfWork = provider.GetRequiredService<IUnitOfWork>(),
-	        TaskRepository = provider.GetRequiredService<ITaskRepository>(),
-	        ProjectMemberRepository = provider.GetRequiredService<IProjectMemberRepository>(),
-	        UserProfileRepository = provider.GetRequiredService<IUserProfileRepository>(),
-	        TaskAssignmentRepository = provider.GetRequiredService<ITaskAssignmentRepository>(),
-	        TaskAttachmentRepository = provider.GetRequiredService<ITaskAttachmentRepository>(),
-	        FileService = provider.GetRequiredService<IFileService>(),
-	        TaskSorter = provider.GetRequiredService<ITaskSorter>(),
-	        DependentTaskStrategy = provider.GetRequiredService<IDependentTaskStrategy>(),
-	        Logger = provider.GetRequiredService<ILogger<TaskService>>()
-        }));
+		builder.Services.AddScoped<TaskServiceDependencies>(provider => new TaskServiceDependencies
+		{
+			UnitOfWork = provider.GetRequiredService<IUnitOfWork>(),
+			TaskRepository = provider.GetRequiredService<ITaskRepository>(),
+			ProjectMemberRepository = provider.GetRequiredService<IProjectMemberRepository>(),
+			UserProfileRepository = provider.GetRequiredService<IUserProfileRepository>(),
+			TaskAssignmentRepository = provider.GetRequiredService<ITaskAssignmentRepository>(),
+			TaskAttachmentRepository = provider.GetRequiredService<ITaskAttachmentRepository>(),
+			FileService = provider.GetRequiredService<IFileService>(),
+			TaskSorter = provider.GetRequiredService<ITaskSorter>(),
+			DependentTaskStrategy = provider.GetRequiredService<IDependentTaskStrategy>(),
+			Logger = provider.GetRequiredService<ILogger<TaskService>>()
+		});
+		builder.Services.AddScoped<ITaskService, TaskService>();
 		var app = builder.Build();
 
         // Configure the HTTP request pipeline
