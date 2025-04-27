@@ -141,6 +141,28 @@ public class ProjectController : Controller
         return RedirectToAction("Dashboard", "Project", new { id = existingProject.Id });
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Update(int id)
+    {
+        if(!ModelState.IsValid) return View();
+
+        var project = await _projectService.GetProjectByIdAsync(id);
+        if (project == null) return NotFound();
+
+        var model = new ProjectUpdateViewModel
+        {
+            Id = project.Id,
+            Title = project.Title,
+            Description = project.Description,
+            Status = project.Status,
+            StartDate = project.StartDate,
+            EndDateInput = project.EndDate
+        };
+
+        return PartialView("_EditProjectForm", model);
+    }
+
+
     // GET: Project/Dashboard/5
     public async Task<IActionResult> Dashboard(int id)
     {
