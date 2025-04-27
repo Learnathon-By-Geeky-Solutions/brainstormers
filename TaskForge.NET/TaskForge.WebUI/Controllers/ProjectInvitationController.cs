@@ -29,25 +29,19 @@ namespace TaskForge.WebUI.Controllers
             _userProfileService = userProfileService;
         }
 
-        // Action method to display the current user's invitations
+
         public async Task<IActionResult> Index(int pageIndex = 1, int pageSize = 10)
         {
             if (!ModelState.IsValid) return RedirectToAction("Index");
 
             var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                TempData["ErrorMessage"] = "You must be logged in to view your invitations.";
-                return RedirectToAction("Login", "Account");
-            }
-
             string userId = user.Id;
 
             var userProfileId = await _userProfileService.GetByUserIdAsync(userId);
             if (userProfileId == null)
             {
                 TempData["ErrorMessage"] = "User profile not found.";
-                return RedirectToAction("Index", "Home"); // Redirect to home or another appropriate page
+                return RedirectToAction("Index", "Home");
             }
 
             var paginatedInvitations = await _invitationService.GetInvitationsForUserAsync(userProfileId, pageIndex, pageSize);
@@ -82,7 +76,7 @@ namespace TaskForge.WebUI.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return View(viewModel);
+                return RedirectToAction("Index");
             }
             // Restrict project access to assigned users only
             var user = await _userManager.GetUserAsync(User);
@@ -91,7 +85,7 @@ namespace TaskForge.WebUI.Controllers
             var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, viewModel.ProjectId);
             if (member == null || member.Role != ProjectRole.Admin)
             {
-                return Forbid(); // User is not an Admin, access denied
+                return Forbid();
             }
 
             // Send Invitation
@@ -110,12 +104,20 @@ namespace TaskForge.WebUI.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(InviteViewModel viewModel)
+        public async Task<IActionResult> Edit(InvitationApprovalViewModel viewModel)
         {
             if (!ModelState.IsValid)
             {
-                return View(viewModel);
+                var errorMessages = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                TempData["ErrorMessage"] = string.Join(" | ", errorMessages);
+
+                return RedirectToAction("Index");
             }
+
             // Fetch the invitation
             var invitation = await _invitationService.GetByIdAsync(viewModel.Id);
             if (invitation == null)

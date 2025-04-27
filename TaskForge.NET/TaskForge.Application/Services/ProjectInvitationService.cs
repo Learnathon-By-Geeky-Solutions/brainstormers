@@ -127,7 +127,7 @@ namespace TaskForge.Application.Services
 			{
 				await transaction.RollbackAsync();
 				// optionally log exception
-				return ServiceResult.FailureResult("Failed to send invitation.");
+				return ServiceResult.FailureResult("Failed to send invitation." + e.Message);
 			}
 		}
 
