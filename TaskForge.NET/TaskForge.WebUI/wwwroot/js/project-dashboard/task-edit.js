@@ -129,7 +129,14 @@ function GetTaskDetails(taskId) {
             // Attachments
             $('#task-attachment-list').empty();
             data.attachments.forEach(att => {
-                $('#task-attachment-list').append(`
+                if (isReadOnly) {
+                    $('#task-attachment-list').append(`
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <a href="${att.downloadUrl}" target="_blank">${att.fileName}</a>
+                                    </li>`);
+                }
+                else {
+                    $('#task-attachment-list').append(`
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <a href="${att.downloadUrl}" target="_blank">${att.fileName}</a>
                                         <button type="button" class="btn btn-sm btn-danger" onclick="RemoveAttachment(${att.id})">
@@ -137,6 +144,7 @@ function GetTaskDetails(taskId) {
                                         </button>
                                     </li>
                                 `);
+                }
             });
         },
         error: function (xhr) {
@@ -158,11 +166,16 @@ function RemoveAttachment(attachmentId) {
         headers: {
             'RequestVerificationToken': token
         },
-        success: function () {
+        success: function (response) {
             // remove the list item from UI without full reload
-            $(`#task-attachment-list button[onclick="RemoveAttachment(${attachmentId})"]`)
-                .closest('li')
-                .remove();
+            if (response.success) {
+                $(`#task-attachment-list button[onclick="RemoveAttachment(${attachmentId})"]`)
+                    .closest('li')
+                    .remove();
+            }
+            else {
+                alert("Failed to delete attachment: " + response.message);
+            }
         },
         error: function (xhr) {
             console.error("Failed to delete attachment:", xhr.responseText);
