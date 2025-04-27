@@ -80,6 +80,7 @@ internal static class Program
 
         // Register the IdentitySeeder service
         builder.Services.AddTransient<IdentitySeeder>();
+        builder.Services.AddScoped<TaskServiceDependencies>();
 
         // Add services for controllers and Razor Pages
         builder.Services.AddControllersWithViews();

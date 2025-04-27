@@ -792,13 +792,14 @@ namespace TaskForge.Tests.Application.Services
         {
             // Arrange
             var attachmentId = 1;
+            var userId = "test01";
             var attachment = new TaskAttachment { Id = attachmentId, FilePath = "somepath/file.txt" };
 
             _taskAttachmentRepositoryMock.Setup(u => u.GetByIdAsync(attachmentId))
                 .ReturnsAsync(attachment);
 
             // Act
-            await _taskService.DeleteAttachmentAsync(attachmentId);
+            await _taskService.DeleteAttachmentAsync(attachmentId, userId);
 
             // Assert
             _fileServiceMock.Verify(f => f.DeleteFileAsync("somepath/file.txt"), Times.Once);
@@ -810,11 +811,12 @@ namespace TaskForge.Tests.Application.Services
         {
             // Arrange
             var attachmentId = 999;
+            var userId = "test01";
             _taskAttachmentRepositoryMock.Setup(u => u.GetByIdAsync(attachmentId))
                 .ReturnsAsync(value: null);
 
             // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => _taskService.DeleteAttachmentAsync(attachmentId));
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => _taskService.DeleteAttachmentAsync(attachmentId, userId));
         }
     }
 }

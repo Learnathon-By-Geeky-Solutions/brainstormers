@@ -28,7 +28,6 @@ namespace TaskForge.Tests.WebUI.Controllers
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _userManagerMock = new Mock<UserManager<IdentityUser>>(store.Object,
                 null, null, null, null, null, null, null, null);
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
 
             _controller = new ProjectInvitationController(
                 _invitationServiceMock.Object,
@@ -297,10 +296,11 @@ namespace TaskForge.Tests.WebUI.Controllers
         {
             _controller.ModelState.AddModelError("InvitedUserEmail", "Required");
 
-            var viewModel = new InviteViewModel
+            var viewModel = new InvitationApprovalViewModel
             {
-                InvitedUserEmail = "invalid@example.com",
-                AssignedRole = ProjectRole.Viewer
+                Id = 1,
+                ProjectId = 1,
+                Status = InvitationStatus.Accepted,
             };
 
             var result = await _controller.Edit(viewModel);
@@ -311,11 +311,11 @@ namespace TaskForge.Tests.WebUI.Controllers
         [Fact]
         public async Task Edit_ReturnsNotFound_WhenInvitationIsNull()
         {
-            var viewModel = new InviteViewModel
+            var viewModel = new InvitationApprovalViewModel
             {
                 Id = 1,
-                InvitedUserEmail = "test@example.com",
-                AssignedRole = ProjectRole.Viewer
+                ProjectId = 1,
+                Status = InvitationStatus.Accepted,
             };
 
             _invitationServiceMock.Setup(x => x.GetByIdAsync(1))
@@ -332,12 +332,11 @@ namespace TaskForge.Tests.WebUI.Controllers
         [InlineData(InvitationStatus.Canceled)]
         public async Task Edit_ReturnsBadRequest_WhenInvitationStatusIsNotPending(InvitationStatus status)
         {
-            var viewModel = new InviteViewModel
+            var viewModel = new InvitationApprovalViewModel
             {
                 Id = 1,
+                ProjectId = 1,
                 Status = InvitationStatus.Accepted,
-                InvitedUserEmail = "test@example.com",
-                AssignedRole = ProjectRole.Viewer
             };
 
             _invitationServiceMock.Setup(x => x.GetByIdAsync(1))
@@ -351,12 +350,11 @@ namespace TaskForge.Tests.WebUI.Controllers
         [Fact]
         public async Task Edit_CallsUpdateAndRedirects_WhenValid()
         {
-            var viewModel = new InviteViewModel
+            var viewModel = new InvitationApprovalViewModel
             {
                 Id = 1,
+                ProjectId = 1,
                 Status = InvitationStatus.Accepted,
-                InvitedUserEmail = "test@example.com",
-                AssignedRole = ProjectRole.Viewer
             };
 
             _invitationServiceMock.Setup(x => x.GetByIdAsync(1))
