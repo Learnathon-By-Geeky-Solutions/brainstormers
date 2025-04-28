@@ -25,7 +25,7 @@ namespace TaskForge.Application.Services
 
 			using var mail = new MailMessage(_settings.Username, toEmail, subject, message)
 			{
-				IsBodyHtml = true // Optional, if you're sending HTML emails
+				IsBodyHtml = true
 			};
 
 			await client.SendMailAsync(mail);

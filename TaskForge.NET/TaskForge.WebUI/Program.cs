@@ -28,7 +28,7 @@ internal static class Program
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console() // Keep default console logging
             .WriteTo.File("logs/taskforge-log.txt", rollingInterval: RollingInterval.Day,
-                restrictedToMinimumLevel: LogEventLevel.Warning) // Only log warnings and above to file
+                restrictedToMinimumLevel: LogEventLevel.Warning)
             .CreateLogger();
 
         builder.Host.UseSerilog(); // Replace default logging with Serilog
@@ -38,11 +38,12 @@ internal static class Program
 
         // Configure the database context and use SQL Server
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(connectionString)); // UseSqlServer extension
+            options.UseSqlServer(connectionString));
 
         builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+
 		// Configure email sender service (can be replaced with a real email sender)
-		builder.Services.AddTransient<IEmailSender, RealEmailSender>(); // Or use SendGridEmailSender
+		builder.Services.AddTransient<IEmailSender, RealEmailSender>();
 
         // Add Identity services for custom IdentityUser and IdentityRole
         builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
