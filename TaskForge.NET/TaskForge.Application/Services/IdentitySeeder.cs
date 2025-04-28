@@ -71,7 +71,7 @@ namespace TaskForge.Application.Services
             }
 
             var adminUserProfileId = await _userProfileService.GetByUserIdAsync(adminUser.Id);
-            if (adminUserProfileId == 0)
+            if (adminUserProfileId == 0 || adminUserProfileId == null)
             {
                 // Create UserProfile for Super Admin
                 await _userProfileService.CreateUserProfileAsync(adminUser.Id, "Super Admin");
