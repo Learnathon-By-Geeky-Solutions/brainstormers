@@ -38,7 +38,7 @@ internal static class Program
 
         // Configure the database context and use SQL Server
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(connectionString));
+                options.UseNpgsql(Environment.GetEnvironmentVariable("DATABASE_URL")));
 
         builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
@@ -155,12 +155,27 @@ internal static class Program
             "default",
             "{controller=Home}/{action=Index}/{id?}");
 
-        // Seed default roles and super admin user
         using (var scope = app.Services.CreateScope())
         {
-            var seeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
-            await seeder.SeedRolesAndSuperUser();
+            var services = scope.ServiceProvider;
+            try
+            {
+                // Apply migrations to the database to ensure tables are created
+                var context = services.GetRequiredService<ApplicationDbContext>();
+                await context.Database.MigrateAsync();
+
+                var seeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
+                await seeder.SeedRolesAndSuperUser();
+            }
+            catch (Exception ex)
+            {
+                // Log any errors that occur during migration or seeding
+                var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("Program");
+                logger.LogError(ex, "An error occurred during migration or seeding");
+                throw;
+            }
         }
+
 
         await app.RunAsync();
     }
