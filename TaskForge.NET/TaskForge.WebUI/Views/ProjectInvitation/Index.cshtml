@@ -4,6 +4,19 @@
 	Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+@if (TempData["SuccessMessage"] != null)
+{
+	<div class="alert alert-success">
+		@TempData["SuccessMessage"]
+	</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+	<div class="alert alert-danger">
+		@TempData["ErrorMessage"]
+	</div>
+}
+
 <div class="container">
 	<h2>Project Invitations</h2>
 

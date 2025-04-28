@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Moq;
 using System.ComponentModel.DataAnnotations;
@@ -17,13 +18,21 @@ namespace TaskForge.Tests.WebUI.Controllers
     {
         private readonly Mock<ITaskService> _taskServiceMock;
         private readonly Mock<IProjectMemberService> _projectMemberServiceMock;
+        private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
         private readonly TaskController _controller;
 
         public TaskControllerTests()
         {
+            var store = new Mock<IUserStore<IdentityUser>>();
             _taskServiceMock = new Mock<ITaskService>();
             _projectMemberServiceMock = new Mock<IProjectMemberService>();
-            _controller = new TaskController(_taskServiceMock.Object, _projectMemberServiceMock.Object);
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+            _userManagerMock = new Mock<UserManager<IdentityUser>>(store.Object,
+                null, null, null, null, null, null, null, null);
+
+            _controller = new TaskController(_taskServiceMock.Object, 
+                _projectMemberServiceMock.Object,
+                _userManagerMock.Object);
         }
 
         [Fact]
@@ -489,7 +498,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             var result = await _controller.DeleteAttachment(1);
 
             var viewResult = Assert.IsType<ViewResult>(result);
-            _taskServiceMock.Verify(s => s.DeleteAttachmentAsync(It.IsAny<int>()), Times.Never);
+            _taskServiceMock.Verify(s => s.DeleteAttachmentAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
 
             Assert.False(viewResult.ViewData.ModelState.IsValid);
         }
@@ -497,7 +506,8 @@ namespace TaskForge.Tests.WebUI.Controllers
         public async Task DeleteAttachment_ReturnsSuccessJson_WhenDeletedSuccessfully()
         {
             int attachmentId = 123;
-            _taskServiceMock.Setup(s => s.DeleteAttachmentAsync(attachmentId)).Returns(Task.CompletedTask);
+            var userId = "test01";
+            _taskServiceMock.Setup(s => s.DeleteAttachmentAsync(attachmentId, userId)).Returns(Task.CompletedTask);
 
             var result = await _controller.DeleteAttachment(attachmentId);
 
@@ -508,14 +518,15 @@ namespace TaskForge.Tests.WebUI.Controllers
 
             Assert.True(success);
             Assert.Equal("TaskAttachment deleted successfully.", message);
-            _taskServiceMock.Verify(s => s.DeleteAttachmentAsync(attachmentId), Times.Once);
+            _taskServiceMock.Verify(s => s.DeleteAttachmentAsync(attachmentId, userId), Times.Once);
         }
         [Fact]
         public async Task DeleteAttachment_ReturnsErrorJson_WhenExceptionThrown()
         {
             int attachmentId = 999;
+            var userId = "test01";
             _taskServiceMock
-                .Setup(s => s.DeleteAttachmentAsync(attachmentId))
+                .Setup(s => s.DeleteAttachmentAsync(attachmentId, userId))
                 .ThrowsAsync(new Exception("Something went wrong"));
 
             var result = await _controller.DeleteAttachment(attachmentId);
@@ -527,7 +538,7 @@ namespace TaskForge.Tests.WebUI.Controllers
 
             Assert.False(success);
             Assert.Equal("Something went wrong", message);
-            _taskServiceMock.Verify(s => s.DeleteAttachmentAsync(attachmentId), Times.Once);
+            _taskServiceMock.Verify(s => s.DeleteAttachmentAsync(attachmentId, userId), Times.Once);
         }
 
     }
