@@ -31,7 +31,7 @@ namespace TaskForge.Domain.Entities
             {
                 throw new ArgumentException("EndDate cannot be earlier than StartDate.");
             }
-            EndDate = endDate;
+            EndDate = endDate?.ToUniversalTime();
         }
     }
 }

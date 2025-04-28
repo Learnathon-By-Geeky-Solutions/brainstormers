@@ -38,7 +38,7 @@ internal static class Program
 
         // Configure the database context and use SQL Server
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(connectionString));
+            options.UseNpgsql(connectionString));
 
         builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
@@ -79,7 +79,7 @@ internal static class Program
             .AddAspNetIdentity<IdentityUser>()
             .AddInMemoryClients(IdentityServerConfig.GetClients())
             .AddInMemoryApiScopes(IdentityServerConfig.GetApiScopes())
-            .AddDeveloperSigningCredential();
+            .AddDeveloperSigningCredential(persistKey: false);
 
         builder.Services.Configure<IdentityOptions>(options =>
         {

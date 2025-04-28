@@ -57,9 +57,9 @@ namespace TaskForge.WebUI.Controllers
                     ProjectTitle = invitation.Project.Title,
                     Status = invitation.Status.ToString(),
                     Role = invitation.AssignedRole.ToString(),
-                    InvitationSentDate = invitation.InvitationSentDate,
-                    AcceptedDate = invitation.AcceptedDate,
-                    DeclinedDate = invitation.DeclinedDate
+                    InvitationSentDate = invitation.InvitationSentDate.ToUniversalTime(),
+                    AcceptedDate = invitation.AcceptedDate?.ToUniversalTime(),
+                    DeclinedDate = invitation.DeclinedDate?.ToUniversalTime(),
                 }).ToList(),
                 PageIndex = paginatedInvitations.PageIndex,
                 PageSize = paginatedInvitations.PageSize,

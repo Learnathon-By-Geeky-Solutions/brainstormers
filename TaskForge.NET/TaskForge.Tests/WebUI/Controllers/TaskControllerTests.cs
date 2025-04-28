@@ -43,8 +43,8 @@ namespace TaskForge.Tests.WebUI.Controllers
                 ProjectId = 1,
                 Title = "Test Task",
                 Description = "Test Description",
-                StartDate = DateTime.Now,
-                DueDate = DateTime.Now.AddDays(1),
+                StartDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(1),
                 Status = TaskWorkflowStatus.ToDo,
                 Priority = TaskPriority.Medium,
                 Attachments = new List<Microsoft.AspNetCore.Http.IFormFile>()
@@ -87,8 +87,8 @@ namespace TaskForge.Tests.WebUI.Controllers
                 ProjectId = 1,
                 Title = "Test Task",
                 Description = "Test Description",
-                StartDate = DateTime.Now,
-                DueDate = DateTime.Now.AddDays(1),
+                StartDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(1),
                 Status = TaskWorkflowStatus.ToDo,
                 Priority = TaskPriority.Medium,
                 Attachments = new List<Microsoft.AspNetCore.Http.IFormFile>()
@@ -381,8 +381,8 @@ namespace TaskForge.Tests.WebUI.Controllers
                 Description = "Some desc",
                 Priority = 2,
                 Status = 1,
-                StartDate = DateTime.Now,
-                DueDate = DateTime.Now.AddDays(2),
+                StartDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(2),
                 AssignedUserIds = new List<int> { 1, 2 },
                 Attachments = new List<IFormFile>()
             };
@@ -412,8 +412,8 @@ namespace TaskForge.Tests.WebUI.Controllers
                 Description = "Valid Desc",
                 Priority = 1,
                 Status = 0,
-                StartDate = DateTime.Now,
-                DueDate = DateTime.Now.AddDays(1),
+                StartDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(1),
                 AssignedUserIds = new List<int> { 1, 2 },
                 Attachments = new List<IFormFile>()
             };
