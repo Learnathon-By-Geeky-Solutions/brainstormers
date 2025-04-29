@@ -98,7 +98,7 @@ namespace TaskForge.Tests.Infrastructure.Repositories.Common
         [Fact]
         public async Task FindByExpressionAsync_ReturnsMatchingEntities()
         {
-            var result = await _repository.FindByExpressionAsync(e => e.Name.Contains("1"));
+            var result = await _repository.FindByExpressionAsync(e => e.Name.Contains('1'));
             Assert.Single(result);
             Assert.Contains(result, e => e.Name == "Entity 1");
         }

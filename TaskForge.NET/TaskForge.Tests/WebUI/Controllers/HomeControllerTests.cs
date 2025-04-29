@@ -24,7 +24,6 @@ namespace TaskForge.Tests.WebUI.Controllers
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _userManagerMock = new Mock<UserManager<IdentityUser>>(store.Object,
                 null, null, null, null, null, null, null, null);
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         }
 
         private HomeController CreateController(ClaimsPrincipal? user = null)
@@ -60,49 +59,64 @@ namespace TaskForge.Tests.WebUI.Controllers
         [Fact]
         public async Task Index_ModelStateInvalid_RedirectsToIndex()
         {
-            var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, "user1") }, "mock"));
+            var user = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "user1")], "mock"));
             var controller = CreateController(user);
             controller.ModelState.AddModelError("Error", "Some error");
-
+            // Act
             var result = await controller.Index();
-
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestResult>(result);
+            Assert.IsType<BadRequestResult>(badRequestResult);
         }
         [Fact]
         public async Task Index_UserIsNull_RedirectsToLogin()
         {
-            var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, "user1") }, "mock"));
-            var controller = CreateController(user);
+            // Arrange: Authenticated user
+            var claims = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.NameIdentifier, "user123")
+            ], "mock"));
 
-            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync((IdentityUser?)null);
+            var controller = CreateController(claims);
 
+            _userManagerMock
+                .Setup(x => x.GetUserAsync(claims))
+                .ReturnsAsync((IdentityUser?)null);
+
+            // Act
             var result = await controller.Index();
 
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Login", redirectResult.ActionName);
-            Assert.Equal("Account", redirectResult.ControllerName);
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToPageResult>(result);
+            Assert.Equal("Identity/Account/Login", redirectResult.PageName);
         }
         [Fact]
-        public async Task Index_UserProfileNotFound_ReturnsNotFound()
+        public async Task Index_UserProfileNotFound_ReturnsBadRequest()
         {
-            var user = new IdentityUser { Id = "user1" };
-            var principal = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, "user1") }, "mock"));
-            var controller = CreateController(principal);
+            // Arrange
+            var claims = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.NameIdentifier, "user123")
+            ], "mock"));
 
-            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-            _userProfileServiceMock.Setup(x => x.GetByUserIdAsync("user1")).ReturnsAsync((int?)null);
+            var controller = CreateController(claims);
 
+            var user = new IdentityUser { Id = "user123" };
+            _userManagerMock.Setup(x => x.GetUserAsync(claims)).ReturnsAsync(user);
+            _userProfileServiceMock.Setup(x => x.GetByUserIdAsync(user.Id)).ReturnsAsync((int?)null);
+
+            // Act
             var result = await controller.Index();
 
-            Assert.IsType<NotFoundResult>(result);
+            // Assert
+            Assert.IsType<BadRequestResult>(result);
         }
         [Fact]
         public async Task Index_ValidUser_ReturnsDashboardViewWithFullTaskDtoCoverage()
         {
             var user = new IdentityUser { Id = "user1" };
             var principal = new ClaimsPrincipal(new ClaimsIdentity(
-                new[] { new Claim(ClaimTypes.NameIdentifier, "user1") }, "mock"));
+                [new Claim(ClaimTypes.NameIdentifier, "user1")], "mock"));
 
             var controller = CreateController(principal);
 
@@ -113,8 +127,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             var now = DateTime.UtcNow;
 
             var taskList = new PaginatedList<TaskDto>(
-                new List<TaskDto>
-                {
+                [
             new TaskDto
             {
                 Id = 101,
@@ -126,7 +139,7 @@ namespace TaskForge.Tests.WebUI.Controllers
                 DueDate = now.AddDays(2),
                 Status = TaskWorkflowStatus.Done,
                 Priority = TaskPriority.High,
-                Attachments = new List<IFormFile>()
+                Attachments = []
             },
             new TaskDto
             {
@@ -139,9 +152,9 @@ namespace TaskForge.Tests.WebUI.Controllers
                 DueDate = now.AddDays(3),
                 Status = TaskWorkflowStatus.ToDo,
                 Priority = TaskPriority.Medium,
-                Attachments = new List<IFormFile>()
+                Attachments = []
             }
-                },
+                ],
                 totalCount: 2,
                 pageIndex: 1,
                 pageSize: 10

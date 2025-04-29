@@ -142,7 +142,7 @@ namespace TaskForge.WebUI.Controllers
                 var task = await _taskService.GetTaskByIdAsync(id);
                 if (task == null) return Json(new { success = false, message = "Task not found." });
 
-                var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, task.ProjectId);
+                var member = await _projectMemberService.GetUserProjectRoleAsync(user!.Id, task.ProjectId);
                 if (member == null || member.Role == ProjectRole.Viewer) return Json(new { success = false, message = "You do not have permission to delete tasks in this project." });
 
 
