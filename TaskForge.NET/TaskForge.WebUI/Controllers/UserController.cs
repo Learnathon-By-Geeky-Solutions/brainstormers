@@ -59,6 +59,7 @@ public class UserController : Controller
         return View(viewModel);
     }
 
+
     [HttpGet]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create()

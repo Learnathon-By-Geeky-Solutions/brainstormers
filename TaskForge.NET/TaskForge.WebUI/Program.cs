@@ -137,6 +137,7 @@ internal static class Program
 		builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
         builder.Services.AddScoped<ITaskRepository, TaskRepository>();
         builder.Services.AddScoped<IProjectInvitationRepository, ProjectInvitationRepository>();
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
         builder.Services.AddScoped<IProjectMemberRepository, ProjectMemberRepository>();
         builder.Services.AddScoped<ITaskAttachmentRepository, TaskAttachmentRepository>();
