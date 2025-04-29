@@ -15,7 +15,9 @@ namespace TaskForge.WebUI.Controllers
         private readonly IProjectMemberService _projectMemberService;
         private readonly UserManager<IdentityUser> _userManager;
 
-        public TaskController(ITaskService taskService, IProjectMemberService projectMemberService, UserManager<IdentityUser> userManager)
+        public TaskController(ITaskService taskService, 
+            IProjectMemberService projectMemberService, 
+            UserManager<IdentityUser> userManager)
         {
             _taskService = taskService;
             _projectMemberService = projectMemberService;
@@ -34,6 +36,7 @@ namespace TaskForge.WebUI.Controllers
                 }
 
                 var user = await _userManager.GetUserAsync(User);
+                if (user == null) return Unauthorized();
 
                 var member = await _projectMemberService.GetUserProjectRoleAsync(user.Id, model.ProjectId);
                 if (member == null || member.Role == ProjectRole.Viewer) return Json(new { success = false, message = "You do not have permission to create tasks in this project." });
@@ -104,6 +107,7 @@ namespace TaskForge.WebUI.Controllers
                     return Json(new { success = false, message = "Invalid data." });
 
                 var user = await _userManager.GetUserAsync(User);
+                if (user == null) return Unauthorized();
 
                 var task = await _taskService.GetTaskByIdAsync(dto.Id);
                 if (task == null) return Json(new { success = false, message = "Task not found." });
@@ -161,6 +165,8 @@ namespace TaskForge.WebUI.Controllers
             try
             {
                 var user = await _userManager.GetUserAsync(User);
+
+                if (user == null) return Unauthorized();
 
                 await _taskService.DeleteAttachmentAsync(id, user.Id);
                 return Json(new { success = true, message = "TaskAttachment deleted successfully." });
