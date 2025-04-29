@@ -5,39 +5,35 @@ services:
       target: final
     ports:
       - 8080:8080
-    # depends_on:
-    #   db:
-    #     condition: service_healthy
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      # - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=TaskForgeDB;Username=postgres;Password=123
-      - SuperAdmin__Email=${SuperAdmin__Email}
-      - SuperAdmin__Password=${SuperAdmin__Password}
-      - EmailSettings__Username=${EmailSettings__Username}
-      - EmailSettings__Password=${EmailSettings__Password}
     volumes:
       - uploads-data:/app/wwwroot/uploads
-#   db:
-#     image: postgres
-#     restart: always
-#     user: postgres
-#     secrets:
-#       - db-password
-#     volumes:
-#       - db-data:/var/lib/postgresql/data
-#     environment:
-#       - POSTGRES_DB=TaskForgeDB
-#       - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
-#     expose:
-#       - 5432
-#     healthcheck:
-#       test: ["CMD", "pg_isready"]
-#       interval: 10s
-#       timeout: 5s
-#       retries: 5
 volumes:
-  # db-data:
-  uploads-data:  
-# secrets:
-#   db-password:
-#     file: TaskForge.NET/TaskForge.WebUI/password.txt
+  db-data:  
+    
+# services:
+#   server:
+#     build:
+#       context: .
+#       target: final
+#     ports:
+#       - 8080:8080
+#     env_file:
+#       - ./TaskForge.NET/TaskForge.WebUI/.env
+#     environment:
+#       - ConnectionStrings__DefaultConnection=${ConnectionStrings__DefaultConnection}
+#       - SuperAdmin__Email=${SuperAdmin__Email}
+#       - SuperAdmin__Password=${SuperAdmin__Password}
+#       - EmailSettings__Host=${EmailSettings__Host}
+#       - EmailSettings__Port=${EmailSettings__Port}
+#       - EmailSettings__Username=${EmailSettings__Username}
+#       - EmailSettings__Password=${EmailSettings__Password}
+#     volumes:
+#       - uploads-data:/app/wwwroot/uploads
+# volumes:
+#   db-data:    
+#   uploads-data:
+#         driver: local
+#         driver_opts:
+#           type: none
+#           device: ./TaskForge.NET/TaskForge.WebUI/wwwroot/uploads
+#           o: bind

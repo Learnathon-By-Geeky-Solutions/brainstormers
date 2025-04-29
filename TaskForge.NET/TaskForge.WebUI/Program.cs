@@ -1,3 +1,4 @@
+using DotNetEnv;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -26,24 +27,58 @@ internal static class Program
 
         // Configure Serilog to log to a file
         Log.Logger = new LoggerConfiguration()
-            .WriteTo.Console() // Keep default console logging
+            .WriteTo.Console()
             .WriteTo.File("logs/taskforge-log.txt", rollingInterval: RollingInterval.Day,
                 restrictedToMinimumLevel: LogEventLevel.Warning)
             .CreateLogger();
 
         builder.Host.UseSerilog(); // Replace default logging with Serilog
 
+        // Load environment variables from .env file if in development mode
+        if (builder.Environment.IsDevelopment())
+        {
+            var envVars = Env.Load();
+
+            // Inject into configuration manually
+            foreach (var kvp in envVars)
+            {
+                Console.WriteLine($"Loaded environment variable: {kvp.Key} = {kvp.Value}");
+                builder.Configuration[kvp.Key] = kvp.Value;
+            }
+        }
+
+        builder.Configuration.SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddEnvironmentVariables();
+
+
         // Get the database connection string from configuration
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            throw new InvalidOperationException("Database connection string is not set.");
+        }
+
         // Configure the database context and use SQL Server
-        builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(Environment.GetEnvironmentVariable("DATABASE_URL")));
+        builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
+
+        var emailSettings = builder.Configuration.GetSection("EmailSettings").Get<EmailSettings>();
+
+        if (emailSettings == null ||
+            string.IsNullOrWhiteSpace(emailSettings.Host) ||
+            string.IsNullOrWhiteSpace(emailSettings.Port.ToString()) ||
+            string.IsNullOrWhiteSpace(emailSettings.Username) ||
+            string.IsNullOrWhiteSpace(emailSettings.Password))
+        {
+            throw new InvalidOperationException("Email settings are not configured properly.");
+        }
 
         builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
-		// Configure email sender service (can be replaced with a real email sender)
-		builder.Services.AddTransient<IEmailSender, RealEmailSender>();
+        // Configure email sender service (can be replaced with a real email sender)
+        builder.Services.AddTransient<IEmailSender, RealEmailSender>();
+
 
         // Add Identity services for custom IdentityUser and IdentityRole
         builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
@@ -175,7 +210,6 @@ internal static class Program
                 throw;
             }
         }
-
 
         await app.RunAsync();
     }
