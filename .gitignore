@@ -97,3 +97,6 @@ packages/
 /TaskForge.NET/TaskForge.Tests/coveragereport
 /TaskForge.NET/TestResults
 /TaskForge.NET/TaskForge.WebUI/Properties/launchSettings.json
+/TaskForge.NET/TaskForge.WebUI/password.txt
+# /TaskForge.NET/TaskForge.WebUI/.env
+/TaskForge.NET/TaskForge.WebUI/.env

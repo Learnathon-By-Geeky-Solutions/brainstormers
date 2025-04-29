@@ -56,10 +56,10 @@ namespace TaskForge.Tests.WebUI.Controllers
             {
                 Title = "Test Project",
                 Status = ProjectStatus.NotStarted,
-                StartDateFrom = DateTime.Now.AddDays(-7),
-                StartDateTo = DateTime.Now.AddDays(7),
-                EndDateFrom = DateTime.Now.AddDays(-7),
-                EndDateTo = DateTime.Now.AddDays(7),
+                StartDateFrom = DateTime.UtcNow.AddDays(-7),
+                StartDateTo = DateTime.UtcNow.AddDays(7),
+                EndDateFrom = DateTime.UtcNow.AddDays(-7),
+                EndDateTo = DateTime.UtcNow.AddDays(7),
                 SortBy = "StartDate",
                 SortOrder = "asc"
             };
@@ -70,16 +70,16 @@ namespace TaskForge.Tests.WebUI.Controllers
                     ProjectId = 1,
                     ProjectTitle = "Test Project 1",
                     ProjectStatus = ProjectStatus.NotStarted,
-                    ProjectStartDate = DateTime.Now,
-                    ProjectEndDate = DateTime.Now.AddDays(30),
+                    ProjectStartDate = DateTime.UtcNow,
+                    ProjectEndDate = DateTime.UtcNow.AddDays(30),
                     UserRoleInThisProject = ProjectRole.Admin
                 },
                 new() {
                     ProjectId = 2,
                     ProjectTitle = "Test Project 2",
                     ProjectStatus = ProjectStatus.InProgress,
-                    ProjectStartDate = DateTime.Now.AddDays(-10),
-                    ProjectEndDate = DateTime.Now.AddDays(20),
+                    ProjectStartDate = DateTime.UtcNow.AddDays(-10),
+                    ProjectEndDate = DateTime.UtcNow.AddDays(20),
                     UserRoleInThisProject = ProjectRole.Contributor
                 }
             };
@@ -360,7 +360,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             Assert.Equal("", model.Title);
             Assert.Equal(ProjectStatus.NotStarted, model.Status);
             Assert.Equal(expectedStatusOptions, model.StatusOptions);
-            Assert.Equal(DateTime.Now.Date, model.StartDate.Date);
+            Assert.Equal(DateTime.UtcNow.Date, model.StartDate.Date);
             Assert.Null(model.EndDate);
         }
         [Fact]
@@ -371,7 +371,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             {
                 Title = "",
                 Status = ProjectStatus.NotStarted,
-                StartDate = DateTime.Now,
+                StartDate = DateTime.UtcNow,
                 EndDate = null
             };
 
@@ -406,8 +406,8 @@ namespace TaskForge.Tests.WebUI.Controllers
                 Title = "Test Project",
                 Description = "Some desc",
                 Status = ProjectStatus.Completed,
-                StartDate = DateTime.Now,
-                EndDate = DateTime.Now.AddDays(2)
+                StartDate = DateTime.UtcNow,
+                EndDate = DateTime.UtcNow.AddDays(2)
             };
             model.StatusOptions = new List<SelectListItem>
             {
@@ -449,8 +449,8 @@ namespace TaskForge.Tests.WebUI.Controllers
             {
                 Title = "Test Project",
                 Status = ProjectStatus.Completed,
-                StartDate = DateTime.Now,
-                EndDate = DateTime.Now.AddHours(-1) // Invalid: EndDate before StartDate
+                StartDate = DateTime.UtcNow,
+                EndDate = DateTime.UtcNow.AddHours(-1) // Invalid: EndDate before StartDate
             };
 
             // Act

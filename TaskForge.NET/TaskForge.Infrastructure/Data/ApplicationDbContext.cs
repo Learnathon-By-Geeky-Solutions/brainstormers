@@ -22,6 +22,53 @@ namespace TaskForge.Infrastructure.Data
         public DbSet<TaskAssignment> TaskAssignments { get; set; }
         public DbSet<TaskDependency> TaskDependencies { get; set; }
 
+        public override int SaveChanges()
+        {
+            ConvertDateTimeToUtc();
+            return base.SaveChanges();
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            ConvertDateTimeToUtc();
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        private void ConvertDateTimeToUtc()
+        {
+            var entries = ChangeTracker.Entries()
+                .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
+
+            foreach (var entry in entries)
+            {
+                foreach (var property in entry.OriginalValues.Properties)
+                {
+                    if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+                    {
+                        var currentValue = entry.Property(property.Name).CurrentValue;
+
+                        if (currentValue is DateTime dateTimeValue)
+                        {
+                            if (dateTimeValue.Kind == DateTimeKind.Unspecified)
+                                entry.Property(property.Name).CurrentValue = DateTime.SpecifyKind(dateTimeValue, DateTimeKind.Utc);
+                            else if (dateTimeValue.Kind == DateTimeKind.Local)
+                                entry.Property(property.Name).CurrentValue = dateTimeValue.ToUniversalTime();
+                        }
+                        else if (currentValue is DateTime?)
+                        {
+                            var nullableDateTimeValue = (DateTime?)currentValue;
+                            var dateTime = nullableDateTimeValue.Value;
+                            if (dateTime.Kind == DateTimeKind.Unspecified)
+                                entry.Property(property.Name).CurrentValue = DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
+                            else if (dateTime.Kind == DateTimeKind.Local)
+                                entry.Property(property.Name).CurrentValue = dateTime.ToUniversalTime();
+                        }
+                    }
+                }
+            }
+        }
+
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

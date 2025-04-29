@@ -41,7 +41,14 @@ namespace TaskForge.Tests.WebUI.Controllers
             // Arrange
             var model = new TaskItemCreateViewModel
             {
-                ProjectId = 1
+                ProjectId = 1,
+                Title = "Test Task",
+                Description = "Test Description",
+                StartDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(1),
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.Medium,
+                Attachments = new List<Microsoft.AspNetCore.Http.IFormFile>()
             };
 
             _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
@@ -93,7 +100,14 @@ namespace TaskForge.Tests.WebUI.Controllers
             var user = new IdentityUser { Id = userId };
             var model = new TaskItemCreateViewModel
             {
-                ProjectId = 1
+                ProjectId = 1,
+                Title = "Test Task",
+                Description = "Test Description",
+                StartDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(1),
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.Medium,
+                Attachments = new List<Microsoft.AspNetCore.Http.IFormFile>()
             };
 
             _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
@@ -277,9 +291,23 @@ namespace TaskForge.Tests.WebUI.Controllers
         [Fact]
         public async Task Update_ReturnsFailureJson_WhenServiceThrowsException()
         {
+            var dto = new TaskUpdateDto
+            {
+                Id = 1,
+                Title = "Update Test",
+                Description = "Some desc",
+                Priority = 2,
+                Status = 1,
+                StartDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(2),
+                AssignedUserIds = new List<int> { 1, 2 },
+                Attachments = new List<IFormFile>()
+            };
+
             // Arrange
             var dto = new TaskUpdateDto { Id = 1, Title = "title" };
             var exceptionMessage = "Service error";
+
 
             _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
                 .ThrowsAsync(new Exception(exceptionMessage));
@@ -298,6 +326,7 @@ namespace TaskForge.Tests.WebUI.Controllers
         [Fact]
         public async Task Update_ReturnsSuccessJson_WhenUpdateSucceeds()
         {
+
             // Arrange
             var userId = "user123";
             var user = new IdentityUser { Id = userId };

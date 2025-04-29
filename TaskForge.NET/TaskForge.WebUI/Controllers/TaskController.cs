@@ -46,8 +46,8 @@ namespace TaskForge.WebUI.Controllers
                     ProjectId = model.ProjectId,
                     Title = model.Title,
                     Description = model.Description,
-                    StartDate = model.StartDate,
-                    DueDate = model.DueDate,
+                    StartDate = model.StartDate?.ToUniversalTime(),
+                    DueDate = model.DueDate?.ToUniversalTime(),
                     Status = model.Status,
                     Priority = model.Priority,
                     Attachments = model.Attachments

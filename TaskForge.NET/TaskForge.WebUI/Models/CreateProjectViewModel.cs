@@ -15,7 +15,7 @@ namespace TaskForge.WebUI.Models
 
         [Required(ErrorMessage = "StartDate can't be empty")]
         [DataType(DataType.DateTime)]
-        public DateTime StartDate { get; set; } = DateTime.Now;
+        public DateTime StartDate { get; set; } = DateTime.UtcNow;
         [DataType(DataType.DateTime)]
         public DateTime? EndDate { get; set; }
 
