@@ -23,7 +23,9 @@ namespace TaskForge.WebUI.Models
 
     public class InviteViewModel : PaginationViewModel
     {
+        [Required]
         public int Id { get; set; }
+        [Required]
         public int ProjectId { get; set; }
 
         [Required]
@@ -35,7 +37,7 @@ namespace TaskForge.WebUI.Models
         public DateTime InvitationSentDate { get; set; } = DateTime.UtcNow;
 
         [Required]
-        public ProjectRole AssignedRole { get; set; }
+        public required ProjectRole AssignedRole { get; set; }
 
     }
 

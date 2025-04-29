@@ -14,7 +14,7 @@ namespace TaskForge.Application.Services
 			_settings = settings.Value;
 		}
 
-		public async Task SendEmailAsync(string toEmail, string subject, string message)
+		public async Task SendEmailAsync(string email, string subject, string htmlMessage)
 		{
 			using var client = new SmtpClient(_settings.Host)
 			{
@@ -23,9 +23,9 @@ namespace TaskForge.Application.Services
 				EnableSsl = true,
 			};
 
-			using var mail = new MailMessage(_settings.Username, toEmail, subject, message)
+			using var mail = new MailMessage(_settings.Username, email, subject, htmlMessage)
 			{
-				IsBodyHtml = true // Optional, if you're sending HTML emails
+				IsBodyHtml = true
 			};
 
 			await client.SendMailAsync(mail);

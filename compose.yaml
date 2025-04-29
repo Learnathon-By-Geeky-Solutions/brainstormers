@@ -1,0 +1,39 @@
+services:
+  server:
+    build:
+      context: .
+      target: final
+    ports:
+      - 8080:8080
+    volumes:
+      - uploads-data:/app/wwwroot/uploads
+volumes:
+  db-data:  
+    
+# services:
+#   server:
+#     build:
+#       context: .
+#       target: final
+#     ports:
+#       - 8080:8080
+#     env_file:
+#       - ./TaskForge.NET/TaskForge.WebUI/.env
+#     environment:
+#       - ConnectionStrings__DefaultConnection=${ConnectionStrings__DefaultConnection}
+#       - SuperAdmin__Email=${SuperAdmin__Email}
+#       - SuperAdmin__Password=${SuperAdmin__Password}
+#       - EmailSettings__Host=${EmailSettings__Host}
+#       - EmailSettings__Port=${EmailSettings__Port}
+#       - EmailSettings__Username=${EmailSettings__Username}
+#       - EmailSettings__Password=${EmailSettings__Password}
+#     volumes:
+#       - uploads-data:/app/wwwroot/uploads
+# volumes:
+#   db-data:    
+#   uploads-data:
+#         driver: local
+#         driver_opts:
+#           type: none
+#           device: ./TaskForge.NET/TaskForge.WebUI/wwwroot/uploads
+#           o: bind

@@ -65,7 +65,7 @@ public class ProjectController : Controller
             Title = "",
             Status = 0,
             StatusOptions = await _projectService.GetProjectStatusOptions(),
-            StartDate = DateTime.Now,
+            StartDate = DateTime.UtcNow,
             EndDate = null
         };
 
@@ -92,8 +92,8 @@ public class ProjectController : Controller
             Description = createProjectViewModel.Description,
             Status = createProjectViewModel.Status,
             CreatedBy = user.Id,
-            StartDate = createProjectViewModel.StartDate,
-            EndDate = createProjectViewModel.EndDate
+            StartDate = createProjectViewModel.StartDate.ToUniversalTime(),
+            EndDate = createProjectViewModel.EndDate?.ToUniversalTime()
         };
 
         await _projectService.CreateProjectAsync(createNewProject);
@@ -130,7 +130,7 @@ public class ProjectController : Controller
         // Update properties
         existingProject.Title = viewModel.Title;
         existingProject.Description = viewModel.Description;
-        existingProject.StartDate = viewModel.StartDate;
+        existingProject.StartDate = viewModel.StartDate.ToUniversalTime();
         existingProject.SetEndDate(viewModel.EndDateInput);
         existingProject.Status = viewModel.Status;
         existingProject.UpdatedBy = user.Id;
@@ -144,7 +144,7 @@ public class ProjectController : Controller
     [HttpGet]
     public async Task<IActionResult> Update(int id)
     {
-        if(!ModelState.IsValid) return View();
+        if(!ModelState.IsValid) return BadRequest();
 
         var project = await _projectService.GetProjectByIdAsync(id);
         if (project == null) return NotFound();
@@ -155,8 +155,8 @@ public class ProjectController : Controller
             Title = project.Title,
             Description = project.Description,
             Status = project.Status,
-            StartDate = project.StartDate,
-            EndDateInput = project.EndDate
+            StartDate = project.StartDate.ToUniversalTime(),
+            EndDateInput = project.EndDate?.ToUniversalTime()
         };
 
         return PartialView("_EditProjectForm", model);
@@ -192,8 +192,8 @@ public class ProjectController : Controller
             ProjectTitle = project.Title,
             ProjectDescription = project.Description ?? "",
             ProjectStatus = project.Status,
-            StartDate = project.StartDate,
-            EndDate = project.EndDate,
+            StartDate = project.StartDate.ToUniversalTime(),
+            EndDate = project.EndDate?.ToUniversalTime(),
             UserRoleInThisProject = member.Role,
             TotalTasks = taskList.Count,
             PendingTasks = taskList.Count(t => t.Status == TaskWorkflowStatus.ToDo),
@@ -213,7 +213,7 @@ public class ProjectController : Controller
                     ProjectId = m.ProjectId,
                     InvitedUserEmail = m.InvitedUserProfile?.User?.UserName ?? "No User",
                     Status = m.Status,
-                    InvitationSentDate = m.InvitationSentDate,
+                    InvitationSentDate = m.InvitationSentDate.ToUniversalTime(),
                     AssignedRole = m.AssignedRole
                 }).ToList(),
             TaskItems = taskList.Select(t => new TaskItemViewModel
@@ -224,8 +224,8 @@ public class ProjectController : Controller
                 Description = t.Description,
                 Status = t.Status,
                 Priority = t.Priority,
-                StartDate = t.StartDate,
-                DueDate = t.DueDate,
+                StartDate = t.StartDate?.ToUniversalTime(),
+                DueDate = t.DueDate?.ToUniversalTime(),
                 AssignedUsers = t.AssignedUsers.Select(a => new TaskAssignmentViewModel
                 {
                     UserProfileId = a.UserProfileId,
@@ -244,9 +244,9 @@ public class ProjectController : Controller
                 Id = project.Id,
                 Title = project.Title,
                 Description = project.Description,
-                StartDate = project.StartDate,
+                StartDate = project.StartDate.ToUniversalTime(),
                 Status = project.Status,
-                EndDateInput = project.EndDate
+                EndDateInput = project.EndDate?.ToUniversalTime()
             }
         };
 
@@ -291,7 +291,7 @@ public class ProjectController : Controller
                     ProjectId = pi.ProjectId,
                     InvitedUserEmail = pi.InvitedUserProfile?.User?.Email ?? "N/A",
                     Status = pi.Status,
-                    InvitationSentDate = pi.InvitationSentDate,
+                    InvitationSentDate = pi.InvitationSentDate.ToUniversalTime(),
                     AssignedRole = pi.AssignedRole
                 }).ToList(),
                 projectInvitations.TotalCount,

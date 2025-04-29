@@ -51,18 +51,30 @@ namespace TaskForge.Application.Services
             var adminUser = await _userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)
             {
-                adminUser = new IdentityUser
+                try
                 {
-                    UserName = adminEmail,
-                    Email = adminEmail,
-                    EmailConfirmed = true
-                };
+                    adminUser = new IdentityUser
+                    {
+                        UserName = adminEmail,
+                        Email = adminEmail,
+                        EmailConfirmed = true
+                    };
 
-                var result = await _userManager.CreateAsync(adminUser, adminPassword);
-                if (result.Succeeded)
+                    var result = await _userManager.CreateAsync(adminUser, adminPassword);
+                    if (result.Succeeded)
+                    {
+                        await _userManager.AddToRoleAsync(adminUser, "Admin");
+                        _logger.LogInformation("Super admin user created successfully.");
+                    }
+                    else
+                    {
+                        _logger.LogError("Error creating super admin user: {Errors}", string.Join(", ", result.Errors));
+                    }
+                }
+                catch(Exception ex)
                 {
-                    await _userManager.AddToRoleAsync(adminUser, "Admin");
-                    _logger.LogInformation("Super admin user created successfully.");
+                    _logger.LogError(ex, "Error creating super admin user.");
+                    return;
                 }
             }
             else
@@ -70,8 +82,14 @@ namespace TaskForge.Application.Services
                 _logger.LogInformation("Super admin user already exists.");
             }
 
+            if(adminUser == null || adminUser.Id == "")
+            {
+                _logger.LogError("Super admin user is null. Cannot create UserProfile.");
+                return;
+            }
+
             var adminUserProfileId = await _userProfileService.GetByUserIdAsync(adminUser.Id);
-            if (adminUserProfileId == 0)
+            if (adminUserProfileId == 0 || adminUserProfileId == null)
             {
                 // Create UserProfile for Super Admin
                 await _userProfileService.CreateUserProfileAsync(adminUser.Id, "Super Admin");

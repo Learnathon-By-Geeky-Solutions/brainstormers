@@ -35,7 +35,7 @@ namespace TaskForge.WebUI.Controllers
             if (!ModelState.IsValid) return RedirectToAction("Index");
 
             var user = await _userManager.GetUserAsync(User);
-            string userId = user.Id;
+            string userId = user!.Id;
 
             var userProfileId = await _userProfileService.GetByUserIdAsync(userId);
             if (userProfileId == null)
@@ -57,9 +57,9 @@ namespace TaskForge.WebUI.Controllers
                     ProjectTitle = invitation.Project.Title,
                     Status = invitation.Status.ToString(),
                     Role = invitation.AssignedRole.ToString(),
-                    InvitationSentDate = invitation.InvitationSentDate,
-                    AcceptedDate = invitation.AcceptedDate,
-                    DeclinedDate = invitation.DeclinedDate
+                    InvitationSentDate = invitation.InvitationSentDate.ToUniversalTime(),
+                    AcceptedDate = invitation.AcceptedDate?.ToUniversalTime(),
+                    DeclinedDate = invitation.DeclinedDate?.ToUniversalTime(),
                 }).ToList(),
                 PageIndex = paginatedInvitations.PageIndex,
                 PageSize = paginatedInvitations.PageSize,

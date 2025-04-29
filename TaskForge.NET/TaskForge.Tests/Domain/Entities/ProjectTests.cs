@@ -17,7 +17,7 @@ namespace TaskForge.Tests.Domain.Entities
             Assert.Null(project.Description);
             Assert.Equal(ProjectStatus.NotStarted, project.Status);
             Assert.NotEqual(default, project.StartDate);
-            Assert.True(project.StartDate.Kind == DateTimeKind.Utc);
+            Assert.Equal(DateTimeKind.Utc, project.StartDate.Kind);
             Assert.Empty(project.Members);
             Assert.Empty(project.Invitations);
             Assert.Empty(project.TaskItems);

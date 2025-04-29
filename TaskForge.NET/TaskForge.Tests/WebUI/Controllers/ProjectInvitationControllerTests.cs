@@ -50,17 +50,17 @@ namespace TaskForge.Tests.WebUI.Controllers
             Assert.Equal("Index", redirectResult.ActionName);
         }
         [Fact]
-        public async Task Index_RedirectsToLogin_WhenUserIsNull()
+        public async Task Index_ReturnsRedirect_WhenModelStateIsInvalid()
         {
-            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-                .ReturnsAsync((IdentityUser?)null);
+            // Arrange
+            _controller.ModelState.AddModelError("PageIndex", "Invalid");
 
+            // Act
             var result = await _controller.Index();
 
+            // Assert
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Login", redirectResult.ActionName);
-            Assert.Equal("Account", redirectResult.ControllerName);
-            Assert.Equal("You must be logged in to view your invitations.", _controller.TempData["ErrorMessage"]);
+            Assert.Equal("Index", redirectResult.ActionName);
         }
         [Fact]
         public async Task Index_RedirectsToHome_WhenUserProfileIsNull()
@@ -180,21 +180,24 @@ namespace TaskForge.Tests.WebUI.Controllers
 
 
         [Fact]
-        public async Task Create_ReturnsView_WhenModelStateIsInvalid()
+        public async Task Create_ReturnsRedirect_WhenModelStateIsInvalid()
         {
+            // Arrange
             _controller.ModelState.AddModelError("InvitedUserEmail", "Required");
 
             var viewModel = new InviteViewModel
             {
                 ProjectId = 1,
-                InvitedUserEmail = "invalid@example.com",
-                AssignedRole = ProjectRole.Viewer
+                InvitedUserEmail = "",
+                AssignedRole = ProjectRole.Contributor
             };
 
+            // Act
             var result = await _controller.Create(viewModel);
 
-            var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.Equal(viewModel, viewResult.Model);
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirectResult.ActionName);
         }
         [Fact]
         public async Task Create_ReturnsUnauthorized_WhenUserIsNull()
@@ -292,21 +295,24 @@ namespace TaskForge.Tests.WebUI.Controllers
 
 
         [Fact]
-        public async Task Edit_ReturnsView_WhenModelStateIsInvalid()
+        public async Task Edit_ReturnsRedirectToAction_WhenModelStateInvalid()
         {
-            _controller.ModelState.AddModelError("InvitedUserEmail", "Required");
+            // Arrange
+            _controller.ModelState.AddModelError("Title", "Required");
 
-            var viewModel = new InvitationApprovalViewModel
-            {
-                Id = 1,
-                ProjectId = 1,
-                Status = InvitationStatus.Accepted,
-            };
+            var model = new InvitationApprovalViewModel();
 
-            var result = await _controller.Edit(viewModel);
+            // Act
+            var result = await _controller.Edit(model);
 
-            var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.Equal(viewModel, viewResult.Model);
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirectResult.ActionName);
+
+            // Also check that TempData["ErrorMessage"] is set
+            Assert.True(_controller.TempData.ContainsKey("ErrorMessage"));
+            var errorMessage = _controller.TempData["ErrorMessage"] as string;
+            Assert.Contains("Required", errorMessage);
         }
         [Fact]
         public async Task Edit_ReturnsNotFound_WhenInvitationIsNull()

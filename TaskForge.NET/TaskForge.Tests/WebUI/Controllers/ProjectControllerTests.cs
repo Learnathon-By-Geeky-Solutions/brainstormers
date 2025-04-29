@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.CodeAnalysis;
 using Moq;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
@@ -11,9 +10,8 @@ using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
-using TaskForge.WebUI.Models;
 using TaskForge.WebUI.Controllers;
-using Project = TaskForge.Domain.Entities.Project;
+using TaskForge.WebUI.Models;
 using Xunit;
 
 namespace TaskForge.Tests.WebUI.Controllers
@@ -58,10 +56,10 @@ namespace TaskForge.Tests.WebUI.Controllers
             {
                 Title = "Test Project",
                 Status = ProjectStatus.NotStarted,
-                StartDateFrom = DateTime.Now.AddDays(-7),
-                StartDateTo = DateTime.Now.AddDays(7),
-                EndDateFrom = DateTime.Now.AddDays(-7),
-                EndDateTo = DateTime.Now.AddDays(7),
+                StartDateFrom = DateTime.UtcNow.AddDays(-7),
+                StartDateTo = DateTime.UtcNow.AddDays(7),
+                EndDateFrom = DateTime.UtcNow.AddDays(-7),
+                EndDateTo = DateTime.UtcNow.AddDays(7),
                 SortBy = "StartDate",
                 SortOrder = "asc"
             };
@@ -72,16 +70,16 @@ namespace TaskForge.Tests.WebUI.Controllers
                     ProjectId = 1,
                     ProjectTitle = "Test Project 1",
                     ProjectStatus = ProjectStatus.NotStarted,
-                    ProjectStartDate = DateTime.Now,
-                    ProjectEndDate = DateTime.Now.AddDays(30),
+                    ProjectStartDate = DateTime.UtcNow,
+                    ProjectEndDate = DateTime.UtcNow.AddDays(30),
                     UserRoleInThisProject = ProjectRole.Admin
                 },
                 new() {
                     ProjectId = 2,
                     ProjectTitle = "Test Project 2",
                     ProjectStatus = ProjectStatus.InProgress,
-                    ProjectStartDate = DateTime.Now.AddDays(-10),
-                    ProjectEndDate = DateTime.Now.AddDays(20),
+                    ProjectStartDate = DateTime.UtcNow.AddDays(-10),
+                    ProjectEndDate = DateTime.UtcNow.AddDays(20),
                     UserRoleInThisProject = ProjectRole.Contributor
                 }
             };
@@ -195,8 +193,7 @@ namespace TaskForge.Tests.WebUI.Controllers
 
             var result = await _controller.Update(1);
 
-            var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.Null(viewResult.ViewName);
+            Assert.IsType<BadRequestResult>(result);
         }
         [Fact]
         public async Task Update_ProjectNotFound_ReturnsNotFound()
@@ -211,27 +208,32 @@ namespace TaskForge.Tests.WebUI.Controllers
         [Fact]
         public async Task Update_InvalidModelState_ReturnsPartialViewWithViewModel()
         {
-            _controller.ModelState.AddModelError("Title", "Required");
+            // Arrange
+            var viewModel = new ProjectUpdateViewModel(); // Empty viewmodel is fine
 
-            var viewModel = new ProjectUpdateViewModel { Title = "", Id = 1 };
+            _controller.ModelState.AddModelError("Title", "The Title field is required.");
+            _controller.ModelState.AddModelError("StartDate", "The Start Date is invalid.");
 
-            using var stringWriter = new StringWriter();
-            var originalOut = Console.Out;
-            Console.SetOut(stringWriter);
+            // Act
+            var result = await _controller.Update(viewModel);
 
-            try
-            {
-                var result = await _controller.Update(viewModel);
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Dashboard", redirectResult.ActionName);
+            Assert.Null(redirectResult.ControllerName); // ControllerName is null, means same controller.
 
-                var partialView = Assert.IsType<PartialViewResult>(result);
-                Assert.Equal("_EditProjectForm", partialView.ViewName);
-                var model = Assert.IsType<ProjectUpdateViewModel>(partialView.Model);
-                Assert.Equal(viewModel, model);
-            }
-            finally
-            {
-                Console.SetOut(originalOut);
-            }
+            Assert.True(_controller.TempData.ContainsKey("ValidationErrors"));
+
+            var validationErrors = _controller.TempData["ValidationErrors"] as string;
+            Assert.NotNull(validationErrors);
+            Assert.Contains("The Title field is required.", validationErrors);
+            Assert.Contains("The Start Date is invalid.", validationErrors);
+
+            // Also verify services were never called
+            _userManagerMock.Verify(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()), Times.Never);
+            _projectServiceMock.Verify(x => x.GetProjectByIdAsync(It.IsAny<int>()), Times.Never);
+            _projectServiceMock.Verify(x => x.UpdateProjectAsync(It.IsAny<Project>()), Times.Never);
+            _projectMemberServiceMock.Verify(x => x.GetUserProjectRoleAsync(It.IsAny<string>(), It.IsAny<int>()), Times.Never);
         }
         [Fact]
         public async Task Update_UserIsNull_ReturnsUnauthorized()
@@ -263,48 +265,73 @@ namespace TaskForge.Tests.WebUI.Controllers
         [Fact]
         public async Task Update_ValidRequest_UpdatesProjectAndRedirects()
         {
-            var user = new IdentityUser { Id = "user1" };
+            // Arrange
+            var userId = "user123";
+            var projectId = 1;
 
+            var user = new IdentityUser { Id = userId };
             var existingProject = new Project
             {
-                Id = 1,
+                Id = projectId,
                 Title = "Old Title",
-                Description = "Old Desc",
-                StartDate = DateTime.UtcNow.AddDays(-5),
-                Status = ProjectStatus.NotStarted,
-                UpdatedBy = "",
-                UpdatedDate = DateTime.MinValue
+                Description = "Old Description",
+                StartDate = DateTime.UtcNow.AddDays(-10),
+                Status = ProjectStatus.Completed
             };
 
             var viewModel = new ProjectUpdateViewModel
             {
-                Id = 1,
+                Id = projectId,
                 Title = "Updated Title",
-                Description = "Updated Desc",
-                StartDate = DateTime.UtcNow,
-                EndDateInput = DateTime.UtcNow.AddDays(3),
-                Status = ProjectStatus.InProgress
+                Description = "Updated Description",
+                StartDate = DateTime.UtcNow.AddDays(-1),
+                EndDateInput = DateTime.UtcNow.AddDays(30),
+                Status = ProjectStatus.Completed
             };
 
-            _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-                .ReturnsAsync(user);
+            var projectMember = new ProjectMemberDto { Id = 1, Role = ProjectRole.Admin };
 
-            _projectServiceMock.Setup(p => p.GetProjectByIdAsync(viewModel.Id))
-                .ReturnsAsync(existingProject);
+            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user)
+                .Verifiable();
 
-            _projectServiceMock.Setup(p => p.UpdateProjectAsync(It.IsAny<Project>()))
+            _projectServiceMock.Setup(x => x.GetProjectByIdAsync(projectId))
+                .ReturnsAsync(existingProject)
+                .Verifiable();
+
+            _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(userId, projectId))
+                .ReturnsAsync(projectMember)
+                .Verifiable();
+
+            _projectServiceMock.Setup(x => x.UpdateProjectAsync(It.IsAny<Project>()))
                 .Returns(Task.CompletedTask)
                 .Verifiable();
 
+            // Act
             var result = await _controller.Update(viewModel);
 
-            var redirect = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Dashboard", redirect.ActionName);
-            Assert.Equal("Project", redirect.ControllerName);
-            Assert.NotNull(redirect.RouteValues);
-            Assert.Equal(1, redirect.RouteValues["id"]);
+            // Assert
+            _projectServiceMock.Verify(x => x.UpdateProjectAsync(It.Is<Project>(p =>
+                p.Id == projectId &&
+                p.Title == viewModel.Title &&
+                p.Description == viewModel.Description &&
+                p.StartDate == viewModel.StartDate &&
+                p.Status == viewModel.Status &&
+                p.UpdatedBy == userId &&
+                p.UpdatedDate != null
+            )), Times.Once);
 
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Dashboard", redirectResult.ActionName);
+            Assert.Equal("Project", redirectResult.ControllerName);
+            Assert.NotNull(redirectResult.RouteValues);
+            Assert.True(redirectResult.RouteValues.ContainsKey("id"));
+            Assert.Equal(projectId, redirectResult.RouteValues["id"]);
+
+            // Verify ALL mocks
+            _userManagerMock.Verify();
             _projectServiceMock.Verify();
+            _projectMemberServiceMock.Verify();
         }
 
 
@@ -332,7 +359,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             Assert.Equal("", model.Title);
             Assert.Equal(ProjectStatus.NotStarted, model.Status);
             Assert.Equal(expectedStatusOptions, model.StatusOptions);
-            Assert.Equal(DateTime.Now.Date, model.StartDate.Date);
+            Assert.Equal(DateTime.UtcNow.Date, model.StartDate.Date);
             Assert.Null(model.EndDate);
         }
         [Fact]
@@ -343,7 +370,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             {
                 Title = "",
                 Status = ProjectStatus.NotStarted,
-                StartDate = DateTime.Now,
+                StartDate = DateTime.UtcNow,
                 EndDate = null
             };
 
@@ -378,8 +405,8 @@ namespace TaskForge.Tests.WebUI.Controllers
                 Title = "Test Project",
                 Description = "Some desc",
                 Status = ProjectStatus.Completed,
-                StartDate = DateTime.Now,
-                EndDate = DateTime.Now.AddDays(2)
+                StartDate = DateTime.UtcNow,
+                EndDate = DateTime.UtcNow.AddDays(2)
             };
             model.StatusOptions = new List<SelectListItem>
             {
@@ -421,8 +448,8 @@ namespace TaskForge.Tests.WebUI.Controllers
             {
                 Title = "Test Project",
                 Status = ProjectStatus.Completed,
-                StartDate = DateTime.Now,
-                EndDate = DateTime.Now.AddHours(-1) // Invalid: EndDate before StartDate
+                StartDate = DateTime.UtcNow,
+                EndDate = DateTime.UtcNow.AddHours(-1) // Invalid: EndDate before StartDate
             };
 
             // Act
@@ -909,6 +936,8 @@ namespace TaskForge.Tests.WebUI.Controllers
             Assert.Equal(projectId, model.ProjectId);
             Assert.Equal(project.Title, model.ProjectTitle);
             Assert.Equal(project.Description, model.ProjectDescription);
+            Assert.Equal(ProjectRole.Admin, model.AssignedRole);
+
 
             Assert.NotNull(model.ProjectMembers);
             Assert.Collection(model.ProjectMembers,
@@ -1128,12 +1157,13 @@ namespace TaskForge.Tests.WebUI.Controllers
         [Fact]
         public async Task RemoveMember_ModelStateInvalid_ReturnsView()
         {
-            _controller.ModelState.AddModelError("FakeError", "Invalid");
-
+            // Arrange
+            _controller.ModelState.AddModelError("Id", "Required");
+            // Act
             var result = await _controller.RemoveMember(1);
-
-            var view = Assert.IsType<ViewResult>(result);
-            Assert.Null(view.Model);
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("ManageMembers", redirectResult.ActionName);
         }
         [Fact]
         public async Task RemoveMember_MemberNotFound_ReturnsNotFound()
@@ -1220,14 +1250,15 @@ namespace TaskForge.Tests.WebUI.Controllers
 
 
         [Fact]
-        public async Task CancelInvitation_ModelStateInvalid_ReturnsBadRequest()
+        public async Task CancelInvitation_ModelStateInvalid_ReturnsRedirectToManageMembers()
         {
+            // Arrange
             _controller.ModelState.AddModelError("Id", "Required");
-
+            // Act
             var result = await _controller.CancelInvitation(1);
-
-            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.IsType<SerializableError>(badRequest.Value);
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("ManageMembers", redirectResult.ActionName);
         }
         [Fact]
         public async Task CancelInvitation_InvitationNotFound_ReturnsNotFound()

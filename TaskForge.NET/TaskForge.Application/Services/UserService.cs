@@ -12,58 +12,30 @@ namespace TaskForge.Application.Services;
 
 public class UserService : IUserService
 {
-    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IUserProfileRepository _userProfile;
+    private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public UserService(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager,
-        IUserProfileRepository userProfile, IUnitOfWork unitOfWork)
+    public UserService(UserManager<IdentityUser> userManager, 
+        RoleManager<IdentityRole> roleManager,
+        IUserRepository userRepository,
+        IUserProfileRepository userProfile, 
+        IUnitOfWork unitOfWork)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _userProfile = userProfile;
+        _userRepository = userRepository;
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<PaginatedList<UserListItemDto>> GetFilteredUsersAsync(UserFilterDto filter, int pageIndex,
-        int pageSize)
+    public async Task<PaginatedList<UserListItemDto>> GetFilteredUsersAsync(UserFilterDto filter, int pageIndex, int pageSize)
     {
-        Expression<Func<UserProfile, bool>> predicate = user =>
-            string.IsNullOrEmpty(filter.SearchTerm) ||
-            user.FullName.Contains(filter.SearchTerm) ||
-            user.User.Email!.Contains(filter.SearchTerm);
+        var (userListItemDto, totalCount) = await _userRepository.GetFilteredUsersAsync(filter?.SearchTerm, filter?.RoleFilter, pageSize, (pageIndex - 1) * pageSize);
 
-        var (filteredUserList, totalCount) = await _userProfile.GetPaginatedListAsync(
-            predicate,
-            query => query.OrderBy(u => u.FullName),
-            query => query.Include(p => p.User),
-            skip: (pageIndex - 1) * pageSize,
-            take: pageSize
-        );
-
-        var userList = new List<UserListItemDto>();
-
-        foreach (var user in filteredUserList)
-        {
-            var roles = await _userManager.GetRolesAsync(user.User);
-
-            if (!string.IsNullOrEmpty(filter.RoleFilter) && !roles.Contains(filter.RoleFilter)) continue;
-
-            userList.Add(new UserListItemDto
-            {
-                UserId = user.UserId,
-                Email = user.User.Email ?? "",
-                FullName = user.FullName,
-                AvatarUrl = user.AvatarUrl,
-                PhoneNumber = user.PhoneNumber,
-                JobTitle = user.JobTitle,
-                Company = user.Company,
-                Role = string.Join(", ", roles)
-            });
-        }
-
-        return new PaginatedList<UserListItemDto>(userList, totalCount, pageIndex, pageSize);
+        return new PaginatedList<UserListItemDto>(userListItemDto, totalCount, pageIndex, pageSize);
     }
 
     public async Task<UserListItemDto?> GetUserByIdAsync(string userId)
@@ -104,12 +76,12 @@ public class UserService : IUserService
 
         if (result.Succeeded)
         {
-            await _userManager.AddToRoleAsync(user, dto.Role);
+            await _userManager.AddToRoleAsync(user, dto.Role!);
 
 			var profile = new UserProfile
             {
                 UserId = user.Id,
-                FullName = dto.FullName,
+                FullName = dto.FullName!,
                 PhoneNumber = dto.PhoneNumber
             };
 

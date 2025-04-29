@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TaskForge.Application
+﻿namespace TaskForge.Application
 {
-	public class EmailSettings
-	{
-		public string Host { get; set; }
-		public int Port { get; set; }
-		public string Username { get; set; }
-		public string Password { get; set; }
-	}
+    public class EmailSettings
+    {
+        public required string Host { get; set; } = string.Empty;
+        public int Port { get; set; }
+        public required string Username { get; set; } = string.Empty;
+        public required string Password { get; set; } = string.Empty;
+    }
 }

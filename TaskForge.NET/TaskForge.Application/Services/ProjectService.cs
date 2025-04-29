@@ -84,8 +84,8 @@ namespace TaskForge.Application.Services
 				ProjectId = pm.Project.Id,
 				ProjectTitle = pm.Project.Title,
 				ProjectStatus = pm.Project.Status,
-				ProjectStartDate = pm.Project.StartDate,
-				ProjectEndDate = pm.Project.EndDate,
+				ProjectStartDate = pm.Project.StartDate.ToUniversalTime(),
+				ProjectEndDate = pm.Project.EndDate?.ToUniversalTime(),
 				UserRoleInThisProject = pm.Role
 			});
 			return new PaginatedList<ProjectWithRoleDto>(projectList, totalCount, pageIndex, pageSize);
@@ -141,7 +141,7 @@ namespace TaskForge.Application.Services
 					Title = dto.Title,
 					Description = dto.Description,
 					Status = dto.Status,
-					StartDate = dto.StartDate,
+					StartDate = dto.StartDate.ToUniversalTime(),
 				};
 
 				if (dto.EndDate != null) project.SetEndDate(dto.EndDate);
@@ -190,9 +190,9 @@ namespace TaskForge.Application.Services
             existingProject!.Title = dto.Title;
             existingProject.Description = dto.Description;
             existingProject.Status = dto.Status;
-            existingProject.StartDate = dto.StartDate;
+            existingProject.StartDate = dto.StartDate.ToUniversalTime();
             existingProject.UpdatedBy = dto.UpdatedBy;
-            existingProject.UpdatedDate = dto.UpdatedDate;
+            existingProject.UpdatedDate = dto.UpdatedDate?.ToUniversalTime();
             existingProject.SetEndDate(dto.EndDate);
 
             await _projectRepository.UpdateAsync(existingProject);
