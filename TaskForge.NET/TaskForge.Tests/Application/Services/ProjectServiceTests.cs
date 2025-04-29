@@ -201,8 +201,7 @@ namespace TaskForge.Tests.Application.Services
                         StartDate = DateTime.UtcNow.AddDays(-1)
                     }
                 },
-                new ProjectMember
-                {
+                new() {
                     Id = 2,
                     Role = ProjectRole.Contributor,
                     Project = new Project
@@ -290,8 +289,7 @@ namespace TaskForge.Tests.Application.Services
 
             var mockProjects = new List<ProjectMember>
             {
-                new ProjectMember
-                {
+                new() {
                     ProjectId = 1,
                     Project = new Project { Title = "Test", StartDate = DateTime.UtcNow },
                     Role = ProjectRole.Contributor
@@ -335,7 +333,7 @@ namespace TaskForge.Tests.Application.Services
 
 			var userProfiles = new List<UserProfile>
 			{
-				new UserProfile { Id = userProfileId, UserId = createProjectDto.CreatedBy }
+				new() { Id = userProfileId, UserId = createProjectDto.CreatedBy }
 			};
 
 			_projectRepositoryMock.Setup(u => u.AddAsync(It.IsAny<Project>()))

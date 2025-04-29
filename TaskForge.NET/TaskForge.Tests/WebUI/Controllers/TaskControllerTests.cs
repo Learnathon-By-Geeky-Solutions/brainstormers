@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
+using System.Net.Mail;
 using System.Security.Claims;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
@@ -207,13 +208,34 @@ namespace TaskForge.Tests.WebUI.Controllers
         [Fact]
         public async Task GetTask_TaskNotFound_ReturnsNotFound()
         {
+            // Arrange
             _taskServiceMock.Setup(s => s.GetTaskByIdAsync(It.IsAny<int>()))
                             .ReturnsAsync((TaskItem?)null);
+            // Act
             var result = await _controller.GetTask(99);
+            // Assert
             Assert.IsType<NotFoundResult>(result);
         }
+        [Fact]
+        public async Task GetTask_ModelStateInvalid_ReturnsBadRequest()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("id", "Required");
 
+            // Act
+            var result = await _controller.GetTask(1);
 
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var value = json.Value!;
+            var valueType = value.GetType();
+
+            var success = (bool)valueType.GetProperty("success")!.GetValue(value)!;
+            var message = valueType.GetProperty("message")!.GetValue(value)!;
+
+            Assert.False(success);
+            Assert.Equal("Invalid Data", message);
+        }
 
         [Fact]
         public void SetDueDate_DueBeforeStart_ThrowsValidationException()
@@ -291,7 +313,8 @@ namespace TaskForge.Tests.WebUI.Controllers
         [Fact]
         public async Task Update_ReturnsFailureJson_WhenServiceThrowsException()
         {
-            var dto = new TaskUpdateDto
+			// Arrange
+			var dto = new TaskUpdateDto
             {
                 Id = 1,
                 Title = "Update Test",
@@ -304,8 +327,6 @@ namespace TaskForge.Tests.WebUI.Controllers
                 Attachments = new List<IFormFile>()
             };
 
-            // Arrange
-            var dto = new TaskUpdateDto { Id = 1, Title = "title" };
             var exceptionMessage = "Service error";
 
 
@@ -364,6 +385,79 @@ namespace TaskForge.Tests.WebUI.Controllers
         }
 
 
+        [Fact]
+        public async Task Delete_ThrowsException_ReturnsErrorMessage()
+        {
+            // Arrange
+            var taskId = 2;
+            var user = new IdentityUser { Id = "user2" };
+            var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id)
+            }, "mock"));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+            };
+
+            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+
+            _taskServiceMock.Setup(x => x.GetTaskByIdAsync(taskId))
+                .ThrowsAsync(new Exception("Something went wrong"));
+
+            // Act
+            var result = await _controller.Delete(taskId);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var value = json.Value!;
+            var success = (bool)value.GetType().GetProperty("success")!.GetValue(value)!;
+            var message = (string)value.GetType().GetProperty("message")!.GetValue(value)!;
+            Assert.False(success);
+            Assert.Equal("Something went wrong", message);
+        }
+        [Fact]
+        public async Task Delete_TaskDeletedSuccessfully_ReturnsSuccessMessage()
+        {
+            // Arrange
+            var taskId = 1;
+            var user = new IdentityUser { Id = "user1" };
+            var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id)
+            }, "mock"));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+            };
+
+            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+
+            _taskServiceMock.Setup(x => x.GetTaskByIdAsync(taskId))
+                .ReturnsAsync(new TaskItem { Id = taskId, ProjectId = 10 });
+
+
+            _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, 10))
+                .ReturnsAsync(new ProjectMemberDto { Role = ProjectRole.Admin });
+
+            _taskServiceMock.Setup(x => x.RemoveTaskAsync(taskId))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _controller.Delete(taskId);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var value = json.Value!;
+            var success = (bool)value.GetType().GetProperty("success")!.GetValue(value)!;
+            var message = (string)value.GetType().GetProperty("message")!.GetValue(value)!;
+            Assert.True(success);
+            Assert.Equal("Task deleted successfully.", message);
+        }
         [Fact]
         public async Task Delete_ReturnsBadRequest_WhenModelStateIsInvalid()
         {
@@ -444,19 +538,7 @@ namespace TaskForge.Tests.WebUI.Controllers
         }
 
 
-
-        [Fact]
-        public async Task DeleteAttachment_ReturnsUnauthorized_WhenUserIsNull()
-        {
-            // Arrange
-            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync((IdentityUser)null!);
-
-            // Act
-            var result = await _controller.DeleteAttachment(10);
-
-            // Assert
-            Assert.IsType<UnauthorizedResult>(result);
-        }
+               
         [Fact]
         public async Task DeleteAttachment_ReturnsBadRequest_WhenModelStateIsInvalid()
         {

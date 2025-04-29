@@ -45,9 +45,9 @@ namespace TaskForge.Application.Helpers.DependencyResolvers
         {
             if (!visited.Add(taskId)) return;
 
-            if (_adjacencyList.ContainsKey(taskId))
+            if (_adjacencyList.TryGetValue(taskId, out List<int>? value))
             {
-                foreach (var dependentTaskId in _adjacencyList[taskId])
+                foreach (var dependentTaskId in value)
                 {
                     await TraverseAsync(dependentTaskId, visited);
                 }

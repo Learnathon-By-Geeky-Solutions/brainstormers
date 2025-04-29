@@ -101,7 +101,7 @@
                                     <td>@member.Email</td>
                                     <td>@member.Role</td>
                                     <td>
-                                        @if (member.Email != User.Identity.Name)
+                                        @if (member.Email != User.Identity!.Name)
                                         {
 	                                        <form asp-action="RemoveMember" asp-controller="Project" method="post"
 	                                              class="d-inline" onsubmit="return confirmAction('remove this member');">
@@ -214,9 +214,9 @@
                         <li class="page-item me-3">
                             <select id="pageSize" name="pageSize" class="form-select form-select-sm"
                                     onchange="changePageSize(this.value)">
-                                <option value="5" selected="@(Model.ProjectInvitations.PageSize == 5)">5</option>
-                                <option value="10" selected="@(Model.ProjectInvitations.PageSize == 10)">10</option>
-                                <option value="20" selected="@(Model.ProjectInvitations.PageSize == 20)">20</option>
+                                <option value="5" selected="@(Model.ProjectInvitations!.PageSize == 5)">5</option>
+                                <option value="10" selected="@(Model.ProjectInvitations!.PageSize == 10)">10</option>
+                                <option value="20" selected="@(Model.ProjectInvitations!.PageSize == 20)">20</option>
                             </select>
                         </li>
 

@@ -11,6 +11,8 @@ namespace TaskForge.WebUI.Controllers;
 public class UserController : Controller
 {
     private readonly IUserService _userService;
+    private readonly string SuccessMessage = "SuccessMessage";
+    private readonly string ErrorMessage = "ErrorMessage";
 
     public UserController(IUserService userService)
     {
@@ -56,6 +58,7 @@ public class UserController : Controller
 
         return View(viewModel);
     }
+
 
     [HttpGet]
     [Authorize(Roles = "Admin")]
@@ -106,13 +109,13 @@ public class UserController : Controller
             model.AvailableRoles = (await _userService.GetAllRolesAsync())
                 .Select(r => new SelectListItem { Text = r.Name, Value = r.Name });
 
-            TempData["SuccessMessage"] = null;
-            TempData["ErrorMessage"] = "Create: There was an issue creating the user. Please try again.";
+            TempData[SuccessMessage] = null;
+            TempData[ErrorMessage] = "Create: There was an issue creating the user. Please try again.";
             return View(model);
         }
 
-        TempData["SuccessMessage"] = "Create: User successfully created.";
-        TempData["ErrorMessage"] = null;
+        TempData[SuccessMessage] = "Create: User successfully created.";
+        TempData[ErrorMessage] = null;
 
         return RedirectToAction("Index");
     }
@@ -155,13 +158,13 @@ public class UserController : Controller
 
         if (result)
         {
-            TempData["SuccessMessage"] = "Delete: User successfully deleted.";
-            TempData["ErrorMessage"] = null;
+            TempData[SuccessMessage] = "Delete: User successfully deleted.";
+            TempData[ErrorMessage] = null;
             return RedirectToAction(nameof(Index));
         }
 
-        TempData["SuccessMessage"] = null;
-        TempData["ErrorMessage"] = "Delete: There was an issue deleting the user. Please try again.";
+        TempData[SuccessMessage] = null;
+        TempData[ErrorMessage] = "Delete: There was an issue deleting the user. Please try again.";
         return RedirectToAction(nameof(Delete), new { id });
     }
 }
