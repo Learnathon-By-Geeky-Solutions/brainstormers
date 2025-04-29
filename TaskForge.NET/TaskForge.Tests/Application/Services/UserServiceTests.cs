@@ -18,6 +18,7 @@ namespace TaskForge.Tests.Services
 		private readonly Mock<IUserProfileRepository> _userProfileRepositoryMock;
 		private readonly Mock<IUnitOfWork> _unitOfWorkMock;
 		private readonly UserService _userService;
+		private readonly Mock<IUserRepository> _userRepositoryMock;
 
 		public UserServiceTests()
 		{
@@ -27,12 +28,14 @@ namespace TaskForge.Tests.Services
 			var roleStoreMock = new Mock<IRoleStore<IdentityRole>>();
 			_roleManagerMock = new Mock<RoleManager<IdentityRole>>(roleStoreMock.Object, null, null, null, null);
 
+			_userRepositoryMock = new Mock<IUserRepository>();
 			_userProfileRepositoryMock = new Mock<IUserProfileRepository>();
 			_unitOfWorkMock = new Mock<IUnitOfWork>();
 
 			_userService = new UserService(
 				_userManagerMock.Object,
 				_roleManagerMock.Object,
+				_userRepositoryMock.Object,
 				_userProfileRepositoryMock.Object,
 				_unitOfWorkMock.Object
 			);

@@ -193,8 +193,7 @@ namespace TaskForge.Tests.WebUI.Controllers
 
             var result = await _controller.Update(1);
 
-            var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.Null(viewResult.ViewName);
+            Assert.IsType<BadRequestResult>(result);
         }
         [Fact]
         public async Task Update_ProjectNotFound_ReturnsNotFound()
