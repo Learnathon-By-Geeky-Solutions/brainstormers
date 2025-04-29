@@ -21,6 +21,9 @@ public class UserController : Controller
     [HttpGet]
     public async Task<IActionResult> Index(string? searchTerm, string? roleFilter, int pageIndex = 1, int pageSize = 10)
     {
+        if (!ModelState.IsValid)
+            return View();
+
         var userFilterDto = new UserFilterDto
         {
             SearchTerm = searchTerm,
