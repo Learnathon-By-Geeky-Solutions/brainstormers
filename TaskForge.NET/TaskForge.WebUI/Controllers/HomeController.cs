@@ -34,16 +34,16 @@ namespace TaskForge.WebUI.Controllers
                 return View("Welcome");
             }
 
-            if (!ModelState.IsValid) return RedirectToAction("Index");
+            if (!ModelState.IsValid) return BadRequest();
 
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login", "Account");
+            if (user == null) return RedirectToPage("Identity/Account/Login");
 
 
-			var userId = user.Id;
+            var userId = user.Id;
 
             var userProfileId = await _userProfileService.GetByUserIdAsync(userId);
-            if (userProfileId == null) return NotFound();
+            if (userProfileId == null) return BadRequest();
 
             var totalProjects = await _projectMemberService.GetUserProjectCountAsync(userProfileId);
             var userTaskList = await _taskService.GetUserTaskAsync(userProfileId, pageIndex, pageSize);

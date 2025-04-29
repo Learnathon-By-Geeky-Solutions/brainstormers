@@ -132,9 +132,6 @@ namespace TaskForge.WebUI.Areas.Identity.Pages.Account
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
-                    await _userProfileService.CreateUserProfileAsync(userId, Input.Email.Split('@')[0]);
-
-
                     // Optionally: Add user to roles
                     await _userManager.AddToRoleAsync(user, "User"); // Ensure the role exists
 
@@ -146,7 +143,7 @@ namespace TaskForge.WebUI.Areas.Identity.Pages.Account
                         protocol: Request.Scheme);
 
                     await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                        $"Welcome to TaskForge.NET!! Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {

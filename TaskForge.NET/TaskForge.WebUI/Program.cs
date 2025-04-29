@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
+using TaskForge.Application;
 using TaskForge.Application.Helpers.DependencyResolvers;
 using TaskForge.Application.Helpers.TaskSorters;
 using TaskForge.Application.Interfaces.Repositories;
@@ -27,7 +28,7 @@ internal static class Program
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console() // Keep default console logging
             .WriteTo.File("logs/taskforge-log.txt", rollingInterval: RollingInterval.Day,
-                restrictedToMinimumLevel: LogEventLevel.Warning) // Only log warnings and above to file
+                restrictedToMinimumLevel: LogEventLevel.Warning)
             .CreateLogger();
 
         builder.Host.UseSerilog(); // Replace default logging with Serilog
@@ -37,14 +38,16 @@ internal static class Program
 
         // Configure the database context and use SQL Server
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(connectionString)); // UseSqlServer extension
+            options.UseSqlServer(connectionString));
 
-        // Configure email sender service (can be replaced with a real email sender)
-        builder.Services.AddTransient<IEmailSender, MockEmailSender>(); // Or use SendGridEmailSender
+        builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+
+		// Configure email sender service (can be replaced with a real email sender)
+		builder.Services.AddTransient<IEmailSender, RealEmailSender>();
 
         // Add Identity services for custom IdentityUser and IdentityRole
         builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
-                options.SignIn.RequireConfirmedAccount = false) // Email confirmation option (optional)
+                options.SignIn.RequireConfirmedAccount = true) 
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
@@ -78,8 +81,13 @@ internal static class Program
             .AddInMemoryApiScopes(IdentityServerConfig.GetApiScopes())
             .AddDeveloperSigningCredential();
 
-        // Register the IdentitySeeder service
-        builder.Services.AddTransient<IdentitySeeder>();
+        builder.Services.Configure<IdentityOptions>(options =>
+        {
+	        options.SignIn.RequireConfirmedEmail = true; // Ensure users have to confirm their email before signing in
+        });
+
+		// Register the IdentitySeeder service
+		builder.Services.AddTransient<IdentitySeeder>();
 
 		// Add services for controllers and Razor Pages
 		builder.Services.AddControllersWithViews();

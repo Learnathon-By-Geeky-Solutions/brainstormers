@@ -95,16 +95,18 @@ public class UserService : IUserService
         {
             UserName = dto.Email,
             Email = dto.Email,
-            PhoneNumber = dto.PhoneNumber
+            PhoneNumber = dto.PhoneNumber,
+            EmailConfirmed = true,
         };
 
-        var result = await _userManager.CreateAsync(user, dto.Password);
+
+		var result = await _userManager.CreateAsync(user, dto.Password);
 
         if (result.Succeeded)
         {
             await _userManager.AddToRoleAsync(user, dto.Role);
 
-            var profile = new UserProfile
+			var profile = new UserProfile
             {
                 UserId = user.Id,
                 FullName = dto.FullName,

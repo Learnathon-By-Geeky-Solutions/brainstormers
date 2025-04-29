@@ -166,9 +166,7 @@ namespace TaskForge.WebUI.Controllers
             {
                 var user = await _userManager.GetUserAsync(User);
 
-                if (user == null) return Unauthorized();
-
-                await _taskService.DeleteAttachmentAsync(id, user.Id);
+                await _taskService.DeleteAttachmentAsync(id, user!.Id);
                 return Json(new { success = true, message = "TaskAttachment deleted successfully." });
             }
             catch (Exception ex)

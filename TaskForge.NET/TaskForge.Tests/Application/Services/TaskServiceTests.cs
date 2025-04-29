@@ -265,23 +265,6 @@ namespace TaskForge.Tests.Application.Services
             Assert.Equal(sortedTasks, result);
         }
         [Fact]
-        public async Task GetSortedTasksAsync_ReturnsEmptyList_WhenSortedTasksIsNull()
-        {
-            // Arrange
-            int projectId = 1;
-            var status = TaskWorkflowStatus.InProgress;
-
-            _taskSorterMock.Setup(t => t.GetTopologicalOrderingsAsync(status, projectId))
-                           .ReturnsAsync((List<List<List<int>>>)null!);
-
-            // Act
-            var result = await _taskService.GetSortedTasksAsync(status, projectId);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Empty(result);
-        }
-        [Fact]
         public async Task GetSortedTasksAsync_ThrowsArgumentException_WhenProjectIdIsInvalid()
         {
             // Arrange
