@@ -76,7 +76,7 @@ jobs:
     name: Deploy to Railway
     needs: build-and-analyze
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
     container: ghcr.io/railwayapp/cli:latest
     
     steps:
