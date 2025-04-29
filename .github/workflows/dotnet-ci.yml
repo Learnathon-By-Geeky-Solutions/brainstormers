@@ -76,15 +76,12 @@ jobs:
     name: Deploy to Railway
     needs: build-and-analyze
     runs-on: ubuntu-latest
-    if: always()
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     container: ghcr.io/railwayapp/cli:latest
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-          
-      - name: Navigate to Project Directory
-        run: cd TaskForge.NET/TaskForge.WebUI/
         
       - name: Deploy to Railway
         env:
