@@ -104,12 +104,12 @@ public class UserService : IUserService
 
         if (result.Succeeded)
         {
-            await _userManager.AddToRoleAsync(user, dto.Role);
+            await _userManager.AddToRoleAsync(user, dto.Role!);
 
 			var profile = new UserProfile
             {
                 UserId = user.Id,
-                FullName = dto.FullName,
+                FullName = dto.FullName!,
                 PhoneNumber = dto.PhoneNumber
             };
 

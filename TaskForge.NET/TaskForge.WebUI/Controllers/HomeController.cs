@@ -36,7 +36,7 @@ namespace TaskForge.WebUI.Controllers
 
             if (!ModelState.IsValid) return BadRequest();
 
-            var user = await _userManager.GetUserAsync(User);
+            var user = await _userManager.GetUserAsync(User!);
             if (user == null) return RedirectToPage("Identity/Account/Login");
 
 
