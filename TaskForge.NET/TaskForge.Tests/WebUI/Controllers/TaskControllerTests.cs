@@ -313,7 +313,8 @@ namespace TaskForge.Tests.WebUI.Controllers
         [Fact]
         public async Task Update_ReturnsFailureJson_WhenServiceThrowsException()
         {
-            var dto = new TaskUpdateDto
+			// Arrange
+			var dto = new TaskUpdateDto
             {
                 Id = 1,
                 Title = "Update Test",
@@ -326,8 +327,6 @@ namespace TaskForge.Tests.WebUI.Controllers
                 Attachments = new List<IFormFile>()
             };
 
-            // Arrange
-            var dto = new TaskUpdateDto { Id = 1, Title = "title" };
             var exceptionMessage = "Service error";
 
 
