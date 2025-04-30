@@ -21,7 +21,7 @@ namespace TaskForge.Tests.WebUI.Models
             // Act & Assert
             Assert.NotNull(model.Project);
             var project = model.Project;
-            Assert.True(project.Id == 1);
+            Assert.Equal(1, project.Id);
         }
 
         [Fact]

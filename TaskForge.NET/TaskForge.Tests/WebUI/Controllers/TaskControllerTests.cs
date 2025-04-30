@@ -1,10 +1,15 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using FluentAssertions;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.CodeAnalysis;
 using Moq;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mail;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
@@ -34,6 +39,13 @@ namespace TaskForge.Tests.WebUI.Controllers
             _controller = new TaskController(_taskServiceMock.Object,
                 _projectMemberServiceMock.Object,
                 _userManagerMock.Object);
+
+            _controller.Url = new UrlHelper(new ActionContext
+            {
+                HttpContext = new DefaultHttpContext(),
+                RouteData = new RouteData(),
+                ActionDescriptor = new ControllerActionDescriptor()
+            });
         }
 
         [Fact]
@@ -80,7 +92,7 @@ namespace TaskForge.Tests.WebUI.Controllers
         {
             _controller.ModelState.AddModelError("Title", "Required");
 
-            var model = new TaskItemCreateViewModel();
+            var model = new TaskItemCreateViewModel() { ProjectId = 1};
 
             var result = await _controller.Create(model);
 
@@ -168,6 +180,112 @@ namespace TaskForge.Tests.WebUI.Controllers
 
             _taskServiceMock.Verify(s => s.CreateTaskAsync(It.Is<TaskDto>(dto => dto.Attachments == null)), Times.Once);
         }
+        [Fact]
+        public async Task Create_ReturnUnauthorized_WhenUserIsNull()
+        {
+            // Arrange
+            var model = new TaskItemCreateViewModel
+            {
+                ProjectId = 1,
+                Title = "Test Task",
+                Description = "Test Description",
+                StartDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(1),
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.Medium,
+                Attachments = []
+            };
+            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync((IdentityUser?)null);
+            // Act
+            var result = await _controller.Create(model);
+            // Assert
+            Assert.IsType<UnauthorizedResult>(result);
+        }
+        [Fact]
+        public async Task Create_ReturnsFailureJson_WhenMemberIsNull()
+        {
+            // Arrange
+            var model = new TaskItemCreateViewModel
+            {
+                ProjectId = 1,
+                Title = "Test Task",
+                Description = "Test Description",
+                StartDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(1),
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.Medium,
+                Attachments = []
+            };
+            var user = new IdentityUser { Id = "testuser" };
+
+            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, model.ProjectId))
+                .ReturnsAsync((ProjectMemberDto?)null);
+
+            // Act
+            var result = await _controller.Create(model);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var value = json.Value!;
+            var type = value.GetType();
+
+            var success = (bool)type.GetProperty("success")!.GetValue(value)!;
+            var message = (string)type.GetProperty("message")!.GetValue(value)!;
+
+            Assert.False(success);
+            Assert.Equal("You do not have permission to create tasks in this project.", message);
+
+            // Verify the service was called with correct parameters
+            _projectMemberServiceMock.Verify(
+                x => x.GetUserProjectRoleAsync(user.Id, model.ProjectId),
+                Times.Once);
+
+            // Alternatively, if you want to explicitly verify that member was null
+            // (though the test name already implies this)
+            var member = await _projectMemberServiceMock.Object.GetUserProjectRoleAsync(user.Id, model.ProjectId);
+            Assert.Null(member);
+        }
+        [Fact]
+        public async Task Create_ReturnsFailureJson_WhenMemberIsViewer()
+        {
+            // Arrange
+            var model = new TaskItemCreateViewModel
+            {
+                ProjectId = 1,
+                Title = "Test Task",
+                Description = "Test Description",
+                StartDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(1),
+                Status = TaskWorkflowStatus.ToDo,
+                Priority = TaskPriority.Medium,
+                Attachments = []
+            };
+            var user = new IdentityUser { Id = "testuser" };
+            var viewerMember = new ProjectMemberDto { Role = ProjectRole.Viewer };
+
+            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, model.ProjectId))
+                .ReturnsAsync(viewerMember);
+
+            // Act
+            var result = await _controller.Create(model);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var value = json.Value!;
+            var type = value.GetType();
+
+            var success = (bool)type.GetProperty("success")!.GetValue(value)!;
+            var message = (string)type.GetProperty("message")!.GetValue(value)!;
+
+            Assert.False(success);
+            Assert.Equal("You do not have permission to create tasks in this project.", message);
+        }
+
 
 
 
@@ -236,6 +354,130 @@ namespace TaskForge.Tests.WebUI.Controllers
             Assert.False(success);
             Assert.Equal("Invalid Data", message);
         }
+        [Fact]
+        public async Task GetTask_ReturnsJsonResult_WhenTaskExists()
+        {
+            // Arrange
+            int taskId = 1;
+            var task = new TaskItem
+            {
+                Id = taskId,
+                Title = "Test Task",
+                Description = "Description",
+                ProjectId = 100,
+                StartDate = new DateTime(2025, 4, 30, 9, 0, 0, DateTimeKind.Utc),
+                Status = TaskWorkflowStatus.InProgress,
+                Priority = TaskPriority.High,
+                Attachments =
+                [
+                    new TaskAttachment { Id = 1, FileName = "test.pdf", StoredFileName = "abc123.pdf" }
+                ],
+                AssignedUsers =
+                [
+                    new TaskAssignment { UserProfileId = 42 }
+                ],
+                Dependencies =
+                [
+                    new TaskDependency { DependsOnTaskId = 2 }
+                ]
+            };
+            task.SetDueDate(new DateTime(2025, 5, 5, 17, 0, 0, DateTimeKind.Utc));
+
+            var members = new List<ProjectMemberDto>
+            {
+                new() { UserProfileId = 42, Name = "Jane Doe" }
+            };
+
+            var dependentTaskIds = new List<int> { 5, 6 };
+
+            _taskServiceMock.Setup(s => s.GetTaskByIdAsync(taskId)).ReturnsAsync(task);
+            _projectMemberServiceMock.Setup(s => s.GetProjectMembersAsync(task.ProjectId)).ReturnsAsync(members);
+            _taskServiceMock.Setup(s => s.GetDependentTaskIdsAsync(taskId, task.Status)).ReturnsAsync(dependentTaskIds);
+
+            // Act
+            var result = await _controller.GetTask(taskId);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var value = json.Value!;
+            var type = value.GetType();
+
+            Assert.Equal(task.Id, type.GetProperty("id")!.GetValue(value));
+            Assert.Equal(task.Title, type.GetProperty("title")!.GetValue(value));
+            Assert.Equal(100, task.ProjectId);
+            Assert.Equal(task.Description, type.GetProperty("description")!.GetValue(value));
+            Assert.Equal("2025-04-30T09:00", type.GetProperty("startDate")!.GetValue(value));
+            Assert.Equal("2025-05-05T17:00", type.GetProperty("dueDate")!.GetValue(value));
+            Assert.Equal((int)task.Status, type.GetProperty("status")!.GetValue(value));
+            Assert.Equal((int)task.Priority, type.GetProperty("priority")!.GetValue(value));
+
+            // Attachments
+            var attachments = type.GetProperty("attachments")!.GetValue(value) as IEnumerable<object>;
+            var attachment = attachments!.First();
+            var atType = attachment.GetType();
+            Assert.Equal("test.pdf", atType.GetProperty("fileName")!.GetValue(attachment));
+            Assert.Equal("/uploads/tasks/abc123.pdf", atType.GetProperty("downloadUrl")!.GetValue(attachment));
+
+            // Assigned Users
+            var assignedIdsObj = type.GetProperty("assignedUserIds")!.GetValue(value);
+            Assert.NotNull(assignedIdsObj);
+            var assignedIds = (assignedIdsObj as IEnumerable<int>) ?? (assignedIdsObj as IEnumerable<object>)?.Cast<int>();
+            Assert.NotNull(assignedIds);
+            Assert.Contains(42, assignedIds!);
+
+            // All Users
+            var allUsers = type.GetProperty("allUsers")!.GetValue(value) as IEnumerable<object>;
+            var user = allUsers!.First();
+            var userType = user.GetType();
+            Assert.Equal(42, userType.GetProperty("id")!.GetValue(user));
+            Assert.Equal("Jane Doe", userType.GetProperty("name")!.GetValue(user));
+
+            // Dependencies
+            var dependsOnObj = type.GetProperty("dependsOnTaskIds")!.GetValue(value);
+            Assert.NotNull(dependsOnObj);
+            var dependsOn = (dependsOnObj as IEnumerable<int>) ?? (dependsOnObj as IEnumerable<object>)?.Cast<int>();
+            Assert.NotNull(dependsOn);
+            Assert.Contains(2, dependsOn!);
+
+            // Dependent Task IDs
+            var dependentTaskIdsObj = type.GetProperty("dependentTaskIds")!.GetValue(value);
+            Assert.NotNull(dependentTaskIdsObj);
+            var dependentTaskIdsList = (dependentTaskIdsObj as IEnumerable<int>) ?? (dependentTaskIdsObj as IEnumerable<object>)?.Cast<int>();
+            Assert.NotNull(dependentTaskIdsList);
+            Assert.Contains(5, dependentTaskIdsList!);
+            Assert.Contains(6, dependentTaskIdsList!);
+        }
+        [Fact]
+        public async Task GetTask_ReturnsEmptyCollections_WhenTaskHasNoRelatedData()
+        {
+            // Arrange
+            int taskId = 1;
+            var task = new TaskItem
+            {
+                Id = taskId,
+                Title = "Empty Task"
+            };
+
+            var members = new List<ProjectMemberDto>();
+            var dependentTaskIds = new List<int>();
+
+            _taskServiceMock.Setup(s => s.GetTaskByIdAsync(taskId)).ReturnsAsync(task);
+            _projectMemberServiceMock.Setup(s => s.GetProjectMembersAsync(task.ProjectId)).ReturnsAsync(members);
+            _taskServiceMock.Setup(s => s.GetDependentTaskIdsAsync(taskId, task.Status)).ReturnsAsync(dependentTaskIds);
+
+            // Act
+            var result = await _controller.GetTask(taskId);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var value = json.Value!;
+            var type = value.GetType();
+
+            Assert.Equal(task.Id, type.GetProperty("id")!.GetValue(value));
+            Assert.Equal(task.Title, type.GetProperty("title")!.GetValue(value));
+        }
+
+
 
         [Fact]
         public void SetDueDate_DueBeforeStart_ThrowsValidationException()
@@ -383,6 +625,99 @@ namespace TaskForge.Tests.WebUI.Controllers
             _projectMemberServiceMock.Verify();
             _taskServiceMock.Verify();
         }
+        [Fact]
+        public async Task Update_ReturnsFailureJson_WhenTaskIsNull()
+        {
+            // Arrange
+            var user = new IdentityUser { Id = "test" };
+            var dto = new TaskUpdateDto { Id = 1, Title = "title" };
+
+            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            _taskServiceMock.Setup(t => t.GetTaskByIdAsync(1))
+                .ReturnsAsync((TaskItem?)null);
+            // Act
+            var result = await _controller.Update(dto);
+            //Assert
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var value = json.Value!;
+            var type = value.GetType();
+
+            var success = (bool)type.GetProperty("success")!.GetValue(value)!;
+            var message = (string)type.GetProperty("message")!.GetValue(value)!;
+
+            Assert.False(success);
+            Assert.Equal("Task not found.", message);
+        }
+        [Fact]
+        public async Task Update_ReturnsFailureJson_WhenMemberIsNull()
+        {
+            // Arrange
+            var user = new IdentityUser { Id = "test" };
+            var dto = new TaskUpdateDto { Id = 1, Title = "title" };
+            var task = new TaskItem { Id = 1, ProjectId = 10 };
+            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            _taskServiceMock.Setup(x => x.GetTaskByIdAsync(1))
+                .ReturnsAsync(task);
+            _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, task.ProjectId))
+                .ReturnsAsync((ProjectMemberDto?)null);
+
+            // Act
+            var result = await _controller.Update(dto);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var value = json.Value!;
+            var type = value.GetType();
+            var success = (bool)type.GetProperty("success")!.GetValue(value)!;
+            var message = (string)type.GetProperty("message")!.GetValue(value)!;
+            Assert.False(success);
+            Assert.Equal("You do not have permission to update tasks in this project.", message);
+
+            // Verify the service was called with correct parameters
+            _projectMemberServiceMock.Verify(
+                x => x.GetUserProjectRoleAsync(user.Id, task.ProjectId),
+                Times.Once);
+            var member = await _projectMemberServiceMock.Object.GetUserProjectRoleAsync(user.Id, task.ProjectId);
+            Assert.Null(member);
+        }
+        [Fact]
+        public async Task Create_Returns_WhenMemberIsViewer()
+        {
+            // Arrange
+            var user = new IdentityUser { Id = "test" };
+            var dto = new TaskUpdateDto { Id = 1, Title = "title" };
+            var task = new TaskItem { Id = 1, ProjectId = 10 };
+            var viewerMember = new ProjectMemberDto { Role = ProjectRole.Viewer };
+            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            _taskServiceMock.Setup(x => x.GetTaskByIdAsync(1))
+                .ReturnsAsync(task);
+            _projectMemberServiceMock.Setup(x => x.GetUserProjectRoleAsync(user.Id, task.ProjectId))
+                .ReturnsAsync(viewerMember);
+
+            // Act
+            var result = await _controller.Update(dto);
+
+            // Assert
+            var json = Assert.IsType<JsonResult>(result);
+            var value = json.Value!;
+            var type = value.GetType();
+            var success = (bool)type.GetProperty("success")!.GetValue(value)!;
+            var message = (string)type.GetProperty("message")!.GetValue(value)!;
+            Assert.False(success);
+            Assert.Equal("You do not have permission to update tasks in this project.", message);
+
+            // Verify the service was called with correct parameters
+            _projectMemberServiceMock.Verify(
+                x => x.GetUserProjectRoleAsync(user.Id, task.ProjectId),
+                Times.Once);
+            var member = await _projectMemberServiceMock.Object.GetUserProjectRoleAsync(user.Id, task.ProjectId);
+            Assert.Equal(ProjectRole.Viewer, member!.Role);
+        }
+
 
 
         [Fact]
