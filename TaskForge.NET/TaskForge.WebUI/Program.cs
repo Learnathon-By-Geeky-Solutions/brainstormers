@@ -94,13 +94,12 @@ internal static class Program
             options.Password.RequireUppercase = false;
             options.Password.RequireLowercase = false;
             options.Password.RequiredUniqueChars = 1;
-			options.SignIn.RequireConfirmedEmail = true;
 		});
 
         // Cookie configuration (important for setting the authentication cookie)
         builder.Services.ConfigureApplicationCookie(options =>
         {
-            options.Cookie.Name = "TaskForge_Auth"; // Cookie name (make sure it’s unique)
+            options.Cookie.Name = "TaskForge_Auth"; // Cookie name (it’s unique)
             options.Cookie.HttpOnly = true;
             options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Ensures secure cookies over HTTPS
             options.LoginPath = "/Identity/Account/Login";
@@ -116,6 +115,12 @@ internal static class Program
             .AddInMemoryClients(IdentityServerConfig.GetClients())
             .AddInMemoryApiScopes(IdentityServerConfig.GetApiScopes())
             .AddDeveloperSigningCredential(persistKey: false);
+
+
+        builder.Services.Configure<IdentityOptions>(options =>
+        {
+            options.SignIn.RequireConfirmedEmail = true;
+        });
 
         // Register the IdentitySeeder service
         builder.Services.AddTransient<IdentitySeeder>();

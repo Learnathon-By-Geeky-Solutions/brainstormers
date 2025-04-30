@@ -68,7 +68,9 @@ namespace TaskForge.Application.Services
                     }
                     else
                     {
+                        _logger.LogInformation(adminEmail, adminPassword);
                         _logger.LogError("Error creating super admin user: {Errors}", string.Join(", ", result.Errors));
+                        return;
                     }
                 }
                 catch(Exception ex)
