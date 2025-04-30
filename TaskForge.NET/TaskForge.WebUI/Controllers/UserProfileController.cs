@@ -1,22 +1,17 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.WebUI.Models;
 
 namespace TaskForge.WebUI.Controllers;
 
-public class UserProfileController : Controller
-{
-	private readonly IUserProfileService _userProfileService;
-	private readonly UserManager<IdentityUser> _userManager;
 
-	public UserProfileController(IUserProfileService userProfileService, UserManager<IdentityUser> userManager)
-	{
-		_userProfileService = userProfileService;
-		_userManager = userManager;
-	}
+public class UserProfileController(IUserProfileService userProfileService, UserManager<IdentityUser> userManager) : Controller
+{
+    private readonly IUserProfileService _userProfileService = userProfileService;
+    private readonly UserManager<IdentityUser> _userManager = userManager;
+
 
 	[Authorize]
 	public async Task<IActionResult> Setup()
@@ -24,14 +19,14 @@ public class UserProfileController : Controller
 		var userId = _userManager.GetUserId(User);
 		if (userId == null)
 		{
-			return NotFound();
+			return Unauthorized();
 		}
 		var profile = await _userProfileService.GetByUserIdAsync(userId);
 
-		if (profile == null)
-		{
-			return NotFound();
-		}
+        if (profile == null)
+        {
+            return Unauthorized();
+        }
 
 		var model = new UserProfileEditViewModel
 		{
@@ -47,36 +42,35 @@ public class UserProfileController : Controller
             UserId = profile.UserId,
         };
 
-		return View(model);
-	}
+        return View(model);
+    }
 
     [Authorize]
     [HttpPost]
-	public async Task<IActionResult> Setup(UserProfileEditViewModel model)
-	{
-		if (!ModelState.IsValid)
-			return View(model);
+    public async Task<IActionResult> Setup(UserProfileEditViewModel model)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+                return View(model);
 
-		var userId = _userManager.GetUserId(User);
-		if (userId == null)
-		{
-			return RedirectToAction("Login", "Account");
-		}
-		var profile = await _userProfileService.GetByUserIdAsync(userId);
-		if (profile == null)
-		{
-			return NotFound();
-		}
+            var userId = _userManager.GetUserId(User);
+            if (userId == null)
+                return RedirectToAction("Login", "Account");
 
-		// Update properties
-		profile.FullName = model.FullName;
-		profile.PhoneNumber = model.PhoneNumber;
-		profile.Location = model.Location;
-		profile.JobTitle = model.JobTitle;
-		profile.Company = model.Company;
-		profile.ProfessionalSummary = model.ProfessionalSummary;
-		profile.LinkedInProfile = model.LinkedInProfile;
-		profile.WebsiteUrl = model.WebsiteUrl;
+            var profile = await _userProfileService.GetByUserIdAsync(userId);
+            if (profile == null)
+                return NotFound();
+
+            // Update properties
+            profile.FullName = model.FullName;
+            profile.PhoneNumber = model.PhoneNumber;
+            profile.Location = model.Location;
+            profile.JobTitle = model.JobTitle;
+            profile.Company = model.Company;
+            profile.ProfessionalSummary = model.ProfessionalSummary;
+            profile.LinkedInProfile = model.LinkedInProfile;
+            profile.WebsiteUrl = model.WebsiteUrl;
 
         if (model.AvatarImage != null && model.AvatarImage.Length > 0)
 		{
@@ -87,38 +81,39 @@ public class UserProfileController : Controller
 				return View(model);
 			}
 
-			// 2. Validate allowed file extensions
-			var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-			var extension = Path.GetExtension(model.AvatarImage.FileName).ToLowerInvariant();
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                var extension = Path.GetExtension(model.AvatarImage.FileName).ToLowerInvariant();
 
-			if (!allowedExtensions.Contains(extension))
-			{
-				ModelState.AddModelError("AvatarImage", "Only .jpg, .jpeg, and .png files are allowed.");
-				return View(model);
-			}
+                if (!allowedExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError("AvatarImage", "Only .jpg, .jpeg, and .png files are allowed.");
+                    return View(model);
+                }
 
-			var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/avatars");
-			if (!Directory.Exists(uploadsFolder))
-				Directory.CreateDirectory(uploadsFolder);
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/avatars");
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
 
-			var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.AvatarImage.FileName);
-			var filePath = Path.Combine(uploadsFolder, fileName);
+                var fileName = Guid.NewGuid().ToString() + extension;
+                var filePath = Path.Combine(uploadsFolder, fileName);
 
-			using (var stream = new FileStream(filePath, FileMode.Create))
-			{
-				await model.AvatarImage.CopyToAsync(stream);
-			}
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.AvatarImage.CopyToAsync(stream);
+                }
 
-			// Save the relative path to AvatarUrl (used in <img src="..." />)
-			profile.AvatarUrl = "/uploads/avatars/" + fileName;
-			Console.WriteLine(profile.AvatarUrl);
-		}
+                profile.AvatarUrl = "/uploads/avatars/" + fileName;
+            }
 
+            await _userProfileService.UpdateAsync(profile);
 
-		await _userProfileService.UpdateAsync(profile);
-
-		return RedirectToAction("Setup", "UserProfile");
-	}
+		    return RedirectToAction("Setup", "UserProfile");
+        }
+        catch (Exception)
+        {
+            return new JsonResult("An error occurred while updating the profile. Please try again.");
+        }
+    }
 
     public async Task<IActionResult> Details(string userId)
     {

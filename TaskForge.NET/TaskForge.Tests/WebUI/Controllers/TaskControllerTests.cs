@@ -395,29 +395,39 @@ namespace TaskForge.Tests.WebUI.Controllers
             _projectMemberServiceMock.Setup(s => s.GetProjectMembersAsync(task.ProjectId)).ReturnsAsync(members);
             _taskServiceMock.Setup(s => s.GetDependentTaskIdsAsync(taskId, task.Status)).ReturnsAsync(dependentTaskIds);
 
-            // Act
-            var result = await _controller.GetTask(taskId);
+			var urlHelperMock = new Mock<IUrlHelper>();
+			urlHelperMock
+				.Setup(u => u.Content(It.IsAny<string>()))
+				.Returns<string>(s => s);
+
+			_controller.Url = urlHelperMock.Object;
+
+
+			// Act
+			var result = await _controller.GetTask(taskId);
 
             // Assert
             var json = Assert.IsType<JsonResult>(result);
-            var value = json.Value!;
+            dynamic value = json.Value!;
             var type = value.GetType();
 
             Assert.Equal(task.Id, type.GetProperty("id")!.GetValue(value));
             Assert.Equal(task.Title, type.GetProperty("title")!.GetValue(value));
             Assert.Equal(100, type.GetProperty("projectId")!.GetValue(value));
 			Assert.Equal(task.Description, type.GetProperty("description")!.GetValue(value));
-            Assert.Equal("2025-04-30T09:00", type.GetProperty("startDate")!.GetValue(value));
-            Assert.Equal("2025-05-05T17:00", type.GetProperty("dueDate")!.GetValue(value));
-            Assert.Equal((int)task.Status, type.GetProperty("status")!.GetValue(value));
+			Assert.Equal("2025-04-30T09:00", type.GetProperty("startDate")?.GetValue(value)?.ToString());
+			Assert.Equal("2025-05-05T17:00", type.GetProperty("dueDate")?.GetValue(value)?.ToString());
+			Assert.Equal((int)task.Status, type.GetProperty("status")!.GetValue(value));
             Assert.Equal((int)task.Priority, type.GetProperty("priority")!.GetValue(value));
 
             // Attachments
             var attachments = type.GetProperty("attachments")!.GetValue(value) as IEnumerable<object>;
             var attachment = attachments!.First();
-            var atType = attachment.GetType();
+			Assert.NotNull(attachments);
+			Assert.NotEmpty(attachments);
+			var atType = attachment.GetType();
             Assert.Equal("test.pdf", atType.GetProperty("fileName")!.GetValue(attachment));
-            Assert.Equal("/uploads/tasks/abc123.pdf", atType.GetProperty("downloadUrl")!.GetValue(attachment));
+            Assert.Equal("~/uploads/tasks/abc123.pdf", atType.GetProperty("downloadUrl")!.GetValue(attachment));
 
             // Assigned Users
             var assignedIdsObj = type.GetProperty("assignedUserIds")!.GetValue(value);
@@ -428,7 +438,10 @@ namespace TaskForge.Tests.WebUI.Controllers
 
             // All Users
             var allUsers = type.GetProperty("allUsers")!.GetValue(value) as IEnumerable<object>;
-            var user = allUsers!.First();
+			Assert.NotNull(allUsers);
+			Assert.NotEmpty(allUsers);
+
+			var user = allUsers!.First();
             var userType = user.GetType();
             Assert.Equal(42, userType.GetProperty("id")!.GetValue(user));
             Assert.Equal("Jane Doe", userType.GetProperty("name")!.GetValue(user));
