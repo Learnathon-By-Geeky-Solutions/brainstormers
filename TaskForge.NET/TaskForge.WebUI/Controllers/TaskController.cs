@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
 using TaskForge.Application.DTOs;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Enums;
@@ -79,6 +80,7 @@ namespace TaskForge.WebUI.Controllers
             {
                 id = task.Id,
                 title = task.Title,
+                projectId = task.ProjectId,
                 description = task.Description,
                 startDate = task.StartDate?.ToString("yyyy-MM-ddTHH:mm"),
                 dueDate = task.DueDate?.ToString("yyyy-MM-ddTHH:mm"),

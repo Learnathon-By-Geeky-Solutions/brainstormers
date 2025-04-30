@@ -12,6 +12,7 @@ using TaskForge.Domain.Entities;
 using TaskForge.Domain.Enums;
 using Xunit;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using TaskForge.Application.Interfaces.Services;
 
 namespace TaskForge.Tests.Application.Services
 {
@@ -25,8 +26,8 @@ namespace TaskForge.Tests.Application.Services
         private readonly ProjectInvitationService _projectInvitationService;
         private readonly Mock<IDbContextTransaction> _transactionMock;
 		private readonly Mock<IProjectRepository> _projectRepositoryMock;
-		private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;
 		private readonly Mock<IEmailSender> _emailSenderMock;
+		private readonly Mock<ILinkGeneratorService> _linkGeneratorServiceMock;
 
 		public ProjectInvitationServiceTests()
 		{
@@ -35,19 +36,19 @@ namespace TaskForge.Tests.Application.Services
 			_userProfileRepositoryMock = new Mock<IUserProfileRepository>();
 			_unitOfWorkMock = new Mock<IUnitOfWork>();
 			_projectRepositoryMock = new Mock<IProjectRepository>();
-			_httpContextAccessorMock = new Mock<IHttpContextAccessor>();
 			_emailSenderMock = new Mock<IEmailSender>();
 			_userManagerMock = CreateMockUserManager();
+			_linkGeneratorServiceMock = new Mock<ILinkGeneratorService>();
 
 			_projectInvitationService = new ProjectInvitationService(
 				_projectInvitationRepositoryMock.Object,
 				_projectMemberRepositoryMock.Object,
 				_projectRepositoryMock.Object,
 				_userProfileRepositoryMock.Object,
-				_httpContextAccessorMock.Object,
 				_emailSenderMock.Object,
 				_unitOfWorkMock.Object,
-				_userManagerMock.Object
+				_userManagerMock.Object,
+				_linkGeneratorServiceMock.Object
 			);
 
 			_transactionMock = new Mock<IDbContextTransaction>();
@@ -630,8 +631,16 @@ namespace TaskForge.Tests.Application.Services
 
 	        _projectInvitationRepositoryMock.Setup(x => x.AddAsync(It.IsAny<ProjectInvitation>()))
 		        .Returns(Task.CompletedTask);
+			_projectRepositoryMock.Setup(x => x.GetByIdAsync(projectId))
+	        .ReturnsAsync(new Project
+	        {
+		        Id = projectId,
+		        Title = "Test Project",
+		        Description = "A sample project."
+	        });
 
-	        _unitOfWorkMock.Setup(x => x.SaveChangesAsync())
+
+			_unitOfWorkMock.Setup(x => x.SaveChangesAsync())
 		        .ReturnsAsync(1);
 
 	        // Act
@@ -688,6 +697,15 @@ namespace TaskForge.Tests.Application.Services
 
 			_projectInvitationRepositoryMock.Setup(x => x.AddAsync(It.IsAny<ProjectInvitation>()))
 				.Returns(Task.CompletedTask);
+
+			_projectRepositoryMock.Setup(x => x.GetByIdAsync(projectId))
+	        .ReturnsAsync(new Project
+	        {
+		        Id = projectId,
+		        Title = "Test Project",
+		        Description = "A test project"
+	        });
+
 
 			_unitOfWorkMock.Setup(x => x.SaveChangesAsync())
 				.ThrowsAsync(new Exception("Simulated DB failure"));

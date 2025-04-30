@@ -117,8 +117,8 @@ internal static class Program
             .AddInMemoryApiScopes(IdentityServerConfig.GetApiScopes())
             .AddDeveloperSigningCredential(persistKey: false);
 
-        // Register the IdentitySeeder service
-        builder.Services.AddTransient<IdentitySeeder>();
+		// Register the IdentitySeeder service
+		builder.Services.AddTransient<IdentitySeeder>();
 
         // Add services for controllers and Razor Pages
         builder.Services.AddControllersWithViews();
@@ -147,7 +147,8 @@ internal static class Program
         builder.Services.AddScoped<IProjectService, ProjectService>();
         builder.Services.AddScoped<IProjectMemberService, ProjectMemberService>();
         builder.Services.AddScoped<IProjectInvitationService, ProjectInvitationService>();
-        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<ILinkGeneratorService, LinkGeneratorService>();
+		builder.Services.AddHttpContextAccessor();
 
 
         builder.Services.AddScoped<TaskServiceDependencies>(provider => new TaskServiceDependencies
