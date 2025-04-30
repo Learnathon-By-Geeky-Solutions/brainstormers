@@ -17,6 +17,7 @@ using TaskForge.Domain.Enums;
 using TaskForge.WebUI.Controllers;
 using TaskForge.WebUI.Models;
 using Xunit;
+using System.Linq;
 
 namespace TaskForge.Tests.WebUI.Controllers
 {
@@ -404,8 +405,8 @@ namespace TaskForge.Tests.WebUI.Controllers
 
             Assert.Equal(task.Id, type.GetProperty("id")!.GetValue(value));
             Assert.Equal(task.Title, type.GetProperty("title")!.GetValue(value));
-            Assert.Equal(100, task.ProjectId);
-            Assert.Equal(task.Description, type.GetProperty("description")!.GetValue(value));
+            Assert.Equal(100, type.GetProperty("projectId")!.GetValue(value));
+			Assert.Equal(task.Description, type.GetProperty("description")!.GetValue(value));
             Assert.Equal("2025-04-30T09:00", type.GetProperty("startDate")!.GetValue(value));
             Assert.Equal("2025-05-05T17:00", type.GetProperty("dueDate")!.GetValue(value));
             Assert.Equal((int)task.Status, type.GetProperty("status")!.GetValue(value));
@@ -684,7 +685,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             Assert.Null(member);
         }
         [Fact]
-        public async Task Create_Returns_WhenMemberIsViewer()
+        public async Task Update_ReturnsFailureJson_WhenMemberIsViewer()
         {
             // Arrange
             var user = new IdentityUser { Id = "test" };
