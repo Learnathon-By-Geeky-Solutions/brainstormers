@@ -68,7 +68,9 @@ namespace TaskForge.Application.Services
                     }
                     else
                     {
+                        _logger.LogInformation(adminEmail, adminPassword);
                         _logger.LogError("Error creating super admin user: {Errors}", string.Join(", ", result.Errors));
+                        return;
                     }
                 }
                 catch(Exception ex)
@@ -88,7 +90,7 @@ namespace TaskForge.Application.Services
                 return;
             }
 
-            var adminUserProfileId = await _userProfileService.GetByUserIdAsync(adminUser.Id);
+            var adminUserProfileId = await _userProfileService.GetUserProfileIdByUserIdAsync(adminUser.Id);
             if (adminUserProfileId == 0 || adminUserProfileId == null)
             {
                 // Create UserProfile for Super Admin

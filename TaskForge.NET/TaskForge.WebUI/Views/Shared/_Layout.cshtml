@@ -47,7 +47,13 @@
 							</a>
 							<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
 								<li>
-									<a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Profile</a>
+									<a class="dropdown-item" asp-controller="UserProfile" asp-action="Setup">My Profile</a>
+								</li>
+								<li>
+									<a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Email">Manage Account</a>
+								</li>
+								<li>
+									<a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/ChangePassword">Change Password</a>
 								</li>
 								<li>
 									<a class="dropdown-item" asp-controller="ProjectInvitation" asp-action="Index">My Invitations</a>
@@ -86,7 +92,7 @@
 
 <footer class="border-top footer text-muted">
 	<div class="container">
-		&copy; 2025 - TaskForge.WebUI -
+		&copy; 2025 - TaskForge.WebUI
 	</div>
 </footer>
 

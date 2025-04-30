@@ -127,8 +127,8 @@ namespace TaskForge.Tests.WebUI.Controllers
             _userServiceMock.Setup(x => x.CreateUserAsync(It.IsAny<UserCreateDto>())).ReturnsAsync(identityResult);
             _userServiceMock.Setup(x => x.GetAllRolesAsync()).ReturnsAsync(new List<IdentityRole>
             {
-                new IdentityRole("Admin"),
-                new IdentityRole("User")
+                new("Admin"),
+                new("User")
             });
 
             var model = new UserCreateViewModel

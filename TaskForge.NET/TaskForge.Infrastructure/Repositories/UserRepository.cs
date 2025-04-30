@@ -39,6 +39,8 @@ namespace TaskForge.Infrastructure.Repositories
 
             var totalUsers = await query.CountAsync();
 
+            query = query.OrderBy(i => i.roleName);
+
             if (skip.HasValue)
             {
                 query = query.Skip(skip.Value);
@@ -49,7 +51,7 @@ namespace TaskForge.Infrastructure.Repositories
                 query = query.Take(take.Value);
             }
 
-            var users = await query.OrderBy(i => i.roleName).ToListAsync();
+            var users = await query.ToListAsync();
 
             var userList = users.Select(user => new UserListItemDto
             {

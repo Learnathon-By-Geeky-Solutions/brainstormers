@@ -49,7 +49,7 @@ namespace TaskForge.WebUI.Areas.Identity.Pages.Account
 			if (result.Succeeded && user.Email != null)
 			{
 				// Check if user profile already exists
-				var existingProfileId = await _userProfileService.GetByUserIdAsync(userId);
+				var existingProfileId = await _userProfileService.GetUserProfileIdByUserIdAsync(userId);
 				if (existingProfileId == null)
 				{
 					await _userProfileService.CreateUserProfileAsync(userId, user.Email.Split('@')[0]);

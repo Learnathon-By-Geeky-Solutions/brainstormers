@@ -42,7 +42,7 @@ namespace TaskForge.WebUI.Controllers
 
             var userId = user.Id;
 
-            var userProfileId = await _userProfileService.GetByUserIdAsync(userId);
+            var userProfileId = await _userProfileService.GetUserProfileIdByUserIdAsync(userId);
             if (userProfileId == null) return BadRequest();
 
             var totalProjects = await _projectMemberService.GetUserProjectCountAsync(userProfileId);

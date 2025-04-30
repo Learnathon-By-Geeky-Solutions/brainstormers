@@ -1,4 +1,5 @@
-﻿using TaskForge.Application.Interfaces.Repositories;
+﻿using Microsoft.EntityFrameworkCore;
+using TaskForge.Application.Interfaces.Repositories;
 using TaskForge.Application.Interfaces.Repositories.Common;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.Domain.Entities;
@@ -15,7 +16,17 @@ public class UserProfileService : IUserProfileService
 		_userProfileRepository = userProfileRepository;
 	}
 
-	public async Task<int?> GetByUserIdAsync(string userId)
+	public async Task<UserProfile?> GetByUserIdAsync(string userId)
+	{
+		var userProfiles = await _userProfileRepository.FindByExpressionAsync(
+			predicate: up => up.UserId == userId, 
+			includes: query => query.Include(up => up.User)
+			);
+
+		return userProfiles.FirstOrDefault();
+	}
+
+	public async Task<int?> GetUserProfileIdByUserIdAsync(string userId)
 	{
 		var userProfiles = await _userProfileRepository
 			.FindByExpressionAsync(up => up.UserId == userId);
@@ -34,7 +45,6 @@ public class UserProfileService : IUserProfileService
         {
             // User profile already exists, no need to create a new one
             // Optionally, you can log this or throw an exception
-            // throw new Exception("User profile already exists.");
             Console.WriteLine("User profile already exists.");
             return;
         }
@@ -45,6 +55,12 @@ public class UserProfileService : IUserProfileService
 			FullName = fullName
 		};
 		await _userProfileRepository.AddAsync(userProfile);
+		await _unitOfWork.SaveChangesAsync();
+	}
+
+	public async Task UpdateAsync(UserProfile profile)
+	{
+		await _userProfileRepository.UpdateAsync(profile);
 		await _unitOfWork.SaveChangesAsync();
 	}
 }

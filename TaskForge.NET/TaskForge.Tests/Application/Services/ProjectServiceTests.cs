@@ -214,7 +214,7 @@ namespace TaskForge.Tests.Application.Services
                 }
             };
 
-            _userProfileServiceMock.Setup(u => u.GetByUserIdAsync(userId))
+            _userProfileServiceMock.Setup(u => u.GetUserProfileIdByUserIdAsync(userId))
                 .ReturnsAsync(userProfileId);
 
             _projectMemberRepositoryMock.Setup(u => u.GetPaginatedListAsync(
@@ -263,7 +263,7 @@ namespace TaskForge.Tests.Application.Services
             var pageSize = 5;
 
             _userProfileServiceMock
-                .Setup(u => u.GetByUserIdAsync(filter.UserId))
+                .Setup(u => u.GetUserProfileIdByUserIdAsync(filter.UserId))
                 .ReturnsAsync(0);
 
             // Act
@@ -285,7 +285,7 @@ namespace TaskForge.Tests.Application.Services
                 SortOrder = "asc"
             };
 
-            _userProfileServiceMock.Setup(x => x.GetByUserIdAsync("user-1")).ReturnsAsync(1);
+            _userProfileServiceMock.Setup(x => x.GetUserProfileIdByUserIdAsync("user-1")).ReturnsAsync(1);
 
             var mockProjects = new List<ProjectMember>
             {

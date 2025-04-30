@@ -1,0 +1,178 @@
+﻿
+@model TaskForge.WebUI.Models.UserProfileEditViewModel
+@{
+    ViewData["Title"] = "Edit Profile";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <form asp-action="Setup" method="post" enctype="multipart/form-data" class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-circle me-2"></i>Edit Profile</h5>
+                </div>
+
+
+                <div class="card-body px-4 py-3">
+                    <div class="row gy-3 gx-4">
+                        <!-- Column 1 -->
+                        <div class="col-md-6">
+                            <div class="d-flex flex-column align-items-center position-relative my-3 avatar-container">
+                                <img id="avatarPreview"
+                                     src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? "/images/user.png" : Model.AvatarUrl)"
+                                     alt="Profile Picture"
+                                     class="rounded-circle shadow-sm"
+                                     style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #dee2e6;" />
+
+
+                                <!-- Hover Controls -->
+                                <div class="avatar-actions">
+                                    <label for="AvatarImage" class="btn btn-sm btn-light border me-1" title="Change Picture">
+                                        <i class="bi bi-pencil"></i>
+                                    </label>
+                                    <button type="button" class="btn btn-sm btn-danger" id="delete-avatar-btn" title="Remove Picture">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Hidden File Input -->
+                                <input type="file" id="AvatarImage" name="AvatarImage" class="d-none" accept="image/*" />
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="FullName" class="form-label small fw-semibold">Full Name</label>
+                                <input asp-for="FullName" class="form-control form-control-sm" placeholder="John Doe" />
+                                <span asp-validation-for="FullName" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="PhoneNumber" class="form-label small fw-semibold">Phone Number</label>
+                                <input asp-for="PhoneNumber" class="form-control form-control-sm" placeholder="+8801XXXXXXXXX" />
+                                <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="ProfessionalSummary" class="form-label small fw-semibold">Professional Summary</label>
+                                <textarea asp-for="ProfessionalSummary" class="form-control form-control-sm" rows="3" placeholder="A brief about your experience, goals, and skills..."></textarea>
+                                <span asp-validation-for="ProfessionalSummary" class="text-danger small"></span>
+                            </div>
+
+                        </div>
+
+                        <!-- Column 2 -->
+                        <div class="col-md-6">
+
+                            <div class="mb-3">
+                                <label asp-for="Location" class="form-label small fw-semibold">Location</label>
+                                <input asp-for="Location" class="form-control form-control-sm" placeholder="Dhaka, Bangladesh" />
+                                <span asp-validation-for="Location" class="text-danger small"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="JobTitle" class="form-label small fw-semibold">Job Title</label>
+                                <input asp-for="JobTitle" class="form-control form-control-sm" placeholder="Software Engineer" />
+                                <span asp-validation-for="JobTitle" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Company" class="form-label small fw-semibold">Company</label>
+                                <input asp-for="Company" class="form-control form-control-sm" placeholder="BrainStation 23" />
+                                <span asp-validation-for="Company" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="LinkedInProfile" class="form-label small fw-semibold">LinkedIn URL</label>
+                                <input asp-for="LinkedInProfile" class="form-control form-control-sm" placeholder="https://linkedin.com/in/yourname" />
+                                <span asp-validation-for="LinkedInProfile" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="WebsiteUrl" class="form-label small fw-semibold">Website URL</label>
+                                <input asp-for="WebsiteUrl" class="form-control form-control-sm" placeholder="https://yourportfolio.com" />
+                                <span asp-validation-for="WebsiteUrl" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer text-end bg-light py-2 px-4">
+                    <button type="submit" class="btn btn-success btn-sm">
+                        <i class="bi bi-save me-1"></i> Save Changes
+                    </button>
+                    <a asp-action="Details" asp-route-userId="@Model.UserId" target="_blank" class="btn btn-warning btn-sm ms-2">
+                        <i class="fas fa-link me-1"></i> View Profile
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<style>
+    .avatar-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .avatar-actions {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        background-color: rgba(255, 255, 255, 0.85);
+        padding: 4px 8px;
+        border-radius: 6px;
+    }
+
+    .avatar-container:hover .avatar-actions {
+        display: inline-flex;
+        gap: 6px;
+    }
+</style>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.getElementById("AvatarImage").addEventListener("change", function (event) {
+            const input = event.target;
+            const preview = document.getElementById("avatarPreview");
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        });
+
+        document.getElementById("delete-avatar-btn")?.addEventListener("click", function () {
+            document.getElementById("avatarPreview").src = "/images/user.png";
+            document.getElementById("AvatarImage").value = "";
+        });
+
+        document.getElementById("delete-avatar-btn").addEventListener("click", function () {
+            // Clear preview image
+            const avatarImage = document.querySelector(".avatar-container img");
+            avatarImage.src = "/images/user.png";
+
+            // Optionally clear file input if a new file was selected
+            document.getElementById("AvatarImage").value = "";
+
+            // Create a hidden input to flag deletion on submit
+            let deleteInput = document.getElementById("DeleteAvatar");
+            if (!deleteInput) {
+                deleteInput = document.createElement("input");
+                deleteInput.type = "hidden";
+                deleteInput.name = "DeleteAvatar";
+                deleteInput.id = "DeleteAvatar";
+                deleteInput.value = "true";
+                document.querySelector("form").appendChild(deleteInput);
+            } else {
+                deleteInput.value = "true";
+            }
+        });
+    </script>
+}
