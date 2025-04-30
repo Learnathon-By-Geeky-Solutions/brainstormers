@@ -94,7 +94,8 @@ internal static class Program
             options.Password.RequireUppercase = false;
             options.Password.RequireLowercase = false;
             options.Password.RequiredUniqueChars = 1;
-        });
+			options.SignIn.RequireConfirmedEmail = true;
+		});
 
         // Cookie configuration (important for setting the authentication cookie)
         builder.Services.ConfigureApplicationCookie(options =>
@@ -115,11 +116,6 @@ internal static class Program
             .AddInMemoryClients(IdentityServerConfig.GetClients())
             .AddInMemoryApiScopes(IdentityServerConfig.GetApiScopes())
             .AddDeveloperSigningCredential(persistKey: false);
-
-        builder.Services.Configure<IdentityOptions>(options =>
-        {
-            options.SignIn.RequireConfirmedEmail = true; // Ensure users have to confirm their email before signing in
-        });
 
         // Register the IdentitySeeder service
         builder.Services.AddTransient<IdentitySeeder>();

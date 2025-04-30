@@ -25,8 +25,10 @@ public class UserProfileEditViewModel
 	public string? ProfessionalSummary { get; set; }
 
 	[MaxLength(500)]
+	[RegularExpression(@"^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$", ErrorMessage = "Please enter a valid URL")]
 	public string? LinkedInProfile { get; set; }
 
 	[MaxLength(500)]
+	[RegularExpression(@"^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$", ErrorMessage = "Please enter a valid URL")]
 	public string? WebsiteUrl { get; set; }
 }
