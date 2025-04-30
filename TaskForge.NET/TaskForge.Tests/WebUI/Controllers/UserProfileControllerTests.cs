@@ -369,7 +369,9 @@ namespace TaskForge.Tests.WebUI.Controllers
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Setup", redirect.ActionName);
             Assert.Equal("UserProfile", redirect.ControllerName);
-            _userProfileServiceMock.Verify(s => s.UpdateAsync(It.Is<UserProfile>(p => p.FullName == "New User")), Times.Once);
+            _userProfileServiceMock.Verify(s => s.UpdateAsync(It.Is<UserProfile>(p =>
+                p.FullName == "New User" &&
+                p.AvatarUrl != null)), Times.Once);
         }
 
 
