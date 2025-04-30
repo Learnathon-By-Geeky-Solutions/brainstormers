@@ -104,9 +104,9 @@ public class UserProfileController(IUserProfileService userProfileService, UserM
 
             return RedirectToAction("Setup", "UserProfile");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return new JsonResult(ex.Message);
+            return new JsonResult("An error occurred while updating the profile. Please try again.");
         }
     }
 

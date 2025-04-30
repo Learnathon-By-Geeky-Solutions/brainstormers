@@ -160,7 +160,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             Assert.Equal(model, viewResult.Model);
         }
         [Fact]
-        public async Task Setup_Post_ReturnsRedirectToAction_WhenProfileIsNull()
+        public async Task Setup_Post_ReturnsNotFound_WhenProfileIsNull()
         {
             // Arrange
             var model = new UserProfileEditViewModel
