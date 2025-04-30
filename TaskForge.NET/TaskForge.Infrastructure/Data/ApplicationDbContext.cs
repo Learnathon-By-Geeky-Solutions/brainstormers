@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using TaskForge.Domain.Entities;
 
 namespace TaskForge.Infrastructure.Data
@@ -9,11 +9,9 @@ namespace TaskForge.Infrastructure.Data
     public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
+            : base(options) { }
 
-        // Define DbSets for each entity
+        // DbSets
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectMember> ProjectMembers { get; set; }
@@ -36,79 +34,68 @@ namespace TaskForge.Infrastructure.Data
 
         private void ConvertDateTimeToUtc()
         {
-            var entries = ChangeTracker.Entries()
-                .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
-
-            foreach (var entry in entries)
+            foreach (var entry in ChangeTracker.Entries()
+                .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified))
             {
-                foreach (var property in entry.OriginalValues.Properties)
-                {
-                    if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
-                    {
-                        var currentValue = entry.Property(property.Name).CurrentValue;
-
-                        if (currentValue is DateTime dateTimeValue)
-                        {
-                            if (dateTimeValue.Kind == DateTimeKind.Unspecified)
-                                entry.Property(property.Name).CurrentValue = DateTime.SpecifyKind(dateTimeValue, DateTimeKind.Utc);
-                            else if (dateTimeValue.Kind == DateTimeKind.Local)
-                                entry.Property(property.Name).CurrentValue = dateTimeValue.ToUniversalTime();
-                        }
-                        else if (currentValue is DateTime?)
-                        {
-                            var nullableDateTimeValue = (DateTime?)currentValue;
-                            var dateTime = nullableDateTimeValue.Value;
-                            if (dateTime.Kind == DateTimeKind.Unspecified)
-                                entry.Property(property.Name).CurrentValue = DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
-                            else if (dateTime.Kind == DateTimeKind.Local)
-                                entry.Property(property.Name).CurrentValue = dateTime.ToUniversalTime();
-                        }
-                    }
-                }
+                ProcessDateTimeProperties(entry);
             }
         }
 
+        private static void ProcessDateTimeProperties(EntityEntry entry)
+        {
+            foreach (var property in entry.OriginalValues.Properties)
+            {
+                if (property.ClrType != typeof(DateTime) && property.ClrType != typeof(DateTime?))
+                    continue;
+
+                var currentValue = entry.Property(property.Name).CurrentValue;
+                entry.Property(property.Name).CurrentValue = ConvertToUtc(currentValue);
+            }
+        }
+
+        private static object? ConvertToUtc(object? dateTimeValue)
+        {
+            if (dateTimeValue is DateTime dt)
+            {
+                return ConvertDateTime(dt);
+            }
+            else if (dateTimeValue is DateTime nullableDt)
+            {
+                return ConvertDateTime(nullableDt);
+            }
+            return dateTimeValue;
+        }
+
+        private static DateTime ConvertDateTime(DateTime dateTime)
+        {
+            return dateTime.Kind switch
+            {
+                DateTimeKind.Unspecified => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc),
+                DateTimeKind.Local => dateTime.ToUniversalTime(),
+                _ => dateTime
+            };
+        }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-            // Define relationships and configurations here
-            builder.Entity<IdentityUser>(entity =>
-            {
-                entity.ToTable("Users");
-            });
+            ConfigureIdentityTables(builder);
+            ConfigureTaskDependencies(builder);
+        }
 
-            builder.Entity<IdentityRole>(entity =>
-            {
-                entity.ToTable("Roles");
-            });
+        private static void ConfigureIdentityTables(ModelBuilder builder)
+        {
+            builder.Entity<IdentityUser>().ToTable("Users");
+            builder.Entity<IdentityRole>().ToTable("Roles");
+            builder.Entity<IdentityUserRole<string>>().ToTable("UserRoles");
+            builder.Entity<IdentityUserClaim<string>>().ToTable("UserClaims");
+            builder.Entity<IdentityUserLogin<string>>().ToTable("UserLogins");
+            builder.Entity<IdentityUserToken<string>>().ToTable("UserTokens");
+            builder.Entity<IdentityRoleClaim<string>>().ToTable("RoleClaims");
+        }
 
-            builder.Entity<IdentityUserRole<string>>(entity =>
-            {
-                entity.ToTable("UserRoles");
-            });
-
-            builder.Entity<IdentityUserClaim<string>>(entity =>
-            {
-                entity.ToTable("UserClaims");
-            });
-
-            builder.Entity<IdentityUserLogin<string>>(entity =>
-            {
-                entity.ToTable("UserLogins");
-            });
-
-            builder.Entity<IdentityUserToken<string>>(entity =>
-            {
-                entity.ToTable("UserTokens");
-            });
-
-            builder.Entity<IdentityRoleClaim<string>>(entity =>
-            {
-                entity.ToTable("RoleClaims");
-            });
-
-
+        private static void ConfigureTaskDependencies(ModelBuilder builder)
+        {
             builder.Entity<TaskDependency>()
                 .HasKey(td => new { td.TaskId, td.DependsOnTaskId });
 
@@ -123,7 +110,6 @@ namespace TaskForge.Infrastructure.Data
                 .WithMany(t => t.DependentOnThis)
                 .HasForeignKey(td => td.DependsOnTaskId)
                 .OnDelete(DeleteBehavior.Restrict);
-
         }
     }
 }
