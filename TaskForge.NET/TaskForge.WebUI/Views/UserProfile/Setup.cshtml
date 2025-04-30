@@ -17,27 +17,6 @@
                     <div class="row gy-3 gx-4">
                         <!-- Column 1 -->
                         <div class="col-md-6">
-                            <div class="d-flex flex-column align-items-center position-relative my-3 avatar-container">
-                                <img id="avatarPreview"
-                                     src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? "/images/user.png" : Model.AvatarUrl)"
-                                     alt="Profile Picture"
-                                     class="rounded-circle shadow-sm"
-                                     style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #dee2e6;" />
-
-
-                                <!-- Hover Controls -->
-                                <div class="avatar-actions">
-                                    <label for="AvatarImage" class="btn btn-sm btn-light border me-1" title="Change Picture">
-                                        <i class="bi bi-pencil"></i>
-                                    </label>
-                                    <button type="button" class="btn btn-sm btn-danger" id="delete-avatar-btn" title="Remove Picture">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-
-                                <!-- Hidden File Input -->
-                                <input type="file" id="AvatarImage" name="AvatarImage" class="d-none" accept="image/*" />
-                            </div>
                             <div class="mb-3">
                                 <label asp-for="FullName" class="form-label small fw-semibold">Full Name</label>
                                 <input asp-for="FullName" class="form-control form-control-sm" placeholder="John Doe" />
@@ -52,7 +31,7 @@
 
                             <div class="mb-3">
                                 <label asp-for="ProfessionalSummary" class="form-label small fw-semibold">Professional Summary</label>
-                                <textarea asp-for="ProfessionalSummary" class="form-control form-control-sm" rows="3" placeholder="A brief about your experience, goals, and skills..."></textarea>
+                                <textarea asp-for="ProfessionalSummary" class="form-control form-control-sm" rows="9" placeholder="A brief about your experience, goals, and skills..."></textarea>
                                 <span asp-validation-for="ProfessionalSummary" class="text-danger small"></span>
                             </div>
 
@@ -105,74 +84,3 @@
         </div>
     </div>
 </div>
-
-
-<style>
-    .avatar-container {
-        position: relative;
-        display: inline-block;
-    }
-
-    .avatar-actions {
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        display: none;
-        background-color: rgba(255, 255, 255, 0.85);
-        padding: 4px 8px;
-        border-radius: 6px;
-    }
-
-    .avatar-container:hover .avatar-actions {
-        display: inline-flex;
-        gap: 6px;
-    }
-</style>
-
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-
-    <script>
-        document.getElementById("AvatarImage").addEventListener("change", function (event) {
-            const input = event.target;
-            const preview = document.getElementById("avatarPreview");
-
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    preview.src = e.target.result;
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        });
-
-        document.getElementById("delete-avatar-btn")?.addEventListener("click", function () {
-            document.getElementById("avatarPreview").src = "/images/user.png";
-            document.getElementById("AvatarImage").value = "";
-        });
-
-        document.getElementById("delete-avatar-btn").addEventListener("click", function () {
-            // Clear preview image
-            const avatarImage = document.querySelector(".avatar-container img");
-            avatarImage.src = "/images/user.png";
-
-            // Optionally clear file input if a new file was selected
-            document.getElementById("AvatarImage").value = "";
-
-            // Create a hidden input to flag deletion on submit
-            let deleteInput = document.getElementById("DeleteAvatar");
-            if (!deleteInput) {
-                deleteInput = document.createElement("input");
-                deleteInput.type = "hidden";
-                deleteInput.name = "DeleteAvatar";
-                deleteInput.id = "DeleteAvatar";
-                deleteInput.value = "true";
-                document.querySelector("form").appendChild(deleteInput);
-            } else {
-                deleteInput.value = "true";
-            }
-        });
-    </script>
-}
