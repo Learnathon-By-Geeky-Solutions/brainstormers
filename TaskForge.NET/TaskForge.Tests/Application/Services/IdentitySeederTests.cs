@@ -55,7 +55,7 @@ namespace TaskForge.Tests.Application.Services
                 .ReturnsAsync(IdentityResult.Success);
             _userManagerMock.Setup(u => u.AddToRoleAsync(It.IsAny<IdentityUser>(), "Admin"))
                 .ReturnsAsync(IdentityResult.Success);
-            _userProfileServiceMock.Setup(u => u.GetByUserIdAsync(It.IsAny<string>()))
+            _userProfileServiceMock.Setup(u => u.GetUserProfileIdByUserIdAsync(It.IsAny<string>()))
                 .ReturnsAsync(0);
 
             await _identitySeeder.SeedRolesAndSuperUser();
@@ -106,7 +106,7 @@ namespace TaskForge.Tests.Application.Services
                 .ReturnsAsync(IdentityResult.Success);
             _userManagerMock.Setup(u => u.AddToRoleAsync(It.IsAny<IdentityUser>(), "Admin"))
                 .ReturnsAsync(IdentityResult.Success);
-            _userProfileServiceMock.Setup(u => u.GetByUserIdAsync(It.IsAny<string>()))
+            _userProfileServiceMock.Setup(u => u.GetUserProfileIdByUserIdAsync(It.IsAny<string>()))
                 .ReturnsAsync(0);
 
             await _identitySeeder.SeedRolesAndSuperUser();
@@ -127,7 +127,7 @@ namespace TaskForge.Tests.Application.Services
                 .ReturnsAsync(true);
             _userManagerMock.Setup(u => u.FindByEmailAsync(existingUser.Email))
                 .ReturnsAsync(existingUser);
-            _userProfileServiceMock.Setup(u => u.GetByUserIdAsync(existingUser.Id))
+            _userProfileServiceMock.Setup(u => u.GetUserProfileIdByUserIdAsync(existingUser.Id))
                 .ReturnsAsync(1);
 
             await _identitySeeder.SeedRolesAndSuperUser();
@@ -156,7 +156,7 @@ namespace TaskForge.Tests.Application.Services
                 .ReturnsAsync(true);
             _userManagerMock.Setup(u => u.FindByEmailAsync(user.Email))
                 .ReturnsAsync(user);
-            _userProfileServiceMock.Setup(u => u.GetByUserIdAsync(user.Id))
+            _userProfileServiceMock.Setup(u => u.GetUserProfileIdByUserIdAsync(user.Id))
                 .ReturnsAsync(0);
 
             await _identitySeeder.SeedRolesAndSuperUser();

@@ -65,7 +65,7 @@ namespace TaskForge.Application.Services
 		{
 			if (filter.UserId == null) return new PaginatedList<ProjectWithRoleDto>(new List<ProjectWithRoleDto>(), 0, pageIndex, pageSize);
 
-			var userProfileId = await _userProfileService.GetByUserIdAsync(filter.UserId);
+			var userProfileId = await _userProfileService.GetUserProfileIdByUserIdAsync(filter.UserId);
 			if (userProfileId == 0) return new PaginatedList<ProjectWithRoleDto>(new List<ProjectWithRoleDto>(), 0, pageIndex, pageSize);
 
 			var predicate = BuildPredicate(filter, userProfileId);

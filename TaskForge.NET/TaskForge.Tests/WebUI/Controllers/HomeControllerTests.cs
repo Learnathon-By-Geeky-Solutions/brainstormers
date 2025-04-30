@@ -103,7 +103,7 @@ namespace TaskForge.Tests.WebUI.Controllers
 
             var user = new IdentityUser { Id = "user123" };
             _userManagerMock.Setup(x => x.GetUserAsync(claims)).ReturnsAsync(user);
-            _userProfileServiceMock.Setup(x => x.GetByUserIdAsync(user.Id)).ReturnsAsync((int?)null);
+            _userProfileServiceMock.Setup(x => x.GetUserProfileIdByUserIdAsync(user.Id)).ReturnsAsync((int?)null);
 
             // Act
             var result = await controller.Index();
@@ -121,7 +121,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             var controller = CreateController(principal);
 
             _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-            _userProfileServiceMock.Setup(x => x.GetByUserIdAsync("user1")).ReturnsAsync(5);
+            _userProfileServiceMock.Setup(x => x.GetUserProfileIdByUserIdAsync("user1")).ReturnsAsync(5);
             _projectMemberServiceMock.Setup(x => x.GetUserProjectCountAsync(5)).ReturnsAsync(3);
 
             var now = DateTime.UtcNow;
