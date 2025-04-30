@@ -100,3 +100,4 @@ packages/
 /TaskForge.NET/TaskForge.WebUI/password.txt
 # /TaskForge.NET/TaskForge.WebUI/.env
 /TaskForge.NET/TaskForge.WebUI/.env
+/TaskForge.NET/TaskForge.WebUI/wwwroot/images

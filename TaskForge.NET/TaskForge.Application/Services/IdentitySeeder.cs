@@ -88,7 +88,7 @@ namespace TaskForge.Application.Services
                 return;
             }
 
-            var adminUserProfileId = await _userProfileService.GetByUserIdAsync(adminUser.Id);
+            var adminUserProfileId = await _userProfileService.GetUserProfileIdByUserIdAsync(adminUser.Id);
             if (adminUserProfileId == 0 || adminUserProfileId == null)
             {
                 // Create UserProfile for Super Admin

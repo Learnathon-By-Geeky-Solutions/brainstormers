@@ -37,7 +37,7 @@ namespace TaskForge.WebUI.Controllers
             var user = await _userManager.GetUserAsync(User);
             string userId = user!.Id;
 
-            var userProfileId = await _userProfileService.GetByUserIdAsync(userId);
+            var userProfileId = await _userProfileService.GetUserProfileIdByUserIdAsync(userId);
             if (userProfileId == null)
             {
                 TempData["ErrorMessage"] = "User profile not found.";

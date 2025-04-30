@@ -68,7 +68,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             var user = new IdentityUser { Id = "user123" };
             _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
-            _userProfileServiceMock.Setup(x => x.GetByUserIdAsync(user.Id))
+            _userProfileServiceMock.Setup(x => x.GetUserProfileIdByUserIdAsync(user.Id))
                 .ReturnsAsync((int?)null);
 
             var result = await _controller.Index();
@@ -84,7 +84,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             var user = new IdentityUser { Id = "user123" };
             _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
-            _userProfileServiceMock.Setup(x => x.GetByUserIdAsync(user.Id))
+            _userProfileServiceMock.Setup(x => x.GetUserProfileIdByUserIdAsync(user.Id))
                 .ReturnsAsync(5);
 
             var paginatedList = new PaginatedList<ProjectInvitation>(new List<ProjectInvitation>(), 0, 1, 10);
@@ -114,7 +114,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             var user = new IdentityUser { Id = "user123" };
             _userManagerMock.Setup(m => m.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
-            _userProfileServiceMock.Setup(s => s.GetByUserIdAsync("user123"))
+            _userProfileServiceMock.Setup(s => s.GetUserProfileIdByUserIdAsync("user123"))
                 .ReturnsAsync(1);
 
             var invitation = new ProjectInvitation
@@ -143,7 +143,7 @@ namespace TaskForge.Tests.WebUI.Controllers
             var user = new IdentityUser { Id = "user123" };
             _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
-            _userProfileServiceMock.Setup(x => x.GetByUserIdAsync(user.Id))
+            _userProfileServiceMock.Setup(x => x.GetUserProfileIdByUserIdAsync(user.Id))
                 .ReturnsAsync(10);
 
             var invitations = new List<ProjectInvitation>

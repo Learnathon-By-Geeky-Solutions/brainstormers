@@ -39,7 +39,7 @@ namespace TaskForge.Tests.Application.Services
 		        .ReturnsAsync(userProfiles);
 
 	        // Act
-	        var result = await _service.GetByUserIdAsync(userId);
+	        var result = await _service.GetUserProfileIdByUserIdAsync(userId);
 
 	        // Assert
 	        Assert.Equal(expectedId, result);
