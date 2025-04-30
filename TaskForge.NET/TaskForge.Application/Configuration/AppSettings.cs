@@ -8,7 +8,7 @@ namespace TaskForge.Application.Configuration
 {
 	public class AppSettings
 	{
-		public string BaseUrl { get; set; }
+		public string? BaseUrl { get; set; }
 	}
 
 }
