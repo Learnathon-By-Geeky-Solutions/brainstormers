@@ -343,7 +343,7 @@ namespace TaskForge.Tests.WebUI.Controllers
 
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
-            Assert.Equal("Update failed", jsonResult.Value);
+            Assert.Equal("An error occurred while updating the profile. Please try again.", jsonResult.Value);
         }
         [Fact]
         public async Task Setup_Post_ValidAvatar_UpdatesProfileAndRedirects()
