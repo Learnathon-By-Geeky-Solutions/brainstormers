@@ -18,8 +18,10 @@ public class UserProfileService : IUserProfileService
 
 	public async Task<UserProfile?> GetByUserIdAsync(string userId)
 	{
-		var userProfiles = await _userProfileRepository
-			.FindByExpressionAsync(up => up.UserId == userId);
+		var userProfiles = await _userProfileRepository.FindByExpressionAsync(
+			predicate: up => up.UserId == userId, 
+			includes: query => query.Include(up => up.User)
+			);
 
 		return userProfiles.FirstOrDefault();
 	}

@@ -1,0 +1,103 @@
+﻿@model TaskForge.WebUI.Models.UserProfileViewModel
+@{
+    ViewData["Title"] = "User Profile";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-circle me-2"></i>User Profile</h5>
+                </div>
+
+                <div class="card-body px-4 py-3">
+                    <div class="row gy-3 gx-4">
+                        <!-- Column 1 -->
+                        <div class="col-md-6">
+                            <div class="d-flex flex-column align-items-center my-3">
+                                <img src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? "/images/user.png" : Model.AvatarUrl)"
+                                alt="Profile Picture"
+                                class="rounded-circle shadow-sm"
+                                style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #dee2e6;" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Full Name</label>
+                                <div class="form-control form-control-sm bg-light">@Model.FullName</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Phone Number</label>
+                                <div class="form-control form-control-sm bg-light">@Model.PhoneNumber</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Professional Summary</label>
+                                <div class="form-control form-control-sm bg-light" style="min-height: 80px;">
+                                    @Model.ProfessionalSummary
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Column 2 -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Location</label>
+                                <div class="form-control form-control-sm bg-light">@Model.Location</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Job Title</label>
+                                <div class="form-control form-control-sm bg-light">@Model.JobTitle</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Company</label>
+                                <div class="form-control form-control-sm bg-light">@Model.Company</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">LinkedIn</label>
+                                @if (!string.IsNullOrEmpty(Model.LinkedInProfile))
+                                {
+                                    <div class="form-control form-control-sm bg-light">
+                                        <a href="@Model.LinkedInProfile" target="_blank">@Model.LinkedInProfile</a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="form-control form-control-sm bg-light">—</div>
+                                }
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Website</label>
+                                @if (!string.IsNullOrEmpty(Model.WebsiteUrl))
+                                {
+                                    <div class="form-control form-control-sm bg-light">
+                                        <a href="@Model.WebsiteUrl" target="_blank">@Model.WebsiteUrl</a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="form-control form-control-sm bg-light">—</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                @if(User.Identity != null && User.Identity.IsAuthenticated && User.Identity.Name == Model.Email)
+                {
+                    <div class="card-footer bg-light text-end py-2 px-4">
+                        <a asp-action="Setup" target="_blank" class="btn btn-primary btn-sm">
+                            <i class="bi bi-pencil me-1"></i>Edit Profile
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

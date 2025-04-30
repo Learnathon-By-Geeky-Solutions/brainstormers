@@ -1,13 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Specialized;
+using Microsoft.EntityFrameworkCore;
 using TaskForge.Application.Interfaces.Services;
 using TaskForge.WebUI.Models;
 
 namespace TaskForge.WebUI.Controllers;
 
-[Authorize]
 public class UserProfileController : Controller
 {
 	private readonly IUserProfileService _userProfileService;
@@ -19,6 +18,7 @@ public class UserProfileController : Controller
 		_userManager = userManager;
 	}
 
+	[Authorize]
 	public async Task<IActionResult> Setup()
 	{
 		var userId = _userManager.GetUserId(User);
@@ -43,13 +43,15 @@ public class UserProfileController : Controller
 			Company = profile.Company,
 			ProfessionalSummary = profile.ProfessionalSummary,
 			LinkedInProfile = profile.LinkedInProfile,
-			WebsiteUrl = profile.WebsiteUrl
-		};
+			WebsiteUrl = profile.WebsiteUrl,
+            UserId = profile.UserId,
+        };
 
 		return View(model);
 	}
 
-	[HttpPost]
+    [Authorize]
+    [HttpPost]
 	public async Task<IActionResult> Setup(UserProfileEditViewModel model)
 	{
 		if (!ModelState.IsValid)
@@ -76,7 +78,7 @@ public class UserProfileController : Controller
 		profile.LinkedInProfile = model.LinkedInProfile;
 		profile.WebsiteUrl = model.WebsiteUrl;
 
-		if (model.AvatarImage != null && model.AvatarImage.Length > 0)
+        if (model.AvatarImage != null && model.AvatarImage.Length > 0)
 		{
 			// 1. Validate file size (max 10MB)
 			if (model.AvatarImage.Length > 10 * 1024 * 1024)
@@ -117,4 +119,34 @@ public class UserProfileController : Controller
 
 		return RedirectToAction("Setup", "UserProfile");
 	}
+
+    public async Task<IActionResult> Details(string userId)
+    {
+        if (string.IsNullOrEmpty(userId))
+        {
+            return NotFound();
+        }
+
+        var profile = await _userProfileService.GetByUserIdAsync(userId);
+
+        if (profile == null) return NotFound();
+
+        var viewModel = new UserProfileViewModel
+		{
+			FullName = profile.FullName,
+			AvatarUrl = profile.AvatarUrl,
+			PhoneNumber = profile.PhoneNumber,
+			Location = profile.Location,
+			JobTitle = profile.JobTitle,
+			Company = profile.Company,
+			ProfessionalSummary = profile.ProfessionalSummary,
+			LinkedInProfile = profile.LinkedInProfile,
+			WebsiteUrl = profile.WebsiteUrl,
+			Email = profile.User.Email!,
+            UserId = profile.UserId,
+		};	
+
+        return View(viewModel);
+    }
+
 }
