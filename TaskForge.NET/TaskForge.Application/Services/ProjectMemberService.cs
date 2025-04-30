@@ -61,7 +61,8 @@ namespace TaskForge.Application.Services
 				Id = pm.Id,
 				ProjectId = pm.ProjectId,
 				UserProfileId = pm.UserProfileId,
-				Name = pm.UserProfile.FullName ?? "Unknown User",
+				UserId = pm.UserProfile.UserId,
+                Name = pm.UserProfile.FullName ?? "Unknown User",
 				Email = pm.UserProfile.User?.UserName ?? "No Email",
 				Role = pm.Role
 			}).ToList();

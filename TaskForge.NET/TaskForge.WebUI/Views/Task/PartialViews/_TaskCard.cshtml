@@ -17,7 +17,9 @@
 					@foreach (var item in Model.AssignedUsers)
 					{
 						<span class="badge bg-light text-dark">
-							<i class="bi bi-person"></i> @item.FullName
+							<a asp-controller="UserProfile" asp-action="Details" asp-route-userId="@item.UserId" target="_blank">
+								<i class="bi bi-person"></i> @item.FullName
+							</a>
 						</span>
 					}
 				</div>
