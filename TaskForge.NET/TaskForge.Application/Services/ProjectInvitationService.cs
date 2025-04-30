@@ -122,14 +122,20 @@ namespace TaskForge.Application.Services
                 await _unitOfWork.SaveChangesAsync();
 
                 var request = _httpContextAccessor.HttpContext?.Request;
-                var baseUrl = $"{request?.Scheme}://{request?.Host.Value}";
+                if (request == null)
+                {
+                    return ServiceResult.FailureResult("Unable to generate invitation link: HTTP context not available.");
+                }
+                var baseUrl = $"{request.Scheme}://{request.Host.Value}";
                 var returnUrl = "/ProjectInvitation";
                 var fullLink = $"{baseUrl}/Identity/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}";
 
-                var subject = "You're invited to join a project!";
+                var subject = $"You're invited to join {project.Title} on TaskForge!";
                 var body = $@"
 					<p>Hello,</p>
-					<p>You have been invited to collaborate on a project in TaskForge.</p>
+					<p>You have been invited to collaborate on project '{project.Title}' in TaskForge.</p>
+					<p>Project Description: {(string.IsNullOrEmpty(project.Description) ? "No description provided" : project.Description)}</p>
+					<p>You have been invited with the role: {assignedRole}</p>
 					<p><a href='{fullLink}'>Click here to view your invitation</a></p>";
 
                 await _emailSender.SendEmailAsync(invitedUserEmail, subject, body);
@@ -138,10 +144,10 @@ namespace TaskForge.Application.Services
 
                 return ServiceResult.SuccessResult("Invitation sent successfully.");
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 await transaction.RollbackAsync();
-                return ServiceResult.FailureResult("Failed to send invitation." + e.Message);
+                return ServiceResult.FailureResult("Failed to send invitation. Please try again later.");
             }
         }
 
