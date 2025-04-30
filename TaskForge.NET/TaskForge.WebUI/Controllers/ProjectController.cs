@@ -204,6 +204,7 @@ public class ProjectController : Controller
                     Id = m.Id,
                     Name = m.Name ?? "",
                     Email = m.Email ?? "",
+                    UserId = m.UserId,
                     Role = m.Role
                 }).ToList(),
             Invitations = (await _invitationService.GetInvitationListAsync(project.Id, 1, 10)).Items.Select(m =>
@@ -228,6 +229,7 @@ public class ProjectController : Controller
                 DueDate = t.DueDate?.ToUniversalTime(),
                 AssignedUsers = t.AssignedUsers.Select(a => new TaskAssignmentViewModel
                 {
+                    UserId = a.UserProfile.UserId ?? "",
                     UserProfileId = a.UserProfileId,
                     FullName = a.UserProfile.FullName ?? "",
                     UserName = a.UserProfile.User.UserName ?? "",
@@ -280,6 +282,7 @@ public class ProjectController : Controller
             ProjectMembers = projectMembers.Select(m => new ProjectMemberViewModel
             {
                 Id = m.Id,
+                UserId = m.UserId!,
                 Name = m.Name ?? "Unknown",
                 Email = m.Email ?? "N/A",
                 Role = m.Role
