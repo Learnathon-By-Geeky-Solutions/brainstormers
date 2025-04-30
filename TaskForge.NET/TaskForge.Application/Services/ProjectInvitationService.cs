@@ -17,10 +17,11 @@ namespace TaskForge.Application.Services
             IProjectMemberRepository projectMemberRepo,
             IProjectRepository projectRepo,
             IUserProfileRepository userProfileRepo,
-            IHttpContextAccessor httpContextAccessor,
             IEmailSender emailSender,
             IUnitOfWork unitOfWork,
-            UserManager<IdentityUser> userManager) : IProjectInvitationService
+            UserManager<IdentityUser> userManager,
+			ILinkGeneratorService linkGeneratorService
+			) : IProjectInvitationService
     {
         private readonly IProjectInvitationRepository _projectInvitationRepo = projectInvitationRepo;
         private readonly IProjectMemberRepository _projectMemberRepo = projectMemberRepo;
@@ -29,7 +30,7 @@ namespace TaskForge.Application.Services
         private readonly IProjectRepository _projectRepo = projectRepo;
         private readonly UserManager<IdentityUser> _userManager = userManager;
         private readonly IEmailSender _emailSender = emailSender;
-        private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+        private readonly ILinkGeneratorService _linkGeneratorService = linkGeneratorService;
 
         public async Task<ProjectInvitation?> GetByIdAsync(int invitationId)
         {
@@ -121,16 +122,10 @@ namespace TaskForge.Application.Services
                 await _projectInvitationRepo.AddAsync(invitation);
                 await _unitOfWork.SaveChangesAsync();
 
-                var request = _httpContextAccessor.HttpContext?.Request;
-                if (request == null)
-                {
-                    return ServiceResult.FailureResult("Unable to generate invitation link: HTTP context not available.");
-                }
-                var baseUrl = $"{request.Scheme}://{request.Host.Value}";
-                var returnUrl = "/ProjectInvitation";
-                var fullLink = $"{baseUrl}/Identity/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}";
+				var fullLink = _linkGeneratorService.GenerateInvitationLink("/ProjectInvitation");
 
-                var subject = $"You're invited to join {project.Title} on TaskForge!";
+
+				var subject = $"You're invited to join {project.Title} on TaskForge!";
                 var body = $@"
 					<p>Hello,</p>
 					<p>You have been invited to collaborate on project '{project.Title}' in TaskForge.</p>

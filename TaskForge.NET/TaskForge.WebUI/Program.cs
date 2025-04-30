@@ -116,7 +116,6 @@ internal static class Program
             .AddInMemoryApiScopes(IdentityServerConfig.GetApiScopes())
             .AddDeveloperSigningCredential(persistKey: false);
 
-
         builder.Services.Configure<IdentityOptions>(options =>
         {
             options.SignIn.RequireConfirmedEmail = true;
@@ -152,7 +151,8 @@ internal static class Program
         builder.Services.AddScoped<IProjectService, ProjectService>();
         builder.Services.AddScoped<IProjectMemberService, ProjectMemberService>();
         builder.Services.AddScoped<IProjectInvitationService, ProjectInvitationService>();
-        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<ILinkGeneratorService, LinkGeneratorService>();
+		builder.Services.AddHttpContextAccessor();
 
 
         builder.Services.AddScoped<TaskServiceDependencies>(provider => new TaskServiceDependencies
